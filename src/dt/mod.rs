@@ -11,6 +11,7 @@ use std::io::Read;
 use textcode;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct BCDString(String);
 /// [BCDString: appendix 2.7.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16562)
 impl BCDString {
@@ -30,6 +31,7 @@ impl BCDString {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct IA5String(String);
 impl IA5String {
     pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
@@ -72,6 +74,7 @@ impl IA5String {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [EmbedderIcAssemblerId: appendix 2.65.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20005)
 pub struct EmbedderIcAssemblerId {
     pub country_code: IA5String,
@@ -101,6 +104,7 @@ impl EmbedderIcAssemblerId {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardReplacementIndex: appendix 2.31.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17853)
 pub struct CardReplacementIndex(IA5String);
 impl CardReplacementIndex {
@@ -111,6 +115,7 @@ impl CardReplacementIndex {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardConsecutiveIndex: appendix 2.14.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16973)
 pub struct CardConsecutiveIndex(IA5String);
 impl CardConsecutiveIndex {
@@ -121,6 +126,7 @@ impl CardConsecutiveIndex {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardRenewalIndex: appendix 2.30.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17812)
 pub struct CardRenewalIndex(IA5String);
 impl CardRenewalIndex {
@@ -133,12 +139,14 @@ impl CardRenewalIndex {
 #[derive(Debug, Serialize, Deserialize)]
 /// [CardNumber: appendix 2.26.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17629)
 pub enum CardNumber {
+    #[serde(rename_all(serialize = "camelCase"))]
     Driver {
         driver_identification: IA5String,
         card_replacement_index: CardReplacementIndex,
         card_renewal_index: CardRenewalIndex,
     },
 
+    #[serde(rename_all(serialize = "camelCase"))]
     Owner {
         owner_identification: IA5String,
         card_consecutive_index: CardConsecutiveIndex,
@@ -182,6 +190,7 @@ impl CardNumber {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [TimeReal: appendix 2.162.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24993)
 pub struct TimeReal(chrono::DateTime<chrono::Utc>);
 // TODO: Determine what timezone is used in the DDD files
@@ -207,6 +216,7 @@ impl TimeReal {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CurrentDateTime: appendix 2.54.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19437)
 pub struct CurrentDateTime(TimeReal);
 impl CurrentDateTime {
@@ -216,6 +226,7 @@ impl CurrentDateTime {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardApprovalNumber: appendix 2.11.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16800)
 pub struct CardApprovalNumber(IA5String);
 impl CardApprovalNumber {
@@ -226,6 +237,7 @@ impl CardApprovalNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [WVehicleCharacteristicConstant: appendix 2.239.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e29395)
 pub struct WVehicleCharacteristicConstant(u16);
 impl WVehicleCharacteristicConstant {
@@ -238,6 +250,7 @@ impl WVehicleCharacteristicConstant {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 /// [KConstantOfRecordingEquipment: appendix 2.85.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21927)
 pub struct KConstantOfRecordingEquipment(u16);
@@ -282,6 +295,7 @@ impl CardStructureVersion {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 /// [LTyreCircumference: appendix 2.91.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22169)
 pub struct LTyreCircumference(u16);
@@ -295,6 +309,7 @@ impl LTyreCircumference {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [TyreSize: appendix 2.163.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25026)
 pub struct TyreSize(IA5String);
 impl TyreSize {
@@ -304,6 +319,7 @@ impl TyreSize {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Speed: appendix 2.155.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24822)
 pub struct Speed(u8);
 impl Speed {
@@ -326,6 +342,7 @@ pub type SpeedMax = Speed;
 pub type OverspeedNumber = Speed;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Name: appendix 2.299.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22398)
 pub struct Name {
     pub code_page: u8,
@@ -340,6 +357,7 @@ impl Name {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Address: appendix 2.2.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16375)
 pub struct Address {
     pub code_page: u8,
@@ -360,6 +378,7 @@ pub type VuManufacturerName = Name;
 pub type VuManufacturerAddress = Address;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuSoftwareVersion: appendix 2.226.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28569)
 pub struct VuSoftwareVersion(IA5String);
 impl VuSoftwareVersion {
@@ -371,6 +390,7 @@ impl VuSoftwareVersion {
 pub type VuSoftInstallationDate = TimeReal;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuSoftwareIdentification: appendix 2.225.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28538)
 pub struct VuSoftwareIdentification {
     vu_software_version: VuSoftwareVersion,
@@ -392,6 +412,7 @@ impl VuSoftwareIdentification {
 pub type VuManufacturingDate = TimeReal;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SimilarEventsNumber: appendix 2.151.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24591)
 pub struct SimilarEventsNumber(u8);
 impl SimilarEventsNumber {
@@ -440,6 +461,7 @@ impl EventFaultRecordPurpose {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VehicleIdentificationNumber: appendix 2.165.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25052)
 pub struct VehicleIdentificationNumber(IA5String);
 impl VehicleIdentificationNumber {
@@ -450,6 +472,7 @@ impl VehicleIdentificationNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VehicleRegistrationNumber: appendix 2.168.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25188)
 pub struct VehicleRegistrationNumber {
     pub code_page: u8,
@@ -467,7 +490,6 @@ impl VehicleRegistrationNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-
 pub enum CardSlotStatus {
     NoCardInserted,
     DriverCardInserted,
@@ -476,6 +498,7 @@ pub enum CardSlotStatus {
     CompanyCardInserted,
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardSlotsStatus: appendix 2.34.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17939)
 pub struct CardSlotsStatus {
     pub codriver: CardSlotStatus,
@@ -513,6 +536,7 @@ impl CardSlotsStatus {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [HolderName: appendix 2.83.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21860)
 pub struct HolderName {
     pub holder_surname: Name,
@@ -548,6 +572,7 @@ impl CardSlotNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [OdometerShort: appendix 2.113.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22854)
 pub struct OdometerShort(u32);
 impl OdometerShort {
@@ -565,6 +590,7 @@ impl OdometerShort {
 pub type OdometerValueMidnight = OdometerShort;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VehicleRegistrationIdentification: appendix 2.116.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25120)
 pub struct VehicleRegistrationIdentification {
     vehicle_registration_nation: external::NationNumeric,
@@ -628,6 +654,7 @@ pub enum ActivityChangeInfoCardActivity {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [ActivityChangeInfo: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)
 pub struct ActivityChangeInfo {
     slot: ActivityChangeInfoSlot,
@@ -695,6 +722,7 @@ impl ActivityChangeInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardChipIdentification: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)
 pub struct CardChipIdentification {
     pub card_chip_identification_number: [u8; 4],
@@ -719,6 +747,7 @@ impl CardChipIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Datef: appendix 2.63.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20100)
 pub struct Datef {
     pub year: u16,
@@ -744,6 +773,7 @@ impl Datef {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct Language(IA5String);
 impl Language {
     pub fn parse(reader: &mut dyn Read) -> Result<Self> {
@@ -752,6 +782,7 @@ impl Language {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardIdentification: appendix 2.24.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17430)
 pub struct CardIdentification {
     card_issuing_member_state: external::NationNumeric,
@@ -783,6 +814,7 @@ impl CardIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [DriverCardHolderIdentification: appendix 2.62.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19928)
 pub struct DriverCardHolderIdentification {
     card_holder_number: HolderName,
@@ -803,6 +835,7 @@ impl DriverCardHolderIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Identification: appendix 4.2.2.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e41651)
 pub struct Identification {
     pub card_identification: CardIdentification,
@@ -823,6 +856,7 @@ impl Identification {
 pub type LastCardDownload = TimeReal;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardDownload: appendix 4.2.2.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e41651)
 pub struct CardDownload {
     pub last_card_download: LastCardDownload,
@@ -835,6 +869,7 @@ impl CardDownload {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardDrivingLicenceInformation: appendix 2.18.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17139)
 pub struct CardDrivingLicenceInformation {
     pub driving_licence_issuing_authority: Name,
@@ -855,6 +890,7 @@ impl CardDrivingLicenceInformation {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// EF Block page 281
 pub struct CardDrivingLicenceInfo {
     pub card_driving_licence_information: CardDrivingLicenceInformation,
@@ -869,6 +905,7 @@ impl CardDrivingLicenceInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [DailyPresenceCounter: appendix 2.56.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19510)
 pub struct DailyPresenceCounter(u16);
 impl DailyPresenceCounter {
@@ -883,6 +920,7 @@ impl DailyPresenceCounter {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Distance: appendix 2.60.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19665)
 pub struct Distance(u16);
 impl Distance {
@@ -898,6 +936,7 @@ impl Distance {
 pub type CardActivityLengthRange = u16;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardDriverActivity: appendix 2.9.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16718)
 pub struct CardActivityDailyRecord {
     pub activity_previous_record_length: CardActivityLengthRange,
@@ -949,6 +988,7 @@ impl CardActivityDailyRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardDriverActivity: appendix 2.17.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17092)
 pub struct CardDriverActivity {
     pub activity_pointer_oldest_day_record: u16,
@@ -1038,6 +1078,7 @@ impl CardDriverActivity {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// EF Block page 281
 pub struct DriverActivityData {
     card_driver_activity: CardDriverActivity,
@@ -1106,6 +1147,7 @@ impl RegionNumeric {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuDataBlockCounter: appendix 2.189.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26512)
 pub struct VuDataBlockCounter(u16);
 
@@ -1126,6 +1168,7 @@ impl VuDataBlockCounter {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardCurrentUse appendix 2.16.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17059)
 pub struct CardCurrentUse {
     pub session_open_time: TimeReal,
@@ -1143,6 +1186,7 @@ impl CardCurrentUse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// EF Block page 281
 pub struct CurrentUsage {
     pub card_current_use: CardCurrentUse,
@@ -1155,6 +1199,7 @@ impl CurrentUsage {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct MonthYear {
     pub month: u8,
     pub year: u8,
@@ -1174,6 +1219,7 @@ impl MonthYear {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuDownloadablePeriod: appendix 2.193](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26674)
 pub struct VuDownloadablePeriod {
     pub min_downloadable_time: TimeReal,
@@ -1194,6 +1240,7 @@ impl VuDownloadablePeriod {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuDetailedSpeedBlock: appendix 2.224.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26534)
 pub struct VuDetailedSpeedBlock {
     pub speed_block_begin_date: TimeReal,
@@ -1218,6 +1265,7 @@ impl VuDetailedSpeedBlock {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuPartNumber: appendix 2.217.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28257)
 pub struct VuPartNumber(IA5String);
 impl VuPartNumber {

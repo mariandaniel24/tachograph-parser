@@ -36,6 +36,7 @@ impl EquipmentType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [ExtendedSerialNumber: appendix 2.72.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21307)
 pub struct ExtendedSerialNumber {
     pub serial_number: u32,
@@ -63,6 +64,7 @@ impl ExtendedSerialNumber {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardIccIdentification: appendix 2.23.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17372)
 pub struct CardIccIdentification {
     pub clock_stop: u8,
@@ -124,6 +126,7 @@ impl CalibrationPurpose {
 
 pub type SensorSerialNumber = ExtendedSerialNumber;
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
 pub struct SensorApprovalNumber(IA5String);
 impl SensorApprovalNumber {
@@ -134,6 +137,7 @@ impl SensorApprovalNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
 pub struct VuApprovalNumber(IA5String);
 impl VuApprovalNumber {
@@ -270,6 +274,7 @@ impl SpecificConditionType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SpecificConditionRecord: appendix 2.152.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24614)
 pub struct SpecificConditionRecord {
     entry_time: TimeReal,
@@ -293,6 +298,7 @@ impl SpecificConditionRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SpecificConditions: appendix 2.153.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24644)
 pub struct SpecificConditions {
     pub specific_condition_records: Vec<SpecificConditionRecord>,
@@ -316,6 +322,7 @@ impl SpecificConditions {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Certificate: appendix 2.41.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18396)
 pub struct Certificate(Vec<u8>);
 impl Certificate {
@@ -329,6 +336,7 @@ impl Certificate {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [FullCardNumber: appendix 2.73.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21400)
 pub struct FullCardNumber {
     pub card_type: EquipmentType,
@@ -360,6 +368,7 @@ impl FullCardNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [ControlType: appendix 2.53.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19148)
 pub struct ControlType {
     pub card_downloading: bool,
@@ -383,6 +392,7 @@ impl ControlType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Signature: appendix 2.149.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24501)
 pub struct Signature(Vec<u8>); // Octet string
 impl Signature {
@@ -396,6 +406,7 @@ impl Signature {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [PreviousVehicleInfo: appendix 2.118.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23250)
 pub struct PreviousVehicleInfo {
     vehicle_registration_identification: VehicleRegistrationIdentification,
@@ -491,6 +502,7 @@ impl EntryTypeDailyWorkPeriod {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [PlaceRecord: appendix 2.117.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23112)
 pub struct PlaceRecord {
     pub entry_time: TimeReal,
@@ -521,6 +533,7 @@ impl PlaceRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [DriverCardApplicationIdentification: appendix 2.61.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19751)
 pub struct DriverCardApplicationIdentification {
     pub type_of_tachograph_card_id: EquipmentType,
@@ -574,6 +587,7 @@ impl DriverCardApplicationIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardEventRecord: appendix 2.20.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17247)
 pub struct CardEventRecord {
     pub event_type: EventFaultType,
@@ -600,6 +614,7 @@ impl CardEventRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
 pub struct CardEventData(Vec<Vec<CardEventRecord>>);
 impl CardEventData {
@@ -638,6 +653,7 @@ impl CardEventData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardFaultData: appendix 2.21.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17292)
 pub struct CardFaultRecord {
     pub fault_type: EventFaultType,
@@ -664,6 +680,7 @@ impl CardFaultRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
 pub struct CardFaultData(Vec<Vec<CardFaultRecord>>);
 impl CardFaultData {
@@ -703,6 +720,7 @@ impl CardFaultData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardVehicleRecord: appendix 2.37.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18163)
 pub struct CardVehicleRecord {
     pub vehicle_odometer_begin: OdometerShort,
@@ -727,6 +745,7 @@ impl CardVehicleRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardVehiclesUsed: appendix 2.38.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18302)
 pub struct CardVehiclesUsed {
     vehicle_pointer_newest_record: u16,
@@ -756,6 +775,7 @@ impl CardVehiclesUsed {
 /// [NoOfCardPlaceRecords: appendix 2.104.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22566)
 type NoOfCardPlaceRecords = u8;
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardPlaceDailyWorkPeriod: appendix 2.27.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17729)
 pub struct CardPlaceDailyWorkPeriod {
     place_pointer_newest_record: NoOfCardPlaceRecords,
@@ -786,6 +806,7 @@ impl CardPlaceDailyWorkPeriod {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardControlActivityDataRecord appendix 2.15.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17002)
 pub struct CardControlActivityDataRecord {
     pub control_type: ControlType,
@@ -809,6 +830,7 @@ impl CardControlActivityDataRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuDownloadActivityData: appendix 2.195.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26758)
 pub struct VuDownloadActivityData {
     pub downloading_time: TimeReal,
@@ -830,6 +852,7 @@ impl VuDownloadActivityData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuCompanyLocksData: appendix 2.183.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26258)
 pub struct VuCompanyLocksData {
     pub no_of_locks: u8,
@@ -855,6 +878,7 @@ impl VuCompanyLocksData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuCompanyLocksRecord: appendix 2.184.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26153)
 pub struct VuCompanyLocksRecord {
     pub lock_in_time: TimeReal,
@@ -879,6 +903,7 @@ impl VuCompanyLocksRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuControlActivityData: appendix 2.186.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26342)
 pub struct VuControlActivityData {
     pub no_of_controls: u8,
@@ -905,6 +930,7 @@ impl VuControlActivityData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuControlActivityRecord: appendix 2.187.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26392)
 pub struct VuControlActivityRecord {
     pub control_type: ControlType,
@@ -930,6 +956,7 @@ impl VuControlActivityRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuOverviewBlock page 342]
 pub struct VuOverviewBlock {
     pub member_state_certificate: Certificate,
@@ -986,6 +1013,7 @@ impl VuOverviewBlock {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuCardIWData {
     pub no_of_iw_records: u16,
     pub vu_card_iw_records: Vec<VuCardIWRecord>,
@@ -1011,6 +1039,7 @@ impl VuCardIWData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuCardIWRecord: appendix 2.177.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25809)
 pub struct VuCardIWRecord {
     pub card_holder_name: HolderName,
@@ -1054,6 +1083,7 @@ impl VuCardIWRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuActivityDailyData: appendix 2.170.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25344)
 pub struct VuActivityDailyData {
     pub no_of_activity_changes: u16,
@@ -1081,6 +1111,7 @@ impl VuActivityDailyData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuPlaceDailyWorkPeriodRecord: appendix 2.219.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28313)
 pub struct VuPlaceDailyWorkPeriodRecord {
     pub full_card_number: FullCardNumber,
@@ -1098,6 +1129,7 @@ impl VuPlaceDailyWorkPeriodRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuPlaceDailyWorkPeriodData: appendix 2.218.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28280)
 pub struct VuPlaceDailyWorkPeriodData {
     pub no_of_place_records: u8,
@@ -1127,6 +1159,7 @@ impl VuPlaceDailyWorkPeriodData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuSpecificConditionRecord: appendix 2.152.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24614)
 pub struct VuSpecificConditionRecord {
     pub entry_time: TimeReal,
@@ -1144,6 +1177,7 @@ impl VuSpecificConditionRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuSpecificConditionData: appendix 2.227.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28591)
 pub struct VuSpecificConditionData {
     pub no_of_specific_conditions: u16,
@@ -1172,6 +1206,7 @@ impl VuSpecificConditionData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// Page 344 TREP 02
 pub struct VuActivitiesBlock {
     pub time_real: TimeReal,
@@ -1202,6 +1237,7 @@ impl VuActivitiesBlock {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuFaultRecord: appendix 2.201.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27156)
 pub struct VuFaultRecord {
     pub fault_type: EventFaultType,
@@ -1239,6 +1275,7 @@ impl VuFaultRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuFaultRecord: appendix 2.200.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27122)
 pub struct VuFaultData {
     pub no_of_vu_fault_records: u8,
@@ -1263,6 +1300,7 @@ impl VuFaultData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuEventRecord: appendix 2.197.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26910)
 pub struct VuEventRecord {
     pub event_type: EventFaultType,
@@ -1303,6 +1341,7 @@ impl VuEventRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuEventData: appendix 2.197.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26876)
 pub struct VuEventData {
     pub no_of_vu_event_records: u8,
@@ -1327,6 +1366,7 @@ impl VuEventData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuOverSpeedingControlData: appendix 2.212.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27978)
 pub struct VuOverSpeedingControlData {
     pub last_overspeed_control_time: TimeReal,
@@ -1346,6 +1386,7 @@ impl VuOverSpeedingControlData {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuOverSpeedingEventRecord: appendix 2.215.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28097)
 pub struct VuOverSpeedingEventRecord {
     pub event_type: EventFaultType,
@@ -1378,6 +1419,7 @@ impl VuOverSpeedingEventRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuOverSpeedingEventData: appendix 2.214.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28064)
 pub struct VuOverSpeedingEventData {
     pub no_of_vu_over_speeding_events: u8,
@@ -1405,6 +1447,7 @@ impl VuOverSpeedingEventData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuTimeAdjustmentRecord: appendix 2.232.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28728)
 pub struct VuTimeAdjustmentRecord {
     pub old_time_value: TimeReal,
@@ -1427,6 +1470,7 @@ impl VuTimeAdjustmentRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuTimeAdjustmentData: appendix 2.229.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28675)
 pub struct VuTimeAdjustmentData {
     pub no_of_vu_time_adj_records: u8,
@@ -1453,6 +1497,7 @@ impl VuTimeAdjustmentData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// TREP 03 page 346
 pub struct VuEventsAndFaultsBlock {
     pub vu_fault_data: VuFaultData,
@@ -1478,6 +1523,7 @@ impl VuEventsAndFaultsBlock {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuDetailedSpeedData: appendix 2.192.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26618)
 pub struct VuDetailedSpeedData {
     pub no_of_speed_blocks: u8,
@@ -1504,6 +1550,7 @@ impl VuDetailedSpeedData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuIdentification {
     pub vu_manufacturer_name: VuManufacturerName,
     pub vu_manufacturer_address: VuManufacturerAddress,
@@ -1538,6 +1585,7 @@ impl VuIdentification {
 pub type VuSerialNumber = ExtendedSerialNumber;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SensorPaired: appendix 2.144.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24360)
 pub struct SensorPaired {
     pub sensor_serial_number: SensorSerialNumber,
@@ -1558,6 +1606,7 @@ impl SensorPaired {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuCalibrationRecord: appendix 2.174.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25500)
 pub struct VuCalibrationRecord {
     pub calibration_purpose: CalibrationPurpose,
@@ -1620,6 +1669,7 @@ impl VuCalibrationRecord {
 
 /// [VuCalibrationData: appendix 2.173.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25471)
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuCalibrationData {
     pub no_of_vu_calibration_records: u8,
     pub vu_calibration_records: Vec<VuCalibrationRecord>,
@@ -1644,6 +1694,7 @@ impl VuCalibrationData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuCompanyLocksBlock: appendix 2.236.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28868)
 pub struct VuCompanyLocksBlock {
     pub vu_identification: VuIdentification,

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuGen1Blocks {
     pub vu_overview: gen1::VuOverviewBlock,
     pub vu_activities: Vec<gen1::VuActivitiesBlock>,
@@ -14,6 +15,7 @@ pub struct VuGen1Blocks {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuGen2Blocks {
     pub vu_overview: gen2::VuOverviewBlock,
     pub vu_activities: Vec<gen2::VuActivitiesBlock>,
@@ -23,19 +25,19 @@ pub struct VuGen2Blocks {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuGen2V2Blocks {
     pub vu_overview: gen2v2::VuOverviewBlock,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub enum VuData {
-    #[serde(rename = "vu_gen1_blocks")]
     VuGen1Blocks(VuGen1Blocks),
-    #[serde(rename = "vu_gen2_blocks")]
     VuGen2Blocks(VuGen2Blocks),
-    #[serde(rename = "vu_gen2v2_blocks")]
     VuGen2V2Blocks(VuGen2V2Blocks),
 }
+
 pub struct VuParser {
     input: Vec<u8>,
 }

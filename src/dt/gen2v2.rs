@@ -11,6 +11,7 @@ pub type VehicleIdentificationNumberRecordArray = RecordArray<VehicleIdentificat
 pub type VehicleRegistrationNumberRecordArray = RecordArray<VehicleRegistrationNumber>;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuOverviewBlock {
     pub member_state_certificate_record_array: MemberStateCertificateRecordArray,
     pub vu_certificate_record_array: VuCertificateRecordArray,

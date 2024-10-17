@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct Gen1Blocks {
     pub card_icc_identification: CardBlock<gen1::CardIccIdentification>,
     pub card_chip_identification: CardBlock<dt::CardChipIdentification>,
@@ -40,6 +41,7 @@ pub struct Gen1Blocks {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct Gen2Blocks {
     pub card_icc_identification: CardBlock<gen2::CardIccIdentification>,
     pub card_chip_identification: CardBlock<dt::CardChipIdentification>,
@@ -77,6 +79,7 @@ pub struct Gen2Blocks {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct CardData {
     pub gen1: Gen1Blocks,
     pub gen2: Gen2Blocks,

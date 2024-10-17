@@ -93,6 +93,7 @@ impl RecordType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 /// A generic implementation for an array of records, where the record type is parameterized
 /// This helper is used across various Vu blocks to parse and store their respective records
@@ -213,6 +214,7 @@ impl<T> RecordArray<T> {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Certificate: appendix 2.41.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18396)
 pub struct Certificate(Vec<u8>);
 impl Certificate {
@@ -286,6 +288,7 @@ impl EquipmentType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [FullCardNumber: appendix 2.73.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21400)
 pub struct FullCardNumber {
     pub card_type: EquipmentType,
@@ -335,6 +338,7 @@ impl Generation {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [FullCardNumberAndGeneration: appendix 2.74.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21438)
 pub struct FullCardNumberAndGeneration {
     pub full_card_number: FullCardNumber,
@@ -362,6 +366,7 @@ impl FullCardNumberAndGeneration {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [ControlType: appendix 2.53.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19148)
 pub struct ControlType {
     pub card_downloading: bool,
@@ -387,6 +392,7 @@ impl ControlType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [Signature: appendix 2.149.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24501)
 pub struct Signature(Vec<u8>); // Octet string
 impl Signature {
@@ -403,6 +409,7 @@ impl Signature {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [PreviousVehicleInfo: appendix 2.118.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23250)
 pub struct PreviousVehicleInfo {
     vehicle_registration_identification: VehicleRegistrationIdentification,
@@ -423,6 +430,7 @@ impl PreviousVehicleInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [GNSSPlaceRecord: appendix 2.80.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21772)
 pub struct GNSSPlaceRecord {
     time_stamp: TimeReal,
@@ -444,6 +452,7 @@ impl GNSSPlaceRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [GNSSAccuracy: appendix 2.77.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21573)
 pub struct GNSSAccuracy(u8);
 impl GNSSAccuracy {
@@ -457,6 +466,7 @@ impl GNSSAccuracy {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [GeoCoordinates: appendix 2.76.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21534)
 pub struct GeoCoordinates {
     latitude: f64,
@@ -505,6 +515,7 @@ impl GeoCoordinates {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuGNSSADRecord: appendix 2.203.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27345)
 pub struct VuGNSSADRecord {
     time_stamp: TimeReal,
@@ -559,6 +570,7 @@ impl EntryTypeDailyWorkPeriod {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [PlaceRecord: appendix 2.117.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23112)
 pub struct PlaceRecord {
     pub entry_time: TimeReal,
@@ -618,6 +630,7 @@ impl SpecificConditionType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SpecificConditionRecord: appendix 2.152.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24614)
 pub struct SpecificConditionRecord {
     entry_time: TimeReal,
@@ -761,6 +774,7 @@ impl EventFaultType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [ManufacturerSpecificEventFaultData: appendix 2.95.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22276)
 pub struct ManufacturerSpecificEventFaultData {
     pub manufacturer_code: external::ManufacturerCode,
@@ -787,6 +801,7 @@ impl ManufacturerSpecificEventFaultData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [ExtendedSerialNumber: appendix 2.72.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21307)
 pub struct ExtendedSerialNumber {
     pub serial_number: u32,
@@ -817,6 +832,7 @@ impl ExtendedSerialNumber {
 pub type VuSerialNumber = ExtendedSerialNumber;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
 pub struct VuApprovalNumber(IA5String);
 impl VuApprovalNumber {
@@ -849,6 +865,7 @@ impl VuAbility {
 pub type SensorSerialNumber = ExtendedSerialNumber;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
 pub struct SensorApprovalNumber(IA5String);
 impl SensorApprovalNumber {
@@ -862,6 +879,7 @@ impl SensorApprovalNumber {
 pub type SensorGNSSSerialNumber = ExtendedSerialNumber;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SensorExternalGNSSApprovalNumber: appendix 2.132.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23931)
 pub struct SensorExternalGNSSApprovalNumber(IA5String);
 impl SensorExternalGNSSApprovalNumber {
@@ -907,6 +925,7 @@ impl CalibrationPurpose {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [ExtendedSealIdentifier: appendix 2.71.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21276)
 pub struct ExtendedSealIdentifier {
     pub manufacturer_code: [u8; 2],
@@ -932,6 +951,7 @@ impl ExtendedSealIdentifier {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SealRecord: appendix 2.130.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23854)
 pub struct SealRecord {
     pub equipment_type: EquipmentType,
@@ -948,6 +968,7 @@ impl SealRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SealDataVu: appendix 2.129.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23827)
 pub struct SealDataVu {
     seal_records: Vec<SealRecord>,
@@ -983,6 +1004,7 @@ pub type NoOfSpecificConditionRecords = u16;
 pub type NoOfCardVehicleUnitRecords = u16;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [DriverCardApplicationIdentification: appendix 2.61.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19751)
 
 pub struct DriverCardApplicationIdentification {
@@ -1052,6 +1074,7 @@ impl DriverCardApplicationIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct ApplicationIdentification {
     pub driver_card_application_identification: DriverCardApplicationIdentification,
 }
@@ -1066,6 +1089,7 @@ impl ApplicationIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardIccIdentification: appendix 2.23.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17372)
 pub struct CardIccIdentification {
     pub clock_stop: u8,
@@ -1101,6 +1125,7 @@ impl CardIccIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardEventRecord: appendix 2.20.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17247)
 pub struct CardEventRecord {
     pub event_type: EventFaultType,
@@ -1127,6 +1152,7 @@ impl CardEventRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
 pub struct CardEventData(Vec<Vec<CardEventRecord>>);
 impl CardEventData {
@@ -1165,6 +1191,7 @@ impl CardEventData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardFaultData: appendix 2.21.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17292)
 pub struct CardFaultRecord {
     pub fault_type: EventFaultType,
@@ -1191,6 +1218,7 @@ impl CardFaultRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
 pub struct CardFaultData(Vec<Vec<CardFaultRecord>>);
 impl CardFaultData {
@@ -1230,6 +1258,7 @@ impl CardFaultData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardVehicleRecord: appendix 2.37.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18163)
 pub struct CardVehicleRecord {
     pub vehicle_odometer_begin: OdometerShort,
@@ -1256,6 +1285,7 @@ impl CardVehicleRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardVehiclesUsed: appendix 2.38.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18302)
 pub struct CardVehiclesUsed {
     vehicle_pointer_newest_record: u16,
@@ -1291,6 +1321,7 @@ impl CardVehiclesUsed {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardPlaceDailyWorkPeriod: appendix 2.27.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17729)
 pub struct CardPlaceDailyWorkPeriod {
     place_pointer_newest_record: NoOfCardPlaceRecords,
@@ -1320,6 +1351,7 @@ impl CardPlaceDailyWorkPeriod {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardControlActivityDataRecord appendix 2.15.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17002)
 pub struct CardControlActivityDataRecord {
     pub control_type: ControlType,
@@ -1343,6 +1375,7 @@ impl CardControlActivityDataRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [SpecificConditions: appendix 2.153.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24644)
 pub struct SpecificConditions {
     pub condition_pointer_newest_record: NoOfSpecificConditionRecords,
@@ -1372,6 +1405,7 @@ impl SpecificConditions {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardVehicleUnitRecord: appendix 2.39.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18302)
 pub struct CardVehicleUnitRecord {
     pub time_stamp: TimeReal,
@@ -1403,6 +1437,7 @@ impl CardVehicleUnitRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [CardVehicleUnitsUsed: appendix 2.40.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18350)
 pub struct CardVehicleUnitsUsed {
     pub no_of_card_vehicle_unit_records: NoOfCardVehicleUnitRecords,
@@ -1434,6 +1469,7 @@ impl CardVehicleUnitsUsed {
 pub type NoOfGNSSADRecords = u16;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [GNSSAccumulatedDrivingRecord: appendix 2.79.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21640)
 pub struct GNSSAccumulatedDrivingRecord {
     pub time_stamp: TimeReal,
@@ -1462,6 +1498,7 @@ impl GNSSAccumulatedDrivingRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [GNSSAccumulatedDriving: appendix 2.79.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21595)
 pub struct GNSSAccumulatedDriving {
     pub gnss_ad_pointer_newest_record: NoOfGNSSADRecords,
@@ -1492,6 +1529,7 @@ impl GNSSAccumulatedDriving {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct DateOfDayDownloaded(TimeReal);
 
 impl DateOfDayDownloaded {
@@ -1503,6 +1541,7 @@ impl DateOfDayDownloaded {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuCardIWRecord {
     pub card_holder_name: HolderName,
     pub full_card_number_and_generation: FullCardNumberAndGeneration,
@@ -1544,6 +1583,7 @@ impl VuCardIWRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuPlaceDailyWorkPeriod {
     pub full_card_number_and_generation: FullCardNumberAndGeneration,
     pub place_record: PlaceRecord,
@@ -1569,6 +1609,7 @@ pub type VuSpecificConditionRecordArray = RecordArray<SpecificConditionRecord>;
 pub type SignatureRecordArray = RecordArray<Signature>;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuActivitiesBlock {
     date_of_day_downloaded_record_array: DateOfDayDownloadedRecordArray,
     odometer_value_midnight_record_array: OdometerValueMidnightRecordArray,
@@ -1632,6 +1673,7 @@ impl VuActivitiesBlock {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 pub struct VuIdentification {
     pub vu_manufacturer_name: VuManufacturerName,
@@ -1670,6 +1712,7 @@ impl VuIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct SensorPairedRecord {
     pub sensor_serial_number: SensorSerialNumber,
     pub sensor_approval_number: SensorApprovalNumber,
@@ -1690,6 +1733,7 @@ impl SensorPairedRecord {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 pub struct SensorExternalGNSSCoupledRecord {
     pub sensor_serial_number: SensorGNSSSerialNumber,
@@ -1711,6 +1755,7 @@ impl SensorExternalGNSSCoupledRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 pub struct VuCalibrationRecord {
     pub calibration_purpose: CalibrationPurpose,
@@ -1775,6 +1820,7 @@ impl VuCalibrationRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 pub struct VuCardRecord {
     pub card_number_and_generation_information: Option<FullCardNumberAndGeneration>,
@@ -1822,6 +1868,7 @@ impl VuCardRecord {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 pub struct VuITSConsentRecord {
     pub card_number_and_gen: Option<FullCardNumberAndGeneration>,
@@ -1843,6 +1890,7 @@ impl VuITSConsentRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 pub struct VuPowerSupplyInterruptionRecord {
     pub event_type: EventFaultType,
@@ -1892,6 +1940,7 @@ pub type VuITSConsentRecordArray = RecordArray<VuITSConsentRecord>;
 pub type VuPowerSupplyInterruptionRecordArray = RecordArray<VuPowerSupplyInterruptionRecord>;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 
 pub struct VuCompanyLocksBlock {
     vu_identification_record_array: VuIdentificationRecordArray,
@@ -1955,6 +2004,7 @@ impl VuCompanyLocksBlock {
 type VuDetailedSpeedBlockRecordArray = RecordArray<VuDetailedSpeedBlock>;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuSpeedBlock {
     pub vu_detailed_speed_block_record_array: VuDetailedSpeedBlockRecordArray,
     pub signature_record_array: SignatureRecordArray,
@@ -1976,6 +2026,7 @@ impl VuSpeedBlock {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuFaultRecord {
     pub fault_type: EventFaultType,
     pub fault_record_purpose: EventFaultRecordPurpose,
@@ -2019,6 +2070,7 @@ impl VuFaultRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuEventRecord {
     pub event_type: EventFaultType,
     pub event_record_purpose: EventFaultRecordPurpose,
@@ -2065,6 +2117,7 @@ impl VuEventRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuOverSpeedingControlData {
     pub last_overspeed_control_time: Option<TimeReal>,
     pub first_overspeed_since: Option<TimeReal>,
@@ -2084,6 +2137,7 @@ impl VuOverSpeedingControlData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuOverSpeedingEventRecord {
     pub event_type: EventFaultType,
     pub event_record_purpose: EventFaultRecordPurpose,
@@ -2117,6 +2171,7 @@ impl VuOverSpeedingEventRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuTimeAdjustmentRecord {
     pub old_time_value: TimeReal,
     pub new_time_value: TimeReal,
@@ -2145,6 +2200,7 @@ pub type VuOverSpeedingControlDataRecordArray = RecordArray<VuOverSpeedingContro
 pub type VuOverSpeedingEventRecordArray = RecordArray<VuOverSpeedingEventRecord>;
 pub type VuTimeAdjustmentRecordArray = RecordArray<VuTimeAdjustmentRecord>;
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuEventsAndFaultsBlock {
     pub vu_fault_record_array: VuFaultRecordArray,
     pub vu_event_record_array: VuEventRecordArray,
@@ -2184,6 +2240,7 @@ impl VuEventsAndFaultsBlock {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuDownloadActivityData {
     pub downloading_time: TimeReal,
     pub full_card_number_and_generation: FullCardNumberAndGeneration,
@@ -2205,6 +2262,7 @@ impl VuDownloadActivityData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuCompanyLocks {
     pub lock_in_time: TimeReal,
     pub lock_out_time: Option<TimeReal>,
@@ -2230,6 +2288,7 @@ impl VuCompanyLocks {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuControlActivity {
     pub control_type: ControlType,
     pub control_time: TimeReal,
@@ -2267,6 +2326,7 @@ pub type VuCompanyLocksRecordArray = RecordArray<VuCompanyLocks>;
 pub type VuControlActivityRecordArray = RecordArray<VuControlActivity>;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct VuOverviewBlock {
     pub member_state_certificate_record_array: MemberStateCertificateRecordArray,
     pub vu_certificate_record_array: VuCertificateRecordArray,

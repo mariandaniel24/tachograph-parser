@@ -3,6 +3,7 @@ use byteorder::ReadBytesExt;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [ManufacturerCode: appendix 2.94.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22253)
 pub struct ManufacturerCode(String);
 impl ManufacturerCode {
@@ -82,6 +83,7 @@ impl ManufacturerCode {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 /// [NationNumeric: appendix 2.101.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22450)
 pub struct NationNumeric(String);
 impl NationNumeric {
