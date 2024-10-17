@@ -2,7 +2,7 @@ use anyhow::Result;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use tacho_parser::detector::{self, TachoFileType};
+use tachograph_parser::detector::{self, TachoFileType};
 
 fn main() -> Result<()> {
     let data_dir = Path::new("data/ddd");

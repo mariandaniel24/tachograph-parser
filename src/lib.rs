@@ -60,3 +60,15 @@ pub fn process_driver_card_bytes_json(bytes: &[u8]) -> Result<String> {
         .parse_to_json()?;
     Ok(card_data_json)
 }
+
+pub enum FileType {
+    VU,
+    Card,
+}
+
+pub fn process_file_json(file_type: FileType, file_path: &str) -> Result<String> {
+    match file_type {
+        FileType::VU => process_vu_file_json(file_path),
+        FileType::Card => process_driver_card_file_json(file_path),
+    }
+}

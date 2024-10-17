@@ -1,6 +1,6 @@
 use anyhow::Result;
 use std::env;
-use tacho_parser::process_vu_file_json;
+use tachograph_parser::process_vu_file_json;
 
 fn main() -> Result<()> {
     std::env::set_var("RUST_LOG", "trace");
