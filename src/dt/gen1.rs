@@ -19,8 +19,8 @@ pub enum EquipmentType {
 }
 /// [EquipmentType: appendix 2.67.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20100)
 impl EquipmentType {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let equipment_type = reader.read_u8().context("Failed to read equipment type")?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let equipment_type = cursor.read_u8().context("Failed to read equipment type")?;
         match equipment_type {
             0 => Ok(EquipmentType::Reserved),
             1 => Ok(EquipmentType::DriverCard),
@@ -45,15 +45,13 @@ pub struct ExtendedSerialNumber {
     pub manufacturer_code: external::ManufacturerCode,
 }
 impl ExtendedSerialNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let serial_number = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let serial_number = cursor
             .read_u32::<BigEndian>()
             .context("Failed to read serial number")?;
-
-        let month_year = MonthYear::parse(reader)?;
-
-        let type_ = reader.read_u8().context("Failed to read type_")?;
-        let manufacturer_code = external::ManufacturerCode::parse(reader)?;
+        let month_year = MonthYear::parse(cursor)?;
+        let type_ = cursor.read_u8().context("Failed to read type_")?;
+        let manufacturer_code = external::ManufacturerCode::parse(cursor)?;
 
         Ok(ExtendedSerialNumber {
             serial_number,
@@ -75,15 +73,15 @@ pub struct CardIccIdentification {
     pub ic_identifier: [u8; 2],
 }
 impl CardIccIdentification {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let clock_stop = reader.read_u8().context("Failed to read clock_stop")?;
-        let card_extended_serial_number = ExtendedSerialNumber::parse(reader)?;
-        let card_approval_number = CardApprovalNumber::parse(reader)?;
-        let card_personaliser_id = external::ManufacturerCode::parse(reader)?;
-        let embedder_ic_assembler_id = EmbedderIcAssemblerId::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let clock_stop = cursor.read_u8().context("Failed to read clock_stop")?;
+        let card_extended_serial_number = ExtendedSerialNumber::parse(cursor)?;
+        let card_approval_number = CardApprovalNumber::parse(cursor)?;
+        let card_personaliser_id = external::ManufacturerCode::parse(cursor)?;
+        let embedder_ic_assembler_id = EmbedderIcAssemblerId::parse(cursor)?;
         let mut buffer = [0u8; 2];
 
-        reader
+        cursor
             .read_exact(&mut buffer)
             .context("Failed to read ic_identifier")?;
         let ic_identifier = [buffer[0], buffer[1]];
@@ -109,8 +107,8 @@ pub enum CalibrationPurpose {
 }
 
 impl CalibrationPurpose {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u8()
             .context("Failed to read CalibrationPurpose")?;
         match value {
@@ -130,8 +128,8 @@ pub type SensorSerialNumber = ExtendedSerialNumber;
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
 pub struct SensorApprovalNumber(IA5String);
 impl SensorApprovalNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(reader, 8)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = IA5String::parse_dyn_size(cursor, 8)?;
         Ok(SensorApprovalNumber(value))
     }
 }
@@ -141,8 +139,8 @@ impl SensorApprovalNumber {
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
 pub struct VuApprovalNumber(IA5String);
 impl VuApprovalNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(reader, 8)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = IA5String::parse_dyn_size(cursor, 8)?;
         Ok(VuApprovalNumber(value))
     }
 }
@@ -187,8 +185,8 @@ pub enum EventFaultType {
 }
 
 impl EventFaultType {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u8()
             .context("Failed to read value for EventFaultType")?;
         match value {
@@ -259,8 +257,8 @@ pub enum SpecificConditionType {
 }
 
 impl SpecificConditionType {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u8()
             .context("Failed to read value for SpecificConditionType")?;
         match value {
@@ -282,13 +280,13 @@ pub struct SpecificConditionRecord {
 }
 impl SpecificConditionRecord {
     const SIZE: usize = 5;
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut buf = vec![0u8; Self::SIZE];
-        reader.read_exact(&mut buf)?;
-        let inner_reader = &mut buf.as_slice();
+        cursor.read_exact(&mut buf).context("Failed to read buf")?;
+        let mut inner_cursor = Cursor::new(buf.as_slice());
 
-        let entry_time = TimeReal::parse(inner_reader)?;
-        let specific_condition_type = SpecificConditionType::parse(inner_reader)?;
+        let entry_time = TimeReal::parse(&mut inner_cursor)?;
+        let specific_condition_type = SpecificConditionType::parse(&mut inner_cursor)?;
         if specific_condition_type == SpecificConditionType::RFU {
             return Err(anyhow::anyhow!(
                 "RFU value found in SpecificConditionRecord"
@@ -308,11 +306,11 @@ pub struct SpecificConditions {
     pub specific_condition_records: Vec<SpecificConditionRecord>,
 }
 impl SpecificConditions {
-    pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut specific_condition_records = Vec::new();
         let no_of_records = size as usize / SpecificConditionRecord::SIZE as usize;
         for _ in 0..no_of_records {
-            if let Ok(specific_condition_record) = SpecificConditionRecord::parse(reader) {
+            if let Ok(specific_condition_record) = SpecificConditionRecord::parse(cursor) {
                 specific_condition_records.push(specific_condition_record);
             }
         }
@@ -330,9 +328,9 @@ impl SpecificConditions {
 /// [Certificate: appendix 2.41.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18396)
 pub struct Certificate(Vec<u8>);
 impl Certificate {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut value = vec![0u8; 194];
-        reader
+        cursor
             .read_exact(&mut value)
             .context("Failed to read certificate")?;
         Ok(Certificate(value))
@@ -348,16 +346,16 @@ pub struct FullCardNumber {
     pub card_number: CardNumber,
 }
 impl FullCardNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let card_type = EquipmentType::parse(reader)?;
-        let card_issuing_member_state = external::NationNumeric::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let card_type = EquipmentType::parse(cursor)?;
+        let card_issuing_member_state = external::NationNumeric::parse(cursor)?;
 
         let card_number = match card_type {
-            EquipmentType::DriverCard => CardNumber::parse_driver(reader)?,
+            EquipmentType::DriverCard => CardNumber::parse_driver(cursor)?,
             EquipmentType::WorkshopCard
             | EquipmentType::ControlCard
-            | EquipmentType::CompanyCard => CardNumber::parse_owner(reader)?,
-            _ => CardNumber::parse_unknown(reader)?,
+            | EquipmentType::CompanyCard => CardNumber::parse_owner(cursor)?,
+            _ => CardNumber::parse_unknown(cursor)?,
         };
         if card_type == EquipmentType::RFU {
             return Err(anyhow::anyhow!("RFU value found in FullCardNumber"));
@@ -381,8 +379,8 @@ pub struct ControlType {
     pub display: bool,
 }
 impl ControlType {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let control_type_byte = reader.read_u8().context("Failed to read control type")?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let control_type_byte = cursor.read_u8().context("Failed to read control type")?;
 
         let bits = extract_u8_bits_into_tup(control_type_byte);
 
@@ -400,9 +398,9 @@ impl ControlType {
 /// [Signature: appendix 2.149.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24501)
 pub struct Signature(Vec<u8>); // Octet string
 impl Signature {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut signature_buffer = vec![0u8; 128];
-        reader
+        cursor
             .read_exact(&mut signature_buffer)
             .context("Failed to read signature buffer")?;
         Ok(Signature(signature_buffer))
@@ -417,9 +415,9 @@ pub struct PreviousVehicleInfo {
     card_withdrawal_time: TimeReal,
 }
 impl PreviousVehicleInfo {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let vehicle_registration_identification = VehicleRegistrationIdentification::parse(reader)?;
-        let card_withdrawal_time = TimeReal::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let vehicle_registration_identification = VehicleRegistrationIdentification::parse(cursor)?;
+        let card_withdrawal_time = TimeReal::parse(cursor)?;
         Ok(PreviousVehicleInfo {
             vehicle_registration_identification,
             card_withdrawal_time,
@@ -451,8 +449,8 @@ pub enum RegionNumeric {
 }
 
 impl RegionNumeric {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader.read_u8().context("Failed to read region_numeric")?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor.read_u8().context("Failed to read region_numeric")?;
         match value {
             0x00 => Ok(RegionNumeric::NoInformation),
             0x01 => Ok(RegionNumeric::Andalucia),
@@ -489,8 +487,8 @@ pub enum EntryTypeDailyWorkPeriod {
 }
 
 impl EntryTypeDailyWorkPeriod {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u8()
             .context("Failed to read EntryTypeDailyWorkPeriod")?;
         match value {
@@ -517,16 +515,16 @@ pub struct PlaceRecord {
 }
 impl PlaceRecord {
     const SIZE: usize = 10;
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut buf = vec![0u8; Self::SIZE];
-        reader.read_exact(&mut buf)?;
-        let inner_reader = &mut buf.as_slice();
+        cursor.read_exact(&mut buf).context("Failed to read buf")?;
+        let mut inner_cursor = Cursor::new(buf.as_slice());
 
-        let entry_time = TimeReal::parse(inner_reader)?;
-        let entry_type_daily_work_period = EntryTypeDailyWorkPeriod::parse(inner_reader)?;
-        let daily_work_period_country = external::NationNumeric::parse(inner_reader)?;
-        let daily_work_period_region = RegionNumeric::parse(inner_reader)?;
-        let vehicle_odometer_value = OdometerShort::parse(inner_reader)?;
+        let entry_time = TimeReal::parse(&mut inner_cursor)?;
+        let entry_type_daily_work_period = EntryTypeDailyWorkPeriod::parse(&mut inner_cursor)?;
+        let daily_work_period_country = external::NationNumeric::parse(&mut inner_cursor)?;
+        let daily_work_period_region = RegionNumeric::parse(&mut inner_cursor)?;
+        let vehicle_odometer_value = OdometerShort::parse(&mut inner_cursor)?;
         if entry_time.0.timestamp() == 0 {
             anyhow::bail!("Invalid entry_time in PlaceRecord");
         }
@@ -554,31 +552,31 @@ pub struct DriverCardApplicationIdentification {
 }
 
 impl DriverCardApplicationIdentification {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let type_of_tachograph_card_id = EquipmentType::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let type_of_tachograph_card_id = EquipmentType::parse(cursor)?;
 
         let mut card_structure_version = [0u8; 2];
-        reader
+        cursor
             .read_exact(&mut card_structure_version)
             .context("Failed to read card_structure_version")?;
 
-        let no_of_events_per_type = reader
+        let no_of_events_per_type = cursor
             .read_u8()
             .context("Failed to read no_of_events_per_type")?;
 
-        let no_of_faults_per_type = reader
+        let no_of_faults_per_type = cursor
             .read_u8()
             .context("Failed to read no_of_faults_per_type")?;
 
-        let activity_structure_length = reader
+        let activity_structure_length = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read activity_structure_length")?;
 
-        let no_of_card_vehicle_records = reader
+        let no_of_card_vehicle_records = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read no_of_card_vehicle_records")?;
 
-        let no_of_card_place_records = reader
+        let no_of_card_place_records = cursor
             .read_u8()
             .context("Failed to read no_of_card_place_records")?;
 
@@ -606,15 +604,16 @@ pub struct CardEventRecord {
 
 impl CardEventRecord {
     const SIZE: usize = 24;
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut buf = vec![0u8; Self::SIZE];
-        reader.read_exact(&mut buf)?;
-        let inner_reader = &mut buf.as_slice();
+        cursor.read_exact(&mut buf).context("Failed to read buf")?;
+        let mut inner_cursor = Cursor::new(buf.as_slice());
 
-        let event_type = EventFaultType::parse(inner_reader)?;
-        let event_begin_time = TimeReal::parse(inner_reader)?;
-        let event_end_time = TimeReal::parse(inner_reader)?;
-        let event_vehicle_registration = VehicleRegistrationIdentification::parse(inner_reader)?;
+        let event_type = EventFaultType::parse(&mut inner_cursor)?;
+        let event_begin_time = TimeReal::parse(&mut inner_cursor)?;
+        let event_end_time = TimeReal::parse(&mut inner_cursor)?;
+        let event_vehicle_registration =
+            VehicleRegistrationIdentification::parse(&mut inner_cursor)?;
 
         Ok(CardEventRecord {
             event_type,
@@ -632,7 +631,7 @@ pub struct CardEventData(Vec<Vec<CardEventRecord>>);
 impl CardEventData {
     const OUTER_RECORDS_AMOUNT: usize = 6;
 
-    pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut card_event_records = Vec::new();
         let inner_record_amounts = size / Self::OUTER_RECORDS_AMOUNT / CardEventRecord::SIZE;
 
@@ -640,7 +639,7 @@ impl CardEventData {
         for _ in 0..Self::OUTER_RECORDS_AMOUNT {
             let mut inner_card_event_records = Vec::new();
             for _ in 0..inner_record_amounts {
-                if let Ok(card_event_record) = CardEventRecord::parse(reader) {
+                if let Ok(card_event_record) = CardEventRecord::parse(cursor) {
                     inner_card_event_records.push(card_event_record);
                 }
             }
@@ -665,15 +664,16 @@ pub struct CardFaultRecord {
 
 impl CardFaultRecord {
     const SIZE: usize = 24;
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut buf = vec![0u8; Self::SIZE];
-        reader.read_exact(&mut buf)?;
-        let inner_reader = &mut buf.as_slice();
+        cursor.read_exact(&mut buf).context("Failed to read buf")?;
+        let mut inner_cursor = Cursor::new(buf.as_slice());
 
-        let fault_type = EventFaultType::parse(inner_reader)?;
-        let fault_begin_time = TimeReal::parse(inner_reader)?;
-        let fault_end_time = TimeReal::parse(inner_reader)?;
-        let fault_vehicle_registration = VehicleRegistrationIdentification::parse(inner_reader)?;
+        let fault_type = EventFaultType::parse(&mut inner_cursor)?;
+        let fault_begin_time = TimeReal::parse(&mut inner_cursor)?;
+        let fault_end_time = TimeReal::parse(&mut inner_cursor)?;
+        let fault_vehicle_registration =
+            VehicleRegistrationIdentification::parse(&mut inner_cursor)?;
 
         Ok(CardFaultRecord {
             fault_type,
@@ -691,7 +691,7 @@ pub struct CardFaultData(Vec<Vec<CardFaultRecord>>);
 impl CardFaultData {
     const OUTER_RECORDS_AMOUNT: usize = 2;
 
-    pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut card_fault_records = Vec::new();
 
         let max_inner_records = size / Self::OUTER_RECORDS_AMOUNT / CardFaultRecord::SIZE;
@@ -700,7 +700,7 @@ impl CardFaultData {
         for _ in 0..Self::OUTER_RECORDS_AMOUNT {
             let mut inner_card_fault_records = Vec::new();
             for _ in 0..max_inner_records {
-                if let Ok(card_fault_record) = CardFaultRecord::parse(reader) {
+                if let Ok(card_fault_record) = CardFaultRecord::parse(cursor) {
                     inner_card_fault_records.push(card_fault_record);
                 }
             }
@@ -726,18 +726,18 @@ pub struct CardVehicleRecord {
 }
 impl CardVehicleRecord {
     const SIZE: usize = 31;
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut buf = vec![0u8; Self::SIZE];
-        reader.read_exact(&mut buf)?;
-        let inner_reader = &mut buf.as_slice();
+        cursor.read_exact(&mut buf).context("Failed to read buf")?;
+        let mut inner_cursor = Cursor::new(buf.as_slice());
 
         Ok(CardVehicleRecord {
-            vehicle_odometer_begin: OdometerShort::parse(inner_reader)?,
-            vehicle_odometer_end: OdometerShort::parse(inner_reader)?,
-            vehicle_first_use: TimeReal::parse(inner_reader)?,
-            vehicle_last_use: TimeReal::parse(inner_reader)?,
-            vehicle_registration: VehicleRegistrationIdentification::parse(inner_reader)?,
-            vu_data_block_counter: VuDataBlockCounter::parse(inner_reader)?,
+            vehicle_odometer_begin: OdometerShort::parse(&mut inner_cursor)?,
+            vehicle_odometer_end: OdometerShort::parse(&mut inner_cursor)?,
+            vehicle_first_use: TimeReal::parse(&mut inner_cursor)?,
+            vehicle_last_use: TimeReal::parse(&mut inner_cursor)?,
+            vehicle_registration: VehicleRegistrationIdentification::parse(&mut inner_cursor)?,
+            vu_data_block_counter: VuDataBlockCounter::parse(&mut inner_cursor)?,
         })
     }
 }
@@ -750,15 +750,15 @@ pub struct CardVehiclesUsed {
     card_vehicle_records: Vec<CardVehicleRecord>,
 }
 impl CardVehiclesUsed {
-    pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
-        let vehicle_pointer_newest_record = reader
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let vehicle_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read vehicle_pointer_newest_record")?;
 
         let mut card_vehicle_records = Vec::new();
         let amount_of_records = size as usize / CardVehicleRecord::SIZE as usize;
         for _ in 0..amount_of_records {
-            if let Ok(card_vehicle_record) = CardVehicleRecord::parse(reader) {
+            if let Ok(card_vehicle_record) = CardVehicleRecord::parse(cursor) {
                 card_vehicle_records.push(card_vehicle_record);
             }
         }
@@ -780,8 +780,8 @@ pub struct CardPlaceDailyWorkPeriod {
     place_records: Vec<PlaceRecord>,
 }
 impl CardPlaceDailyWorkPeriod {
-    pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
-        let place_pointer_newest_record = reader
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let place_pointer_newest_record = cursor
             .read_u8()
             .context("Failed to read place_pointer_newest_record")?;
 
@@ -790,7 +790,7 @@ impl CardPlaceDailyWorkPeriod {
         let amount_of_records = size as usize / PlaceRecord::SIZE as usize;
 
         for _ in 0..amount_of_records {
-            if let Ok(place_record) = PlaceRecord::parse(reader) {
+            if let Ok(place_record) = PlaceRecord::parse(cursor) {
                 place_records.push(place_record);
             }
         }
@@ -815,14 +815,14 @@ pub struct CardControlActivityDataRecord {
     pub control_download_period_end: TimeReal,
 }
 impl CardControlActivityDataRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            control_type: ControlType::parse(reader)?,
-            control_time: TimeReal::parse(reader)?,
-            control_card_number: FullCardNumber::parse(reader)?,
-            control_vehicle_registration: VehicleRegistrationIdentification::parse(reader)?,
-            control_download_period_begin: TimeReal::parse(reader)?,
-            control_download_period_end: TimeReal::parse(reader)?,
+            control_type: ControlType::parse(cursor)?,
+            control_time: TimeReal::parse(cursor)?,
+            control_card_number: FullCardNumber::parse(cursor)?,
+            control_vehicle_registration: VehicleRegistrationIdentification::parse(cursor)?,
+            control_download_period_begin: TimeReal::parse(cursor)?,
+            control_download_period_end: TimeReal::parse(cursor)?,
         })
     }
 }
@@ -837,13 +837,13 @@ pub struct VuDownloadActivityData {
 }
 
 impl VuDownloadActivityData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            downloading_time: TimeReal::parse(reader)
+            downloading_time: TimeReal::parse(cursor)
                 .context("Failed to parse downloading_time")?,
-            full_card_number: FullCardNumber::parse(reader)
+            full_card_number: FullCardNumber::parse(cursor)
                 .context("Failed to parse full_card_number")?,
-            company_or_workshop_name: Name::parse(reader)
+            company_or_workshop_name: Name::parse(cursor)
                 .context("Failed to parse company_or_workshop_name")?,
         })
     }
@@ -858,12 +858,12 @@ pub struct VuCompanyLocksData {
 }
 
 impl VuCompanyLocksData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_locks = reader.read_u8().context("Failed to read no_of_locks")?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_locks = cursor.read_u8().context("Failed to read no_of_locks")?;
         let mut vu_company_locks_records = Vec::with_capacity(no_of_locks as usize);
         for _ in 0..no_of_locks {
             vu_company_locks_records.push(
-                VuCompanyLocksRecord::parse(reader)
+                VuCompanyLocksRecord::parse(cursor)
                     .context("Failed to parse VuCompanyLocksRecord")?,
             );
         }
@@ -886,15 +886,15 @@ pub struct VuCompanyLocksRecord {
     pub company_card_number: FullCardNumber,
 }
 impl VuCompanyLocksRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            lock_in_time: TimeReal::parse(reader).context("Failed to parse lock_in_time")?,
-            lock_out_time: TimeReal::parse(reader)
+            lock_in_time: TimeReal::parse(cursor).context("Failed to parse lock_in_time")?,
+            lock_out_time: TimeReal::parse(cursor)
                 .context("Failed to parse lock_out_time")
                 .ok(),
-            company_name: Name::parse(reader).context("Failed to parse company_name")?,
-            company_address: Address::parse(reader).context("Failed to parse company_address")?,
-            company_card_number: FullCardNumber::parse(reader)
+            company_name: Name::parse(cursor).context("Failed to parse company_name")?,
+            company_address: Address::parse(cursor).context("Failed to parse company_address")?,
+            company_card_number: FullCardNumber::parse(cursor)
                 .context("Failed to parse company_card_number")?,
         })
     }
@@ -909,13 +909,13 @@ pub struct VuControlActivityData {
 }
 
 impl VuControlActivityData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_controls = reader.read_u8().context("Failed to read no_of_controls")?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_controls = cursor.read_u8().context("Failed to read no_of_controls")?;
 
         let mut vu_control_activity_records = Vec::with_capacity(no_of_controls as usize);
         for _ in 0..no_of_controls {
             vu_control_activity_records.push(
-                VuControlActivityRecord::parse(reader)
+                VuControlActivityRecord::parse(cursor)
                     .context("Failed to parse VuControlActivityRecord")?,
             );
         }
@@ -939,15 +939,15 @@ pub struct VuControlActivityRecord {
 }
 
 impl VuControlActivityRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            control_type: ControlType::parse(reader).context("Failed to parse control_type")?,
-            control_time: TimeReal::parse(reader).context("Failed to parse control_time")?,
-            control_card_number: FullCardNumber::parse(reader)
+            control_type: ControlType::parse(cursor).context("Failed to parse control_type")?,
+            control_time: TimeReal::parse(cursor).context("Failed to parse control_time")?,
+            control_card_number: FullCardNumber::parse(cursor)
                 .context("Failed to parse control_card_number")?,
-            download_period_begin_time: TimeReal::parse(reader)
+            download_period_begin_time: TimeReal::parse(cursor)
                 .context("Failed to parse download_period_begin_time")?,
-            download_period_end_time: TimeReal::parse(reader)
+            download_period_end_time: TimeReal::parse(cursor)
                 .context("Failed to parse download_period_end_time")?,
         })
     }
@@ -971,28 +971,28 @@ pub struct VuOverviewBlock {
 }
 
 impl VuOverviewBlock {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let member_state_certificate =
-            Certificate::parse(reader).context("Failed to parse member_state_certificate")?;
+            Certificate::parse(cursor).context("Failed to parse member_state_certificate")?;
         let vu_certificate =
-            Certificate::parse(reader).context("Failed to parse vu_certificate")?;
-        let vehicle_identification_number = VehicleIdentificationNumber::parse(reader)
+            Certificate::parse(cursor).context("Failed to parse vu_certificate")?;
+        let vehicle_identification_number = VehicleIdentificationNumber::parse(cursor)
             .context("Failed to parse vehicle_identification_number")?;
-        let vehicle_registration_identification = VehicleRegistrationIdentification::parse(reader)
+        let vehicle_registration_identification = VehicleRegistrationIdentification::parse(cursor)
             .context("Failed to parse vehicle_registration_identification")?;
         let current_date_time =
-            TimeReal::parse(reader).context("Failed to parse current_date_time")?;
-        let vu_downloadable_period = VuDownloadablePeriod::parse(reader)
+            TimeReal::parse(cursor).context("Failed to parse current_date_time")?;
+        let vu_downloadable_period = VuDownloadablePeriod::parse(cursor)
             .context("Failed to parse vu_downloadable_period")?;
         let card_slots_status =
-            CardSlotsStatus::parse(reader).context("Failed to parse card_slots_status")?;
-        let vu_download_activity_data = VuDownloadActivityData::parse(reader)
+            CardSlotsStatus::parse(cursor).context("Failed to parse card_slots_status")?;
+        let vu_download_activity_data = VuDownloadActivityData::parse(cursor)
             .context("Failed to parse vu_download_activity_data")?;
         let vu_company_locks_data =
-            VuCompanyLocksData::parse(reader).context("Failed to parse vu_company_locks_data")?;
-        let vu_control_activity_data = VuControlActivityData::parse(reader)
+            VuCompanyLocksData::parse(cursor).context("Failed to parse vu_company_locks_data")?;
+        let vu_control_activity_data = VuControlActivityData::parse(cursor)
             .context("Failed to parse vu_control_activity_data")?;
-        let signature = Signature::parse(reader).context("Failed to parse signature")?;
+        let signature = Signature::parse(cursor).context("Failed to parse signature")?;
 
         Ok(Self {
             member_state_certificate,
@@ -1018,15 +1018,15 @@ pub struct VuCardIWData {
 }
 
 impl VuCardIWData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_iw_records = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_iw_records = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read number of VuCardIWRecords")?;
 
         let mut vu_card_iw_records = Vec::with_capacity(no_of_iw_records as usize);
         for _ in 0..no_of_iw_records {
             vu_card_iw_records
-                .push(VuCardIWRecord::parse(reader).context("Failed to parse VuCardIWRecord")?);
+                .push(VuCardIWRecord::parse(cursor).context("Failed to parse VuCardIWRecord")?);
         }
 
         Ok(Self {
@@ -1053,28 +1053,28 @@ pub struct VuCardIWRecord {
 }
 
 impl VuCardIWRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            card_holder_name: HolderName::parse(reader)
+            card_holder_name: HolderName::parse(cursor)
                 .context("Failed to parse card_holder_name")?,
-            full_card_number: FullCardNumber::parse(reader)
+            full_card_number: FullCardNumber::parse(cursor)
                 .context("Failed to parse full_card_number")?,
-            card_expiry_date: TimeReal::parse(reader)
+            card_expiry_date: TimeReal::parse(cursor)
                 .context("Failed to parse card_expiry_date")?,
-            card_insertion_time: TimeReal::parse(reader)
+            card_insertion_time: TimeReal::parse(cursor)
                 .context("Failed to parse card_insertion_time")?,
-            vehicle_odometer_value_at_insertion: OdometerShort::parse(reader)
+            vehicle_odometer_value_at_insertion: OdometerShort::parse(cursor)
                 .context("Failed to parse vehicle_odometer_value_at_insertion")?,
-            card_slot_number: CardSlotNumber::parse(reader)
+            card_slot_number: CardSlotNumber::parse(cursor)
                 .context("Failed to parse card_slot_number")?,
-            card_withdrawal_time: TimeReal::parse(reader)
+            card_withdrawal_time: TimeReal::parse(cursor)
                 .context("Failed to parse card_withdrawal_time")
                 .ok(),
-            vehicle_odometer_value_at_withdrawal: OdometerShort::parse(reader)
+            vehicle_odometer_value_at_withdrawal: OdometerShort::parse(cursor)
                 .context("Failed to parse vehicle_odometer_value_at_withdrawal")?,
-            previous_vehicle_info: PreviousVehicleInfo::parse(reader)
+            previous_vehicle_info: PreviousVehicleInfo::parse(cursor)
                 .context("Failed to parse previous_vehicle_info")?,
-            manual_entry_flag: ManualInputFlag::parse(reader)
+            manual_entry_flag: ManualInputFlag::parse(cursor)
                 .context("Failed to parse manual_entry_flag")?,
         })
     }
@@ -1089,15 +1089,15 @@ pub struct VuActivityDailyData {
 }
 
 impl VuActivityDailyData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_activity_changes = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_activity_changes = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read no_of_activity_changes")?;
 
         let mut activity_change_infos = Vec::with_capacity(no_of_activity_changes as usize);
         for _ in 0..no_of_activity_changes {
             activity_change_infos.push(
-                ActivityChangeInfo::parse(reader).context("Failed to parse ActivityChangeInfo")?,
+                ActivityChangeInfo::parse(cursor).context("Failed to parse ActivityChangeInfo")?,
             );
         }
 
@@ -1117,11 +1117,11 @@ pub struct VuPlaceDailyWorkPeriodRecord {
 }
 
 impl VuPlaceDailyWorkPeriodRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            full_card_number: FullCardNumber::parse(reader)
+            full_card_number: FullCardNumber::parse(cursor)
                 .context("Failed to parse full_card_number")?,
-            place_record: PlaceRecord::parse(reader).context("Failed to parse place_record")?,
+            place_record: PlaceRecord::parse(cursor).context("Failed to parse place_record")?,
         })
     }
 }
@@ -1135,8 +1135,8 @@ pub struct VuPlaceDailyWorkPeriodData {
 }
 
 impl VuPlaceDailyWorkPeriodData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_place_records = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_place_records = cursor
             .read_u8()
             .context("Failed to read no_of_place_records")?;
 
@@ -1144,7 +1144,7 @@ impl VuPlaceDailyWorkPeriodData {
             Vec::with_capacity(no_of_place_records as usize);
         for _ in 0..no_of_place_records {
             vu_place_daily_work_period_records.push(
-                VuPlaceDailyWorkPeriodRecord::parse(reader)
+                VuPlaceDailyWorkPeriodRecord::parse(cursor)
                     .context("Failed to parse VuPlaceDailyWorkPeriodRecord")?,
             );
         }
@@ -1165,10 +1165,10 @@ pub struct VuSpecificConditionRecord {
 }
 
 impl VuSpecificConditionRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            entry_time: TimeReal::parse(reader).context("Failed to parse entry_time")?,
-            specific_condition_type: SpecificConditionType::parse(reader)
+            entry_time: TimeReal::parse(cursor).context("Failed to parse entry_time")?,
+            specific_condition_type: SpecificConditionType::parse(cursor)
                 .context("Failed to parse specific_condition_type")?,
         })
     }
@@ -1183,15 +1183,15 @@ pub struct VuSpecificConditionData {
 }
 
 impl VuSpecificConditionData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_specific_conditions = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_specific_conditions = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read no_of_specific_conditions")?;
 
         let mut specific_condition_records = Vec::with_capacity(no_of_specific_conditions as usize);
         for _ in 0..no_of_specific_conditions {
             specific_condition_records.push(
-                SpecificConditionRecord::parse(reader)
+                SpecificConditionRecord::parse(cursor)
                     .context("Failed to parse SpecificConditionRecord")?,
             );
         }
@@ -1216,20 +1216,20 @@ pub struct VuActivitiesBlock {
     pub signature: Signature,
 }
 impl VuActivitiesBlock {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            time_real: TimeReal::parse(reader).context("Failed to parse time_real")?,
-            odometer_value_midnight: OdometerShort::parse(reader)
+            time_real: TimeReal::parse(cursor).context("Failed to parse time_real")?,
+            odometer_value_midnight: OdometerShort::parse(cursor)
                 .context("Failed to parse odometer_value_midnight")?,
-            vu_card_iw_data: VuCardIWData::parse(reader)
+            vu_card_iw_data: VuCardIWData::parse(cursor)
                 .context("Failed to parse vu_card_iw_data")?,
-            vu_activity_daily_data: VuActivityDailyData::parse(reader)
+            vu_activity_daily_data: VuActivityDailyData::parse(cursor)
                 .context("Failed to parse vu_activity_daily_data")?,
-            vu_place_daily_work_period_data: VuPlaceDailyWorkPeriodData::parse(reader)
+            vu_place_daily_work_period_data: VuPlaceDailyWorkPeriodData::parse(cursor)
                 .context("Failed to parse vu_place_daily_work_period_data")?,
-            vu_specific_condition_data: VuSpecificConditionData::parse(reader)
+            vu_specific_condition_data: VuSpecificConditionData::parse(cursor)
                 .context("Failed to parse vu_specific_condition_data")?,
-            signature: Signature::parse(reader).context("Failed to parse signature")?,
+            signature: Signature::parse(cursor).context("Failed to parse signature")?,
         })
     }
 }
@@ -1248,24 +1248,24 @@ pub struct VuFaultRecord {
     pub card_number_codriver_slot_end: Option<FullCardNumber>,
 }
 impl VuFaultRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            fault_type: EventFaultType::parse(reader).context("Failed to parse fault_type")?,
-            fault_record_purpose: EventFaultRecordPurpose::parse(reader)
+            fault_type: EventFaultType::parse(cursor).context("Failed to parse fault_type")?,
+            fault_record_purpose: EventFaultRecordPurpose::parse(cursor)
                 .context("Failed to parse fault_record_purpose")?,
-            fault_begin_time: TimeReal::parse(reader)
+            fault_begin_time: TimeReal::parse(cursor)
                 .context("Failed to parse fault_begin_time")?,
-            fault_end_time: TimeReal::parse(reader).context("Failed to parse fault_end_time")?,
-            card_number_driver_slot_begin: FullCardNumber::parse(reader)
+            fault_end_time: TimeReal::parse(cursor).context("Failed to parse fault_end_time")?,
+            card_number_driver_slot_begin: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_driver_slot_begin")
                 .ok(),
-            card_number_codriver_slot_begin: FullCardNumber::parse(reader)
+            card_number_codriver_slot_begin: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_codriver_slot_begin")
                 .ok(),
-            card_number_driver_slot_end: FullCardNumber::parse(reader)
+            card_number_driver_slot_end: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_driver_slot_end")
                 .ok(),
-            card_number_codriver_slot_end: FullCardNumber::parse(reader)
+            card_number_codriver_slot_end: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_codriver_slot_end")
                 .ok(),
         })
@@ -1280,14 +1280,14 @@ pub struct VuFaultData {
     pub vu_fault_records: Vec<VuFaultRecord>,
 }
 impl VuFaultData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_vu_fault_records = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_vu_fault_records = cursor
             .read_u8()
             .context("Failed to read no_of_vu_fault_records")?;
         let mut vu_fault_records = Vec::with_capacity(no_of_vu_fault_records as usize);
         for _ in 0..no_of_vu_fault_records {
             vu_fault_records
-                .push(VuFaultRecord::parse(reader).context("Failed to parse VuFaultRecord")?);
+                .push(VuFaultRecord::parse(cursor).context("Failed to parse VuFaultRecord")?);
         }
 
         Ok(Self {
@@ -1312,27 +1312,27 @@ pub struct VuEventRecord {
     pub similar_events_number: SimilarEventsNumber,
 }
 impl VuEventRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            event_type: EventFaultType::parse(reader).context("Failed to parse event_type")?,
-            event_record_purpose: EventFaultRecordPurpose::parse(reader)
+            event_type: EventFaultType::parse(cursor).context("Failed to parse event_type")?,
+            event_record_purpose: EventFaultRecordPurpose::parse(cursor)
                 .context("Failed to parse event_record_purpose")?,
-            event_begin_time: TimeReal::parse(reader)
+            event_begin_time: TimeReal::parse(cursor)
                 .context("Failed to parse event_begin_time")?,
-            event_end_time: TimeReal::parse(reader).context("Failed to parse event_end_time")?,
-            card_number_driver_slot_begin: FullCardNumber::parse(reader)
+            event_end_time: TimeReal::parse(cursor).context("Failed to parse event_end_time")?,
+            card_number_driver_slot_begin: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_driver_slot_begin")
                 .ok(),
-            card_number_codriver_slot_begin: FullCardNumber::parse(reader)
+            card_number_codriver_slot_begin: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_codriver_slot_begin")
                 .ok(),
-            card_number_driver_slot_end: FullCardNumber::parse(reader)
+            card_number_driver_slot_end: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_driver_slot_end")
                 .ok(),
-            card_number_codriver_slot_end: FullCardNumber::parse(reader)
+            card_number_codriver_slot_end: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_codriver_slot_end")
                 .ok(),
-            similar_events_number: SimilarEventsNumber::parse(reader)
+            similar_events_number: SimilarEventsNumber::parse(cursor)
                 .context("Failed to parse similar_events_number")?,
         })
     }
@@ -1346,14 +1346,14 @@ pub struct VuEventData {
     pub vu_event_records: Vec<VuEventRecord>,
 }
 impl VuEventData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_vu_event_records = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_vu_event_records = cursor
             .read_u8()
             .context("Failed to read no_of_vu_event_records")?;
         let mut vu_event_records = Vec::with_capacity(no_of_vu_event_records as usize);
         for _ in 0..no_of_vu_event_records {
             vu_event_records
-                .push(VuEventRecord::parse(reader).context("Failed to parse VuEventRecord")?);
+                .push(VuEventRecord::parse(cursor).context("Failed to parse VuEventRecord")?);
         }
 
         Ok(Self {
@@ -1372,13 +1372,13 @@ pub struct VuOverSpeedingControlData {
     pub number_of_overspeed_since: OverspeedNumber,
 }
 impl VuOverSpeedingControlData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            last_overspeed_control_time: TimeReal::parse(reader)
+            last_overspeed_control_time: TimeReal::parse(cursor)
                 .context("Failed to parse last_overspeed_control_time")?,
-            first_overspeed_since: TimeReal::parse(reader)
+            first_overspeed_since: TimeReal::parse(cursor)
                 .context("Failed to parse first_overspeed_since")?,
-            number_of_overspeed_since: OverspeedNumber::parse(reader)
+            number_of_overspeed_since: OverspeedNumber::parse(cursor)
                 .context("Failed to parse number_of_overspeed_since")?,
         })
     }
@@ -1397,20 +1397,20 @@ pub struct VuOverSpeedingEventRecord {
     pub similar_events_number: SimilarEventsNumber,
 }
 impl VuOverSpeedingEventRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            event_type: EventFaultType::parse(reader).context("Failed to parse event_type")?,
-            event_record_purpose: EventFaultRecordPurpose::parse(reader)
+            event_type: EventFaultType::parse(cursor).context("Failed to parse event_type")?,
+            event_record_purpose: EventFaultRecordPurpose::parse(cursor)
                 .context("Failed to parse event_record_purpose")?,
-            event_begin_time: TimeReal::parse(reader)
+            event_begin_time: TimeReal::parse(cursor)
                 .context("Failed to parse event_begin_time")?,
-            event_end_time: TimeReal::parse(reader).context("Failed to parse event_end_time")?,
-            max_speed_value: SpeedMax::parse(reader).context("Failed to parse max_speed_value")?,
-            average_speed_value: SpeedAverage::parse(reader)
+            event_end_time: TimeReal::parse(cursor).context("Failed to parse event_end_time")?,
+            max_speed_value: SpeedMax::parse(cursor).context("Failed to parse max_speed_value")?,
+            average_speed_value: SpeedAverage::parse(cursor)
                 .context("Failed to parse average_speed_value")?,
-            card_number_driver_slot: FullCardNumber::parse(reader)
+            card_number_driver_slot: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_driver_slot")?,
-            similar_events_number: SimilarEventsNumber::parse(reader)
+            similar_events_number: SimilarEventsNumber::parse(cursor)
                 .context("Failed to parse similar_events_number")?,
         })
     }
@@ -1424,15 +1424,15 @@ pub struct VuOverSpeedingEventData {
     pub vu_over_speeding_event_records: Vec<VuOverSpeedingEventRecord>,
 }
 impl VuOverSpeedingEventData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_vu_over_speeding_events = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_vu_over_speeding_events = cursor
             .read_u8()
             .context("Failed to read no_of_vu_over_speeding_events")?;
         let mut vu_over_speeding_event_records =
             Vec::with_capacity(no_of_vu_over_speeding_events as usize);
         for _ in 0..no_of_vu_over_speeding_events {
             vu_over_speeding_event_records.push(
-                VuOverSpeedingEventRecord::parse(reader)
+                VuOverSpeedingEventRecord::parse(cursor)
                     .context("Failed to parse VuOverSpeedingEventRecord")?,
             );
         }
@@ -1455,13 +1455,13 @@ pub struct VuTimeAdjustmentRecord {
     pub workshop_card_number: FullCardNumber,
 }
 impl VuTimeAdjustmentRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            old_time_value: TimeReal::parse(reader).context("Failed to parse old_time_value")?,
-            new_time_value: TimeReal::parse(reader).context("Failed to parse new_time_value")?,
-            workshop_name: Name::parse(reader).context("Failed to parse workshop_name")?,
-            workshop_address: Address::parse(reader).context("Failed to parse workshop_address")?,
-            workshop_card_number: FullCardNumber::parse(reader)
+            old_time_value: TimeReal::parse(cursor).context("Failed to parse old_time_value")?,
+            new_time_value: TimeReal::parse(cursor).context("Failed to parse new_time_value")?,
+            workshop_name: Name::parse(cursor).context("Failed to parse workshop_name")?,
+            workshop_address: Address::parse(cursor).context("Failed to parse workshop_address")?,
+            workshop_card_number: FullCardNumber::parse(cursor)
                 .context("Failed to parse workshop_card_number")?,
         })
     }
@@ -1475,14 +1475,14 @@ pub struct VuTimeAdjustmentData {
     pub vu_time_adjustment_records: Vec<VuTimeAdjustmentRecord>,
 }
 impl VuTimeAdjustmentData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_vu_time_adj_records = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_vu_time_adj_records = cursor
             .read_u8()
             .context("Failed to read no_of_vu_time_adj_records")?;
         let mut vu_time_adjustment_records = Vec::with_capacity(no_of_vu_time_adj_records as usize);
         for _ in 0..no_of_vu_time_adj_records {
             vu_time_adjustment_records.push(
-                VuTimeAdjustmentRecord::parse(reader)
+                VuTimeAdjustmentRecord::parse(cursor)
                     .context("Failed to parse VuTimeAdjustmentRecord")?,
             );
         }
@@ -1506,17 +1506,17 @@ pub struct VuEventsAndFaultsBlock {
     pub signature: Signature,
 }
 impl VuEventsAndFaultsBlock {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            vu_fault_data: VuFaultData::parse(reader).context("Failed to parse vu_fault_data")?,
-            vu_event_data: VuEventData::parse(reader).context("Failed to parse vu_event_data")?,
-            vu_over_speeding_control_data: VuOverSpeedingControlData::parse(reader)
+            vu_fault_data: VuFaultData::parse(cursor).context("Failed to parse vu_fault_data")?,
+            vu_event_data: VuEventData::parse(cursor).context("Failed to parse vu_event_data")?,
+            vu_over_speeding_control_data: VuOverSpeedingControlData::parse(cursor)
                 .context("Failed to parse vu_over_speeding_control_data")?,
-            vu_over_speeding_event_data: VuOverSpeedingEventData::parse(reader)
+            vu_over_speeding_event_data: VuOverSpeedingEventData::parse(cursor)
                 .context("Failed to parse vu_over_speeding_event_data")?,
-            vu_time_adjustment_data: VuTimeAdjustmentData::parse(reader)
+            vu_time_adjustment_data: VuTimeAdjustmentData::parse(cursor)
                 .context("Failed to parse vu_time_adjustment_data")?,
-            signature: Signature::parse(reader).context("Failed to parse signature")?,
+            signature: Signature::parse(cursor).context("Failed to parse signature")?,
         })
     }
 }
@@ -1528,14 +1528,14 @@ pub struct VuDetailedSpeedData {
     pub vu_detailed_speed_records: Vec<VuDetailedSpeedBlock>,
 }
 impl VuDetailedSpeedData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_speed_blocks = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_speed_blocks = cursor
             .read_u8()
             .context("Failed to read no_of_speed_blocks")?;
         let mut vu_detailed_speed_records = Vec::with_capacity(no_of_speed_blocks as usize);
         for _ in 0..no_of_speed_blocks {
             vu_detailed_speed_records.push(
-                VuDetailedSpeedBlock::parse(reader)
+                VuDetailedSpeedBlock::parse(cursor)
                     .context("Failed to parse VuDetailedSpeedBlock")?,
             );
         }
@@ -1559,21 +1559,21 @@ pub struct VuIdentification {
     pub vu_approval_number: VuApprovalNumber,
 }
 impl VuIdentification {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            vu_manufacturer_name: VuManufacturerName::parse(reader)
+            vu_manufacturer_name: VuManufacturerName::parse(cursor)
                 .context("Failed to parse vu_manufacturer_name")?,
-            vu_manufacturer_address: VuManufacturerAddress::parse(reader)
+            vu_manufacturer_address: VuManufacturerAddress::parse(cursor)
                 .context("Failed to parse vu_manufacturer_address")?,
-            vu_part_number: VuPartNumber::parse(reader)
+            vu_part_number: VuPartNumber::parse(cursor)
                 .context("Failed to parse vu_part_number")?,
-            vu_serial_number: VuSerialNumber::parse(reader)
+            vu_serial_number: VuSerialNumber::parse(cursor)
                 .context("Failed to parse vu_serial_number")?,
-            vu_software_identification: VuSoftwareIdentification::parse(reader)
+            vu_software_identification: VuSoftwareIdentification::parse(cursor)
                 .context("Failed to parse vu_software_identification")?,
-            vu_manufacturing_date: VuManufacturingDate::parse(reader)
+            vu_manufacturing_date: VuManufacturingDate::parse(cursor)
                 .context("Failed to parse vu_manufacturing_date")?,
-            vu_approval_number: VuApprovalNumber::parse(reader)
+            vu_approval_number: VuApprovalNumber::parse(cursor)
                 .context("Failed to parse vu_approval_number")?,
         })
     }
@@ -1591,13 +1591,13 @@ pub struct SensorPaired {
     pub sensor_pairing_date_first: SensorPairingDate,
 }
 impl SensorPaired {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            sensor_serial_number: SensorSerialNumber::parse(reader)
+            sensor_serial_number: SensorSerialNumber::parse(cursor)
                 .context("Failed to parse sensor_serial_number")?,
-            sensor_approval_number: SensorApprovalNumber::parse(reader)
+            sensor_approval_number: SensorApprovalNumber::parse(cursor)
                 .context("Failed to parse sensor_approval_number")?,
-            sensor_pairing_date_first: SensorPairingDate::parse(reader)
+            sensor_pairing_date_first: SensorPairingDate::parse(cursor)
                 .context("Failed to parse sensor_pairing_date_first")?,
         })
     }
@@ -1611,7 +1611,7 @@ pub struct VuCalibrationRecord {
     pub workshop_name: Name,
     pub workshop_address: Address,
     pub workshop_card_number: FullCardNumber,
-    pub workshop_card_expiry_date: TimeReal,
+    pub workshop_card_expiry_date: Option<TimeReal>,
     pub vehicle_identification_number: Option<VehicleIdentificationNumber>,
     pub vehicle_registration_identification: Option<VehicleRegistrationIdentification>,
     pub w_vehicle_characteristic_constant: WVehicleCharacteristicConstant,
@@ -1622,45 +1622,49 @@ pub struct VuCalibrationRecord {
     pub old_odometer_value: OdometerShort,
     pub new_odometer_value: OdometerShort,
     pub old_time_value: Option<TimeReal>,
-    pub new_time_value: TimeReal,
-    pub next_calibration_date: TimeReal,
+    pub new_time_value: Option<TimeReal>,
+    pub next_calibration_date: Option<TimeReal>,
 }
 impl VuCalibrationRecord {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            calibration_purpose: CalibrationPurpose::parse(reader)
+            calibration_purpose: CalibrationPurpose::parse(cursor)
                 .context("Failed to parse calibration_purpose")?,
-            workshop_name: Name::parse(reader).context("Failed to parse workshop_name")?,
-            workshop_address: Address::parse(reader).context("Failed to parse workshop_address")?,
-            workshop_card_number: FullCardNumber::parse(reader)
+            workshop_name: Name::parse(cursor).context("Failed to parse workshop_name")?,
+            workshop_address: Address::parse(cursor).context("Failed to parse workshop_address")?,
+            workshop_card_number: FullCardNumber::parse(cursor)
                 .context("Failed to parse workshop_card_number")?,
-            workshop_card_expiry_date: TimeReal::parse(reader)
-                .context("Failed to parse workshop_card_expiry_date")?,
-            vehicle_identification_number: VehicleIdentificationNumber::parse(reader)
+            workshop_card_expiry_date: TimeReal::parse(cursor)
+                .context("Failed to parse workshop_card_expiry_date")
+                .ok(),
+            vehicle_identification_number: VehicleIdentificationNumber::parse(cursor)
                 .context("Failed to parse vehicle_identification_number")
                 .ok(),
-            vehicle_registration_identification: VehicleRegistrationIdentification::parse(reader)
+            vehicle_registration_identification: VehicleRegistrationIdentification::parse(cursor)
                 .context("Failed to parse vehicle_registration_identification")
                 .ok(),
-            w_vehicle_characteristic_constant: WVehicleCharacteristicConstant::parse(reader)
+            w_vehicle_characteristic_constant: WVehicleCharacteristicConstant::parse(cursor)
                 .context("Failed to parse w_vehicle_characteristic_constant")?,
-            k_constant_of_recording_equipment: KConstantOfRecordingEquipment::parse(reader)
+            k_constant_of_recording_equipment: KConstantOfRecordingEquipment::parse(cursor)
                 .context("Failed to parse k_constant_of_recording_equipment")?,
-            l_tyre_circumference: LTyreCircumference::parse(reader)
+            l_tyre_circumference: LTyreCircumference::parse(cursor)
                 .context("Failed to parse l_tyre_circumference")?,
-            tyre_size: TyreSize::parse(reader).context("Failed to parse tyre_size")?,
-            authorised_speed: SpeedAuthorised::parse(reader)
+            tyre_size: TyreSize::parse(cursor).context("Failed to parse tyre_size")?,
+            authorised_speed: SpeedAuthorised::parse(cursor)
                 .context("Failed to parse authorised_speed")?,
-            old_odometer_value: OdometerShort::parse(reader)
+            old_odometer_value: OdometerShort::parse(cursor)
                 .context("Failed to parse old_odometer_value")?,
-            new_odometer_value: OdometerShort::parse(reader)
+            new_odometer_value: OdometerShort::parse(cursor)
                 .context("Failed to parse new_odometer_value")?,
-            old_time_value: TimeReal::parse(reader)
+            old_time_value: TimeReal::parse(cursor)
                 .context("Failed to parse old_time_value")
                 .ok(),
-            new_time_value: TimeReal::parse(reader).context("Failed to parse new_time_value")?,
-            next_calibration_date: TimeReal::parse(reader)
-                .context("Failed to parse next_calibration_date")?,
+            new_time_value: TimeReal::parse(cursor)
+                .context("Failed to parse new_time_value")
+                .ok(),
+            next_calibration_date: TimeReal::parse(cursor)
+                .context("Failed to parse next_calibration_date")
+                .ok(),
         })
     }
 }
@@ -1673,15 +1677,15 @@ pub struct VuCalibrationData {
     pub vu_calibration_records: Vec<VuCalibrationRecord>,
 }
 impl VuCalibrationData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let no_of_vu_calibration_records = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let no_of_vu_calibration_records = cursor
             .read_u8()
             .context("Failed to read no_of_vu_calibration_records")?;
         let mut vu_calibration_records = Vec::with_capacity(no_of_vu_calibration_records as usize);
         for _ in 0..no_of_vu_calibration_records {
-            if let Ok(record) = VuCalibrationRecord::parse(reader) {
-                vu_calibration_records.push(record);
-            }
+            let record = VuCalibrationRecord::parse(cursor)
+                .context("Failed to parse VuCalibrationRecord")?;
+            vu_calibration_records.push(record);
         }
 
         Ok(Self {
@@ -1701,13 +1705,13 @@ pub struct VuCompanyLocksBlock {
     pub signature: Signature,
 }
 impl VuCompanyLocksBlock {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let vu_identification =
-            VuIdentification::parse(reader).context("Failed to parse vu_identification")?;
-        let sensor_paired = SensorPaired::parse(reader).context("Failed to parse sensor_paired")?;
+            VuIdentification::parse(cursor).context("Failed to parse vu_identification")?;
+        let sensor_paired = SensorPaired::parse(cursor).context("Failed to parse sensor_paired")?;
         let vu_calibration_data =
-            VuCalibrationData::parse(reader).context("Failed to parse vu_calibration_data")?;
-        let signature = Signature::parse(reader).context("Failed to parse signature")?;
+            VuCalibrationData::parse(cursor).context("Failed to parse vu_calibration_data")?;
+        let signature = Signature::parse(cursor).context("Failed to parse signature")?;
         Ok(Self {
             vu_identification,
             sensor_paired,

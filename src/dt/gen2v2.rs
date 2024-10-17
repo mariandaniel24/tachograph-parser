@@ -20,27 +20,27 @@ pub struct VuOverviewBlock {
 }
 
 impl VuOverviewBlock {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let member_state_certificate_record_array =
             MemberStateCertificateRecordArray::parse_dyn_size(
-                reader,
+                cursor,
                 gen2::MemberStateCertificate::parse_dyn_size,
             )
             .context("Failed to parse member_state_certificate_record_array")?;
 
         let vu_certificate_record_array =
-            VuCertificateRecordArray::parse_dyn_size(reader, gen2::VuCertificate::parse_dyn_size)
+            VuCertificateRecordArray::parse_dyn_size(cursor, gen2::VuCertificate::parse_dyn_size)
                 .context("Failed to parse vu_certificate_record_array")?;
 
         let vehicle_identification_number_record_array =
             VehicleIdentificationNumberRecordArray::parse(
-                reader,
+                cursor,
                 VehicleIdentificationNumber::parse,
             )
             .context("Failed to parse vehicle_identification_number_record_array")?;
 
         let vehicle_registration_number_record_array =
-            VehicleRegistrationNumberRecordArray::parse(reader, VehicleRegistrationNumber::parse)
+            VehicleRegistrationNumberRecordArray::parse(cursor, VehicleRegistrationNumber::parse)
                 .context("Failed to parse vehicle_registration_number_record_array")?;
 
         Ok(VuOverviewBlock {

@@ -5,7 +5,7 @@ use crate::dt::{self};
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
 use serde::{Deserialize, Serialize};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, Cursor};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
@@ -99,7 +99,7 @@ impl CardParser {
     }
 
     pub fn parse(&self) -> Result<CardData> {
-        let mut reader = BufReader::new(&self.input[..]);
+        let mut cursor = Cursor::new(&self.input[..]);
         let mut card_icc_identification: Option<CardBlock<gen1::CardIccIdentification>> = None;
         let mut card_chip_identification: Option<CardBlock<dt::CardChipIdentification>> = None;
         let mut application_identification: Option<
@@ -176,379 +176,388 @@ impl CardParser {
 
         // all data blocks for card files follow the structure
         // file_id (2 bytes), sfid (1 byte), size (2 bytes)
-        while reader.fill_buf()?.len() > 0 {
-            let sfid = reader
+        while !cursor.fill_buf()?.is_empty() {
+            let sfid = cursor
                 .read_u16::<BigEndian>()
                 .expect("Failed to read file_id");
-            let file_id = reader.read_u8().expect("Failed to read sfid");
+            let file_id = cursor.read_u8().expect("Failed to read sfid");
 
+            log::debug!(
+                "Parsing card data with sfid: {:04X} and file_id: {:02X}",
+                sfid,
+                file_id
+            );
             // Page 283
             match (sfid, file_id) {
                 // CardIccIdentification Gen1
                 (0x0002, 0) => {
                     card_icc_identification = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         gen1::CardIccIdentification::parse,
                     )?);
                 }
                 // CardChipIdentification Gen1
                 (0x0005, 0) => {
                     card_chip_identification = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         dt::CardChipIdentification::parse,
                     )?);
                 }
                 // ApplicationIdentification Gen1
                 (0x0501, 0) => {
                     application_identification = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         gen1::DriverCardApplicationIdentification::parse,
                     )?);
                 }
                 // ApplicationIdentification Signature Gen1
                 (0x0501, 1) => {
                     application_identification_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // CardCertificate Gen1
                 (0xC100, 0) => {
                     card_certificate =
-                        Some(CardBlock::parse(&mut reader, gen1::Certificate::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Certificate::parse)?);
                 }
                 // MemberStateCertificate Gen1
                 (0xC108, 0) => {
                     member_state_certificate =
-                        Some(CardBlock::parse(&mut reader, gen1::Certificate::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Certificate::parse)?);
                 }
                 // Identification Gen1
                 (0x0520, 0) => {
                     identification =
-                        Some(CardBlock::parse(&mut reader, dt::Identification::parse)?);
+                        Some(CardBlock::parse(&mut cursor, dt::Identification::parse)?);
                 }
                 // Identification Signature Gen1
                 (0x0520, 1) => {
                     identification_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // CardDownload Gen1
                 (0x050E, 0) => {
                     last_card_download =
-                        Some(CardBlock::parse(&mut reader, dt::CardDownload::parse)?);
+                        Some(CardBlock::parse(&mut cursor, dt::CardDownload::parse)?);
                 }
                 // CardDownload Signature Gen1
                 (0x050E, 1) => {
                     last_card_download_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // DrivingLicenseInfo Gen1
                 (0x0521, 0) => {
                     driver_licence_information = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         dt::CardDrivingLicenceInformation::parse,
                     )?);
                 }
                 // DrivingLicenseInfo Signature Gen1
                 (0x0521, 1) => {
                     driver_licence_info_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // EventsData Gen1
                 (0x0502, 0) => {
                     events_data = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen1::CardEventData::parse_dyn_size,
                     )?);
                 }
                 // EventsData Signature Gen1
                 (0x0502, 1) => {
                     events_data_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // FaultsData Gen1
                 (0x0503, 0) => {
                     faults_data = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen1::CardFaultData::parse_dyn_size,
                     )?);
                 }
                 // FaultsData Signature Gen1
                 (0x0503, 1) => {
                     faults_data_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // DriverActivityData Gen1
                 (0x0504, 0) => {
                     driver_activity_data = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         dt::DriverActivityData::parse,
                     )?);
                 }
                 // DriverActivityData Signature Gen1
                 (0x0504, 1) => {
                     driver_activity_data_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // VehiclesUsed Gen1
                 (0x0505, 0) => {
                     vehicles_used = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen1::CardVehiclesUsed::parse_dyn_size,
                     )?);
                 }
                 // VehiclesUsed Signature Gen1
                 (0x0505, 1) => {
                     vehicles_used_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // Places Gen1
                 (0x0506, 0) => {
                     places = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen1::CardPlaceDailyWorkPeriod::parse_dyn_size,
                     )?);
                 }
                 // Places Signature Gen1
                 (0x0506, 1) => {
-                    places_signature = Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                    places_signature = Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // CurrentUsage Gen1
                 (0x0507, 0) => {
-                    current_usage = Some(CardBlock::parse(&mut reader, dt::CurrentUsage::parse)?);
+                    current_usage = Some(CardBlock::parse(&mut cursor, dt::CurrentUsage::parse)?);
                 }
                 // CurrentUsage Signature Gen1
                 (0x0507, 1) => {
                     current_usage_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // ControlActivityData Gen1
                 (0x0508, 0) => {
                     control_activity_data = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         gen1::CardControlActivityDataRecord::parse,
                     )?);
                 }
                 // ControlActivityData Signature Gen1
                 (0x0508, 1) => {
                     control_activity_data_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // SpecificConditions Gen1
                 (0x0522, 0) => {
                     specific_conditions = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen1::SpecificConditions::parse_dyn_size,
                     )?);
                 }
                 // SpecificConditions Signature Gen1
                 (0x0522, 1) => {
                     specific_conditions_signature =
-                        Some(CardBlock::parse(&mut reader, gen1::Signature::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?);
                 }
                 // IMPL GEN2
                 // CardIccIdentification Gen2
                 (0x0002, 2) => {
                     card_icc_identification_gen2 = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         gen2::CardIccIdentification::parse,
                     )?);
                 }
                 // CardChipIdentification Gen2
                 (0x0005, 2) => {
                     card_chip_identification_gen2 = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         dt::CardChipIdentification::parse,
                     )?);
                 }
                 // ApplicationIdentification Gen2
                 (0x0501, 2) => {
                     application_identification_gen2 = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         gen2::DriverCardApplicationIdentification::parse,
                     )?);
                 }
                 // ApplicationIdentification Signature Gen2
                 (0x0501, 3) => {
                     application_identification_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 // CardSignCertificate Gen2
                 (0xC101, 2) => {
                     card_sign_certificate_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen2::Certificate::parse_dyn_size,
                     )?);
                 }
                 // MemberStateCertificate Gen2
                 (0xC108, 2) => {
                     ca_certificate_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen2::Certificate::parse_dyn_size,
                     )?);
                 }
                 // LinkCertificate Gen2
                 (0xC109, 2) => {
                     link_certificate_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen2::Certificate::parse_dyn_size,
                     )?);
                 }
                 // Identification Gen2
                 (0x0520, 2) => {
                     identification_gen2 =
-                        Some(CardBlock::parse(&mut reader, dt::Identification::parse)?);
+                        Some(CardBlock::parse(&mut cursor, dt::Identification::parse)?);
                 }
                 // Identification Signature Gen2
                 (0x0520, 3) => {
                     identification_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 // CardDownload Gen2
                 (0x050E, 2) => {
                     card_download_gen2 =
-                        Some(CardBlock::parse(&mut reader, dt::CardDownload::parse)?);
+                        Some(CardBlock::parse(&mut cursor, dt::CardDownload::parse)?);
                 }
                 // CardDownload Signature Gen2
                 (0x050E, 3) => {
                     card_download_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 // DrivingLicenseInfo Gen2
                 (0x0521, 2) => {
                     driver_licence_information_gen2 = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         dt::CardDrivingLicenceInformation::parse,
                     )?);
                 }
                 (0x0521, 3) => {
                     driver_licence_info_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0502, 2) => {
                     events_data_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen2::CardEventData::parse_dyn_size,
                     )?);
                 }
                 (0x0502, 3) => {
                     events_data_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0503, 2) => {
                     faults_data_gen2 =
-                        Some(CardBlock::parse(&mut reader, gen2::CardFaultData::parse)?);
+                        Some(CardBlock::parse(&mut cursor, gen2::CardFaultData::parse)?);
                 }
                 (0x0503, 3) => {
                     faults_data_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0504, 2) => {
                     driver_activity_data_gen2 = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         dt::DriverActivityData::parse,
                     )?);
                 }
                 (0x0504, 3) => {
                     driver_activity_data_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0505, 2) => {
                     vehicles_used_gen2 = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         gen2::CardVehiclesUsed::parse,
                     )?);
                 }
                 (0x0505, 3) => {
                     vehicles_used_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0506, 2) => {
                     places_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen2::CardPlaceDailyWorkPeriod::parse,
                     )?);
                 }
                 (0x0506, 3) => {
                     places_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0507, 2) => {
                     current_usage_gen2 =
-                        Some(CardBlock::parse(&mut reader, dt::CurrentUsage::parse)?);
+                        Some(CardBlock::parse(&mut cursor, dt::CurrentUsage::parse)?);
                 }
                 (0x0507, 3) => {
                     current_usage_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0508, 2) => {
                     control_activity_data_gen2 = Some(CardBlock::parse(
-                        &mut reader,
+                        &mut cursor,
                         gen2::CardControlActivityDataRecord::parse,
                     )?);
                 }
                 (0x0508, 3) => {
                     control_activity_data_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0522, 2) => {
                     specific_conditions_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen2::SpecificConditions::parse,
                     )?);
                 }
                 (0x0522, 3) => {
                     specific_conditions_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0523, 2) => {
                     vehicle_units_used_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen2::CardVehicleUnitsUsed::parse,
                     )?);
                 }
                 (0x0523, 3) => {
                     vehicle_units_used_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 (0x0524, 2) => {
                     gnss_places_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
+                        &mut cursor,
                         gen2::GNSSAccumulatedDriving::parse,
                     )?);
                 }
                 (0x0524, 3) => {
                     gnss_places_signature_gen2 = Some(CardBlock::parse_dyn_size(
-                        &mut reader,
-                        gen2::Signature::parse,
+                        &mut cursor,
+                        gen2::Signature::parse_dyn_size,
                     )?);
                 }
                 _ => {
-                    log::warn!("Found unknown block {:04x} {:02x}", sfid, file_id);
+                    log::debug!(
+                        "Found unknown block with sfid: {:#04x}, file_id: {:#04x}",
+                        sfid,
+                        file_id
+                    );
                     break;
                 }
             }

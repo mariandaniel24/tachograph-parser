@@ -2,7 +2,7 @@ pub mod card_parser;
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
 use serde::{Deserialize, Serialize};
-use std::io::Read;
+use std::io::{Cursor, Read};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
@@ -12,32 +12,31 @@ pub struct CardBlock<T> {
 }
 
 impl<T> CardBlock<T> {
-    pub fn parse<F>(reader: &mut dyn Read, parse_block: F) -> Result<Self>
+    pub fn parse<F>(cursor: &mut Cursor<&[u8]>, parse_block: F) -> Result<Self>
     where
-        F: Fn(&mut dyn Read) -> Result<T>,
+        F: Fn(&mut Cursor<&[u8]>) -> Result<T>,
     {
-        let size = reader
+        let size = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read size in CardBlock")?;
 
         let mut buf = vec![0u8; size as usize];
-        reader.read_exact(&mut buf).context(format!(
+        cursor.read_exact(&mut buf).context(format!(
             "Failed to read data in CardBlock of size {} for type {}",
             size,
             std::any::type_name::<T>()
         ))?;
+        let mut inner_cursor = Cursor::new(buf.as_slice());
 
-        let mut buf_slice = buf.as_slice();
-        let initial_len = buf_slice.len();
-        let data = parse_block(&mut buf_slice).context(format!(
+        let data = parse_block(&mut inner_cursor).context(format!(
             "Failed to parse data in CardBlock of size {} for type {}",
             size,
             std::any::type_name::<T>()
         ))?;
 
-        let consumed = initial_len - buf_slice.len();
-        if consumed < size as usize {
-            let unused_bytes = size as usize - consumed;
+        let consumed = inner_cursor.position();
+        if consumed < size as u64 {
+            let unused_bytes = size as u64 - consumed;
             log::warn!(
                 "CardBlock of type {} did not consume all bytes. Expected to consume {} bytes, but only consumed {}. {} bytes were unused.",
                 std::any::type_name::<T>(),
@@ -50,32 +49,30 @@ impl<T> CardBlock<T> {
         Ok(CardBlock { size, data })
     }
 
-    pub fn parse_dyn_size<F>(reader: &mut dyn Read, parse_block: F) -> Result<Self>
+    pub fn parse_dyn_size<F>(cursor: &mut Cursor<&[u8]>, parse_block: F) -> Result<Self>
     where
-        F: Fn(&mut dyn Read, usize) -> Result<T>,
+        F: Fn(&mut Cursor<&[u8]>, usize) -> Result<T>,
     {
-        let size = reader
+        let size = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read size in CardBlock")?;
 
         let mut buf = vec![0u8; size as usize];
-
-        reader.read_exact(&mut buf).context(format!(
+        cursor.read_exact(&mut buf).context(format!(
             "Failed to read data in CardBlock of size {} for type {}",
             size,
             std::any::type_name::<T>()
         ))?;
 
-        let mut buf_slice = buf.as_slice();
-        let initial_len = buf_slice.len();
-        let data = parse_block(&mut buf_slice, size as usize).context(format!(
+        let mut inner_cursor = Cursor::new(buf.as_slice());
+        let data = parse_block(&mut inner_cursor, size as usize).context(format!(
             "Failed to parse data with dyn size in CardBlock of size {}",
             size
         ))?;
 
-        let consumed = initial_len - buf_slice.len();
-        if consumed < size as usize {
-            let unused_bytes = size as usize - consumed;
+        let consumed = inner_cursor.position();
+        if consumed < size as u64 {
+            let unused_bytes = size as u64 - consumed;
             log::warn!(
                 "CardBlock of type {} with dynamic size did not consume all bytes. Expected to consume {} bytes, but only consumed {}. {} bytes were unused.",
                 std::any::type_name::<T>(),

@@ -1,14 +1,14 @@
 use anyhow::{Context, Result};
 use byteorder::ReadBytesExt;
 use serde::{Deserialize, Serialize};
-use std::io::Read;
+use std::io::Cursor;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [ManufacturerCode: appendix 2.94.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22253)
 pub struct ManufacturerCode(String);
 impl ManufacturerCode {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let code = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let code = cursor
             .read_u8()
             .context("Failed to read ManufacturerCode")?;
 
@@ -87,8 +87,8 @@ impl ManufacturerCode {
 /// [NationNumeric: appendix 2.101.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22450)
 pub struct NationNumeric(String);
 impl NationNumeric {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader.read_u8().context("Failed to read nation numeric")?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor.read_u8().context("Failed to read nation numeric")?;
         // TODO: decide if we want to keep this list up to date, or just provide the raw value
         let parsed_country = match value {
             0x00 => "No information available",

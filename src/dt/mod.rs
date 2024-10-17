@@ -7,7 +7,7 @@ use crate::bytes::{extract_u16_bits_into_tup, extract_u8_bits_into_tup};
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
 use serde::{Deserialize, Serialize};
-use std::io::Read;
+use std::io::{Cursor, Read};
 use textcode;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -15,9 +15,9 @@ use textcode;
 pub struct BCDString(String);
 /// [BCDString: appendix 2.7.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16562)
 impl BCDString {
-    pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut buffer = vec![0u8; size];
-        reader
+        cursor
             .read_exact(&mut buffer)
             .context("Failed to read BCDString")?;
 
@@ -34,17 +34,21 @@ impl BCDString {
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct IA5String(String);
 impl IA5String {
-    pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut buffer = vec![0u8; size];
-        reader
+        cursor
             .read_exact(&mut buffer)
             .context("Failed to read IA5String")?;
         let value = textcode::utf8::decode_to_string(&buffer);
         Ok(IA5String(value.trim().to_string()))
     }
-    pub fn parse_with_code_page(reader: &mut dyn Read, size: usize, code_page: u8) -> Result<Self> {
+    pub fn parse_with_code_page(
+        cursor: &mut Cursor<&[u8]>,
+        size: usize,
+        code_page: u8,
+    ) -> Result<Self> {
         let mut buffer = vec![0u8; size];
-        reader
+        cursor
             .read_exact(&mut buffer)
             .context("Failed to read IA5String")?;
         let value = match code_page {
@@ -83,16 +87,16 @@ pub struct EmbedderIcAssemblerId {
     pub manufacturer_information: u8, // OctetString
 }
 impl EmbedderIcAssemblerId {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let country_code = IA5String::parse_dyn_size(reader, 2)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let country_code = IA5String::parse_dyn_size(cursor, 2)?;
 
-        let module_embedder = BCDString::parse_dyn_size(reader, 2)?;
+        let module_embedder = BCDString::parse_dyn_size(cursor, 2)?;
         let module_embedder = module_embedder
             .0
             .parse::<u16>()
             .context("Failed to parse module_embedder to a number")?;
 
-        let manufacturer_information = reader
+        let manufacturer_information = cursor
             .read_u8()
             .context("Failed to read manufacturer_information")?;
 
@@ -109,8 +113,8 @@ impl EmbedderIcAssemblerId {
 /// [CardReplacementIndex: appendix 2.31.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17853)
 pub struct CardReplacementIndex(IA5String);
 impl CardReplacementIndex {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(reader, 1)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = IA5String::parse_dyn_size(cursor, 1)?;
         Ok(CardReplacementIndex(value))
     }
 }
@@ -120,8 +124,8 @@ impl CardReplacementIndex {
 /// [CardConsecutiveIndex: appendix 2.14.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16973)
 pub struct CardConsecutiveIndex(IA5String);
 impl CardConsecutiveIndex {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(reader, 1)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = IA5String::parse_dyn_size(cursor, 1)?;
         Ok(CardConsecutiveIndex(value))
     }
 }
@@ -131,8 +135,8 @@ impl CardConsecutiveIndex {
 /// [CardRenewalIndex: appendix 2.30.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17812)
 pub struct CardRenewalIndex(IA5String);
 impl CardRenewalIndex {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(reader, 1)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = IA5String::parse_dyn_size(cursor, 1)?;
         Ok(CardRenewalIndex(value))
     }
 }
@@ -158,17 +162,17 @@ pub enum CardNumber {
 }
 impl CardNumber {
     // This method is only used to consume the null bytes
-    pub fn parse_unknown(reader: &mut dyn Read) -> Result<Self> {
-        let _ = reader
+    pub fn parse_unknown(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let _ = cursor
             .read_exact(&mut [0u8; 16])
             .context("Failed to read CardNumber null bytes")?;
         Ok(CardNumber::None)
     }
 
-    pub fn parse_driver(reader: &mut dyn Read) -> Result<Self> {
-        let driver_identification = IA5String::parse_dyn_size(reader, 14)?;
-        let card_replacement_index = CardReplacementIndex::parse(reader)?;
-        let card_renewal_index = CardRenewalIndex::parse(reader)?;
+    pub fn parse_driver(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let driver_identification = IA5String::parse_dyn_size(cursor, 14)?;
+        let card_replacement_index = CardReplacementIndex::parse(cursor)?;
+        let card_renewal_index = CardRenewalIndex::parse(cursor)?;
 
         Ok(CardNumber::Driver {
             driver_identification,
@@ -176,11 +180,11 @@ impl CardNumber {
             card_renewal_index,
         })
     }
-    pub fn parse_owner(reader: &mut dyn Read) -> Result<Self> {
-        let owner_identification = IA5String::parse_dyn_size(reader, 13)?;
-        let card_consecutive_index = CardConsecutiveIndex::parse(reader)?;
-        let card_replacement_index = CardReplacementIndex::parse(reader)?;
-        let card_renewal_index = CardRenewalIndex::parse(reader)?;
+    pub fn parse_owner(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let owner_identification = IA5String::parse_dyn_size(cursor, 13)?;
+        let card_consecutive_index = CardConsecutiveIndex::parse(cursor)?;
+        let card_replacement_index = CardReplacementIndex::parse(cursor)?;
+        let card_renewal_index = CardRenewalIndex::parse(cursor)?;
 
         Ok(CardNumber::Owner {
             owner_identification,
@@ -195,10 +199,10 @@ impl CardNumber {
 /// [TimeReal: appendix 2.162.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24993)
 pub struct TimeReal(chrono::DateTime<chrono::Utc>);
 // TODO: Determine what timezone is used in the DDD files
-// According to @mpi-wl, the timezone is UTC, see https://github.com/jugglingcats/tachograph-reader/issues/54#issuecomment-603089791
+// According to @mpi-wl, the timezone is UTC, see https://github.com/jugglingcats/tachograph-cursor/issues/54#issuecomment-603089791
 impl TimeReal {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let unix_timestamp = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let unix_timestamp = cursor
             .read_u32::<BigEndian>()
             .context("Failed to read TimeReal")?;
 
@@ -221,8 +225,8 @@ impl TimeReal {
 /// [CurrentDateTime: appendix 2.54.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19437)
 pub struct CurrentDateTime(TimeReal);
 impl CurrentDateTime {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        Ok(CurrentDateTime(TimeReal::parse(reader)?))
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        Ok(CurrentDateTime(TimeReal::parse(cursor)?))
     }
 }
 
@@ -231,8 +235,8 @@ impl CurrentDateTime {
 /// [CardApprovalNumber: appendix 2.11.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16800)
 pub struct CardApprovalNumber(IA5String);
 impl CardApprovalNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(reader, 8)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = IA5String::parse_dyn_size(cursor, 8)?;
         Ok(CardApprovalNumber(value))
     }
 }
@@ -242,8 +246,8 @@ impl CardApprovalNumber {
 /// [WVehicleCharacteristicConstant: appendix 2.239.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e29395)
 pub struct WVehicleCharacteristicConstant(u16);
 impl WVehicleCharacteristicConstant {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read WVehicleCharacteristicConstant")?;
         Ok(WVehicleCharacteristicConstant(value))
@@ -256,8 +260,8 @@ impl WVehicleCharacteristicConstant {
 /// [KConstantOfRecordingEquipment: appendix 2.85.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21927)
 pub struct KConstantOfRecordingEquipment(u16);
 impl KConstantOfRecordingEquipment {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read KConstantOfRecordingEquipment")?;
         Ok(KConstantOfRecordingEquipment(value))
@@ -273,11 +277,11 @@ pub enum CardStructureVersion {
     Gen2V2,
 }
 impl CardStructureVersion {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let fb = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let fb = cursor
             .read_u8()
             .context("Failed to read first byte of CardStructureVersion")?;
-        let sb = reader
+        let sb = cursor
             .read_u8()
             .context("Failed to read second byte of CardStructureVersion")?;
 
@@ -301,8 +305,8 @@ impl CardStructureVersion {
 /// [LTyreCircumference: appendix 2.91.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22169)
 pub struct LTyreCircumference(u16);
 impl LTyreCircumference {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read LTyreCircumference")?;
         Ok(LTyreCircumference(value))
@@ -314,8 +318,8 @@ impl LTyreCircumference {
 /// [TyreSize: appendix 2.163.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25026)
 pub struct TyreSize(IA5String);
 impl TyreSize {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(reader, 15)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = IA5String::parse_dyn_size(cursor, 15)?;
         Ok(TyreSize(value))
     }
 }
@@ -324,8 +328,8 @@ impl TyreSize {
 /// [Speed: appendix 2.155.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24822)
 pub struct Speed(u8);
 impl Speed {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader.read_u8().context("Failed to read value for Speed")?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor.read_u8().context("Failed to read value for Speed")?;
         Ok(Speed(value))
     }
 }
@@ -350,9 +354,9 @@ pub struct Name {
     pub name: IA5String,
 }
 impl Name {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let code_page = reader.read_u8().context("Failed to read code page")?;
-        let name = IA5String::parse_with_code_page(reader, 35, code_page)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let code_page = cursor.read_u8().context("Failed to read code page")?;
+        let name = IA5String::parse_with_code_page(cursor, 35, code_page)?;
         Ok(Name { code_page, name })
     }
 }
@@ -365,9 +369,9 @@ pub struct Address {
     pub address: IA5String,
 }
 impl Address {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let code_page = reader.read_u8().context("Failed to read code page")?;
-        let address = IA5String::parse_with_code_page(reader, 35, code_page)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let code_page = cursor.read_u8().context("Failed to read code page")?;
+        let address = IA5String::parse_with_code_page(cursor, 35, code_page)?;
         Ok(Address { code_page, address })
     }
 }
@@ -383,8 +387,8 @@ pub type VuManufacturerAddress = Address;
 /// [VuSoftwareVersion: appendix 2.226.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28569)
 pub struct VuSoftwareVersion(IA5String);
 impl VuSoftwareVersion {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        Ok(VuSoftwareVersion(IA5String::parse_dyn_size(reader, 4)?))
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        Ok(VuSoftwareVersion(IA5String::parse_dyn_size(cursor, 4)?))
     }
 }
 /// [VuSoftInstallationDate: appendix 2.224.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28515)
@@ -398,9 +402,9 @@ pub struct VuSoftwareIdentification {
     vu_soft_installation_date: VuSoftInstallationDate,
 }
 impl VuSoftwareIdentification {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let vu_software_version = VuSoftwareVersion::parse(reader)?;
-        let vu_soft_installation_date = VuSoftInstallationDate::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let vu_software_version = VuSoftwareVersion::parse(cursor)?;
+        let vu_soft_installation_date = VuSoftInstallationDate::parse(cursor)?;
 
         Ok(VuSoftwareIdentification {
             vu_software_version,
@@ -417,8 +421,8 @@ pub type VuManufacturingDate = TimeReal;
 /// [SimilarEventsNumber: appendix 2.151.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24591)
 pub struct SimilarEventsNumber(u8);
 impl SimilarEventsNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u8()
             .context("Failed to read value for SimilarEventsNumber")?;
 
@@ -441,8 +445,8 @@ pub enum EventFaultRecordPurpose {
     ManufacturerSpecific,
 }
 impl EventFaultRecordPurpose {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u8()
             .context("Failed to read EventFaultRecordPurpose")?;
         let parsed_value = match value {
@@ -466,8 +470,8 @@ impl EventFaultRecordPurpose {
 /// [VehicleIdentificationNumber: appendix 2.165.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25052)
 pub struct VehicleIdentificationNumber(IA5String);
 impl VehicleIdentificationNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let vin = IA5String::parse_dyn_size(reader, 17)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let vin = IA5String::parse_dyn_size(cursor, 17)?;
         Ok(VehicleIdentificationNumber(vin))
     }
 }
@@ -480,9 +484,9 @@ pub struct VehicleRegistrationNumber {
     pub vehicle_reg_number: IA5String,
 }
 impl VehicleRegistrationNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let code_page = reader.read_u8().context("Failed to read code page")?;
-        let vehicle_reg_number = IA5String::parse_with_code_page(reader, 13, code_page)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let code_page = cursor.read_u8().context("Failed to read code page")?;
+        let vehicle_reg_number = IA5String::parse_with_code_page(cursor, 13, code_page)?;
         Ok(VehicleRegistrationNumber {
             code_page,
             vehicle_reg_number,
@@ -506,8 +510,8 @@ pub struct CardSlotsStatus {
     pub driver: CardSlotStatus,
 }
 impl CardSlotsStatus {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let status = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let status = cursor
             .read_u8()
             .context("Failed to read card slots status")?;
 
@@ -544,10 +548,10 @@ pub struct HolderName {
     pub holder_first_names: Name,
 }
 impl HolderName {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(HolderName {
-            holder_surname: Name::parse(reader)?,
-            holder_first_names: Name::parse(reader)?,
+            holder_surname: Name::parse(cursor)?,
+            holder_first_names: Name::parse(cursor)?,
         })
     }
 }
@@ -559,8 +563,8 @@ pub enum CardSlotNumber {
     CoDriverSlot,
 }
 impl CardSlotNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u8()
             .context("Failed to read card_slot_number value")?;
         let card_slot = match value {
@@ -577,9 +581,9 @@ impl CardSlotNumber {
 /// [OdometerShort: appendix 2.113.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22854)
 pub struct OdometerShort(u32);
 impl OdometerShort {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut km_buffer = [0u8; 3];
-        reader
+        cursor
             .read_exact(&mut km_buffer)
             .context("Failed to read odometer short km value")?;
         // odometer short is 3 bytes, so we must pad the buffer with 1 byte to use a u32
@@ -598,9 +602,9 @@ pub struct VehicleRegistrationIdentification {
     vehicle_registration_number: VehicleRegistrationNumber,
 }
 impl VehicleRegistrationIdentification {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let vehicle_registration_nation = external::NationNumeric::parse(reader)?;
-        let vehicle_registration_number = VehicleRegistrationNumber::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let vehicle_registration_nation = external::NationNumeric::parse(cursor)?;
+        let vehicle_registration_number = VehicleRegistrationNumber::parse(cursor)?;
         Ok(VehicleRegistrationIdentification {
             vehicle_registration_nation,
             vehicle_registration_number,
@@ -615,8 +619,8 @@ pub enum ManualInputFlag {
     ManualEntries,
 }
 impl ManualInputFlag {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let manual_input_flag = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let manual_input_flag = cursor
             .read_u8()
             .context("Failed to read manual input flag")?;
         let manual_input_flag = match manual_input_flag {
@@ -667,12 +671,12 @@ pub struct ActivityChangeInfo {
 impl ActivityChangeInfo {
     pub const SIZE: usize = 2;
 
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut buf = vec![0u8; Self::SIZE];
-        reader.read_exact(&mut buf)?;
-        let inner_reader = &mut buf.as_slice();
+        cursor.read_exact(&mut buf)?;
+        let inner_cursor = &mut buf.as_slice();
 
-        let value_buffer = inner_reader
+        let value_buffer = inner_cursor
             .read_u16::<BigEndian>()
             .context("Failed to read activity change info")?;
         let bits = extract_u16_bits_into_tup(value_buffer);
@@ -734,14 +738,14 @@ pub struct CardChipIdentification {
     pub card_chip_identification_signature: [u8; 4],
 }
 impl CardChipIdentification {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut card_chip_identification_number = [0u8; 4];
-        reader
+        cursor
             .read_exact(&mut card_chip_identification_number)
             .context("Failed to read card chip identification number")?;
 
         let mut card_chip_identification_signature = [0u8; 4];
-        reader
+        cursor
             .read_exact(&mut card_chip_identification_signature)
             .context("Failed to read card chip identification signature")?;
         Ok(CardChipIdentification {
@@ -760,16 +764,16 @@ pub struct Datef {
     pub day: u8,
 }
 impl Datef {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let year = BCDString::parse_dyn_size(reader, 2)?
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let year = BCDString::parse_dyn_size(cursor, 2)?
             .0
             .parse::<u16>()
             .context("Failed to parse year")?;
-        let month = BCDString::parse_dyn_size(reader, 1)?
+        let month = BCDString::parse_dyn_size(cursor, 1)?
             .0
             .parse::<u8>()
             .context("Failed to parse month")?;
-        let day = BCDString::parse_dyn_size(reader, 1)?
+        let day = BCDString::parse_dyn_size(cursor, 1)?
             .0
             .parse::<u8>()
             .context("Failed to parse day")?;
@@ -781,8 +785,8 @@ impl Datef {
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct Language(IA5String);
 impl Language {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        Ok(Language(IA5String::parse_dyn_size(reader, 2)?))
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        Ok(Language(IA5String::parse_dyn_size(cursor, 2)?))
     }
 }
 
@@ -798,15 +802,15 @@ pub struct CardIdentification {
     card_expiry_date: TimeReal,
 }
 impl CardIdentification {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let card_issuing_member_state = external::NationNumeric::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let card_issuing_member_state = external::NationNumeric::parse(cursor)?;
         // TODO: Check if this is correct, not sure if this works with workshop/company cards, we might need to get the type of the card file
         // and parse the card number accordingly
-        let card_number = CardNumber::parse_driver(reader)?;
-        let card_issuing_authority_name = Name::parse(reader)?;
-        let card_issue_date = TimeReal::parse(reader)?;
-        let card_validity_begin = TimeReal::parse(reader)?;
-        let card_expiry_date = TimeReal::parse(reader)?;
+        let card_number = CardNumber::parse_driver(cursor)?;
+        let card_issuing_authority_name = Name::parse(cursor)?;
+        let card_issue_date = TimeReal::parse(cursor)?;
+        let card_validity_begin = TimeReal::parse(cursor)?;
+        let card_expiry_date = TimeReal::parse(cursor)?;
         Ok(CardIdentification {
             card_issuing_member_state,
             card_number,
@@ -827,10 +831,10 @@ pub struct DriverCardHolderIdentification {
     card_holder_preferred_language: Language,
 }
 impl DriverCardHolderIdentification {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let card_holder_number = HolderName::parse(reader)?;
-        let card_holder_birth_date = Datef::parse(reader)?;
-        let card_holder_preferred_language = Language::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let card_holder_number = HolderName::parse(cursor)?;
+        let card_holder_birth_date = Datef::parse(cursor)?;
+        let card_holder_preferred_language = Language::parse(cursor)?;
         Ok(DriverCardHolderIdentification {
             card_holder_number,
             card_holder_birth_date,
@@ -847,9 +851,9 @@ pub struct Identification {
     pub driver_card_holder_identification: DriverCardHolderIdentification,
 }
 impl Identification {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let card_identification = CardIdentification::parse(reader)?;
-        let driver_card_holder_identification = DriverCardHolderIdentification::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let card_identification = CardIdentification::parse(cursor)?;
+        let driver_card_holder_identification = DriverCardHolderIdentification::parse(cursor)?;
         Ok(Identification {
             card_identification,
             driver_card_holder_identification,
@@ -867,8 +871,8 @@ pub struct CardDownload {
     pub last_card_download: LastCardDownload,
 }
 impl CardDownload {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let last_card_download = LastCardDownload::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let last_card_download = LastCardDownload::parse(cursor)?;
         Ok(CardDownload { last_card_download })
     }
 }
@@ -882,10 +886,10 @@ pub struct CardDrivingLicenceInformation {
     pub driving_licence_number: IA5String,
 }
 impl CardDrivingLicenceInformation {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let driving_licence_issuing_authority = Name::parse(reader)?;
-        let driving_licence_issuing_nation = external::NationNumeric::parse(reader)?;
-        let driving_licence_number = IA5String::parse_dyn_size(reader, 16)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let driving_licence_issuing_authority = Name::parse(cursor)?;
+        let driving_licence_issuing_nation = external::NationNumeric::parse(cursor)?;
+        let driving_licence_number = IA5String::parse_dyn_size(cursor, 16)?;
         Ok(CardDrivingLicenceInformation {
             driving_licence_issuing_authority,
             driving_licence_issuing_nation,
@@ -901,8 +905,8 @@ pub struct CardDrivingLicenceInfo {
     pub card_driving_licence_information: CardDrivingLicenceInformation,
 }
 impl CardDrivingLicenceInfo {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let card_driving_licence_information = CardDrivingLicenceInformation::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let card_driving_licence_information = CardDrivingLicenceInformation::parse(cursor)?;
         Ok(CardDrivingLicenceInfo {
             card_driving_licence_information,
         })
@@ -914,8 +918,8 @@ impl CardDrivingLicenceInfo {
 /// [DailyPresenceCounter: appendix 2.56.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19510)
 pub struct DailyPresenceCounter(u16);
 impl DailyPresenceCounter {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = BCDString::parse_dyn_size(reader, 2)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = BCDString::parse_dyn_size(cursor, 2)?;
         let value = value
             .0
             .parse::<u16>()
@@ -929,8 +933,8 @@ impl DailyPresenceCounter {
 /// [Distance: appendix 2.60.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19665)
 pub struct Distance(u16);
 impl Distance {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read distance")?;
         Ok(Distance(value))
@@ -959,24 +963,24 @@ impl CardActivityDailyRecord {
     //      activity_daily_presence_counter +
     //      activity_day_distance
     const SIZE_OF_METADATA: u16 = 12;
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let activity_previous_record_length: CardActivityLengthRange = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let activity_previous_record_length: CardActivityLengthRange = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read activity_previous_record_length")?;
-        let activity_record_length: CardActivityLengthRange = reader
+        let activity_record_length: CardActivityLengthRange = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read activity_record_length")?;
 
-        let activity_record_date = TimeReal::parse(reader)?;
-        let activity_daily_presence_counter = DailyPresenceCounter::parse(reader)?;
-        let activity_day_distance = Distance::parse(reader)?;
+        let activity_record_date = TimeReal::parse(cursor)?;
+        let activity_daily_presence_counter = DailyPresenceCounter::parse(cursor)?;
+        let activity_day_distance = Distance::parse(cursor)?;
 
         let records_amount = (activity_record_length as usize - Self::SIZE_OF_METADATA as usize)
             / ActivityChangeInfo::SIZE;
 
         let mut activity_change_info = Vec::with_capacity(records_amount);
         for _ in 0..records_amount {
-            if let Ok(record) = ActivityChangeInfo::parse(reader) {
+            if let Ok(record) = ActivityChangeInfo::parse(cursor) {
                 activity_change_info.push(record);
             }
         }
@@ -1002,17 +1006,17 @@ pub struct CardDriverActivity {
 }
 impl CardDriverActivity {
     const SIZE: usize = 13776;
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let activity_pointer_oldest_day_record = reader
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let activity_pointer_oldest_day_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read activity_pointer_oldest_day_record")?;
-        let activity_pointer_newest_record = reader
+        let activity_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read activity_pointer_newest_record")?;
 
         // Read the entire cyclic data block
         let mut cyclic_data = vec![0u8; Self::SIZE as usize];
-        reader
+        cursor
             .read_exact(&mut cyclic_data)
             .context("Failed to read cyclic data")?;
 
@@ -1089,8 +1093,8 @@ pub struct DriverActivityData {
     card_driver_activity: CardDriverActivity,
 }
 impl DriverActivityData {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let card_driver_activity = CardDriverActivity::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let card_driver_activity = CardDriverActivity::parse(cursor)?;
         Ok(DriverActivityData {
             card_driver_activity,
         })
@@ -1122,8 +1126,8 @@ pub enum RegionNumeric {
     Melilla,
 }
 impl RegionNumeric {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = reader.read_u8().context("Failed to read region_numeric")?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor.read_u8().context("Failed to read region_numeric")?;
         let region = match value {
             0x00 => RegionNumeric::NoInformation,
             0x01 => RegionNumeric::Andalucia,
@@ -1157,8 +1161,8 @@ impl RegionNumeric {
 pub struct VuDataBlockCounter(u16);
 
 impl VuDataBlockCounter {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value = BCDString::parse_dyn_size(reader, 2)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = BCDString::parse_dyn_size(cursor, 2)?;
 
         let num_value = value
             .0
@@ -1180,9 +1184,9 @@ pub struct CardCurrentUse {
     pub session_open_vehicle: VehicleRegistrationIdentification,
 }
 impl CardCurrentUse {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let session_open_time = TimeReal::parse(reader)?;
-        let session_open_vehicle = VehicleRegistrationIdentification::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let session_open_time = TimeReal::parse(cursor)?;
+        let session_open_vehicle = VehicleRegistrationIdentification::parse(cursor)?;
         Ok(CardCurrentUse {
             session_open_time,
             session_open_vehicle,
@@ -1197,8 +1201,8 @@ pub struct CurrentUsage {
     pub card_current_use: CardCurrentUse,
 }
 impl CurrentUsage {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let card_current_use = CardCurrentUse::parse(reader)?;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let card_current_use = CardCurrentUse::parse(cursor)?;
         Ok(CurrentUsage { card_current_use })
     }
 }
@@ -1210,12 +1214,12 @@ pub struct MonthYear {
     pub year: u8,
 }
 impl MonthYear {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let month = BCDString::parse_dyn_size(reader, 1)?
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let month = BCDString::parse_dyn_size(cursor, 1)?
             .0
             .parse::<u8>()
             .context("Failed to parse month from BCDString to number")?;
-        let year = BCDString::parse_dyn_size(reader, 1)?
+        let year = BCDString::parse_dyn_size(cursor, 1)?
             .0
             .parse::<u8>()
             .context("Failed to parse year from BCDString to number")?;
@@ -1231,11 +1235,11 @@ pub struct VuDownloadablePeriod {
     pub max_downloadable_time: TimeReal,
 }
 impl VuDownloadablePeriod {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let min_downloadable_time =
-            TimeReal::parse(reader).context("Failed to parse min_downloadable_time")?;
+            TimeReal::parse(cursor).context("Failed to parse min_downloadable_time")?;
         let max_downloadable_time =
-            TimeReal::parse(reader).context("Failed to parse max_downloadable_time")?;
+            TimeReal::parse(cursor).context("Failed to parse max_downloadable_time")?;
 
         Ok(VuDownloadablePeriod {
             min_downloadable_time,
@@ -1253,13 +1257,13 @@ pub struct VuDetailedSpeedBlock {
 }
 
 impl VuDetailedSpeedBlock {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let speed_block_begin_date =
-            TimeReal::parse(reader).context("Failed to parse speed_block_begin_date")?;
+            TimeReal::parse(cursor).context("Failed to parse speed_block_begin_date")?;
 
         let mut speeds_per_second = Vec::with_capacity(60);
         for _ in 0..60 {
-            speeds_per_second.push(Speed::parse(reader).context("Failed to parse speed")?);
+            speeds_per_second.push(Speed::parse(cursor).context("Failed to parse speed")?);
         }
 
         Ok(VuDetailedSpeedBlock {
@@ -1274,8 +1278,8 @@ impl VuDetailedSpeedBlock {
 /// [VuPartNumber: appendix 2.217.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28257)
 pub struct VuPartNumber(IA5String);
 impl VuPartNumber {
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        Ok(VuPartNumber(IA5String::parse_dyn_size(reader, 16)?))
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        Ok(VuPartNumber(IA5String::parse_dyn_size(cursor, 16)?))
     }
 }
 /// [SensorPairingDate: appendix 2.146.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24438)

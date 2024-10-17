@@ -76,20 +76,20 @@ fn detect(fb: u8, sb: u8, buffer: &[u8]) -> Result<TachoFileType> {
 }
 
 pub fn detect_from_bytes(bytes: &[u8]) -> Result<TachoFileType> {
-    let mut reader = BufReader::new(bytes);
+    let mut cursor = BufReader::new(bytes);
 
-    let fb = reader.read_u8().context("Failed to read first byte")?;
-    let sb = reader.read_u8().context("Failed to read second byte")?;
+    let fb = cursor.read_u8().context("Failed to read first byte")?;
+    let sb = cursor.read_u8().context("Failed to read second byte")?;
 
     detect(fb, sb, bytes)
 }
 
 pub fn detect_from_file(file_path: &str) -> Result<TachoFileType> {
     let bytes = std::fs::read(file_path).context("Failed to read file")?;
-    let mut reader = BufReader::new(&bytes[..]);
+    let mut cursor = BufReader::new(&bytes[..]);
 
-    let fb = reader.read_u8().context("Failed to read first byte")?;
-    let sb = reader.read_u8().context("Failed to read second byte")?;
+    let fb = cursor.read_u8().context("Failed to read first byte")?;
+    let sb = cursor.read_u8().context("Failed to read second byte")?;
 
     detect(fb, sb, &bytes)
 }
