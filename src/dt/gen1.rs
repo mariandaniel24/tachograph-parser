@@ -283,8 +283,12 @@ pub struct SpecificConditionRecord {
 impl SpecificConditionRecord {
     const SIZE: usize = 5;
     pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let entry_time = TimeReal::parse(reader)?;
-        let specific_condition_type = SpecificConditionType::parse(reader)?;
+        let mut buf = vec![0u8; Self::SIZE];
+        reader.read_exact(&mut buf)?;
+        let inner_reader = &mut buf.as_slice();
+
+        let entry_time = TimeReal::parse(inner_reader)?;
+        let specific_condition_type = SpecificConditionType::parse(inner_reader)?;
         if specific_condition_type == SpecificConditionType::RFU {
             return Err(anyhow::anyhow!(
                 "RFU value found in SpecificConditionRecord"
@@ -512,13 +516,17 @@ pub struct PlaceRecord {
     pub vehicle_odometer_value: OdometerShort,
 }
 impl PlaceRecord {
-    const SIZE: u16 = 10;
+    const SIZE: usize = 10;
     pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let entry_time = TimeReal::parse(reader)?;
-        let entry_type_daily_work_period = EntryTypeDailyWorkPeriod::parse(reader)?;
-        let daily_work_period_country = external::NationNumeric::parse(reader)?;
-        let daily_work_period_region = RegionNumeric::parse(reader)?;
-        let vehicle_odometer_value = OdometerShort::parse(reader)?;
+        let mut buf = vec![0u8; Self::SIZE];
+        reader.read_exact(&mut buf)?;
+        let inner_reader = &mut buf.as_slice();
+
+        let entry_time = TimeReal::parse(inner_reader)?;
+        let entry_type_daily_work_period = EntryTypeDailyWorkPeriod::parse(inner_reader)?;
+        let daily_work_period_country = external::NationNumeric::parse(inner_reader)?;
+        let daily_work_period_region = RegionNumeric::parse(inner_reader)?;
+        let vehicle_odometer_value = OdometerShort::parse(inner_reader)?;
         if entry_time.0.timestamp() == 0 {
             anyhow::bail!("Invalid entry_time in PlaceRecord");
         }
@@ -597,12 +605,16 @@ pub struct CardEventRecord {
 }
 
 impl CardEventRecord {
-    const SIZE: u16 = 24;
+    const SIZE: usize = 24;
     pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let event_type = EventFaultType::parse(reader)?;
-        let event_begin_time = TimeReal::parse(reader)?;
-        let event_end_time = TimeReal::parse(reader)?;
-        let event_vehicle_registration = VehicleRegistrationIdentification::parse(reader)?;
+        let mut buf = vec![0u8; Self::SIZE];
+        reader.read_exact(&mut buf)?;
+        let inner_reader = &mut buf.as_slice();
+
+        let event_type = EventFaultType::parse(inner_reader)?;
+        let event_begin_time = TimeReal::parse(inner_reader)?;
+        let event_end_time = TimeReal::parse(inner_reader)?;
+        let event_vehicle_registration = VehicleRegistrationIdentification::parse(inner_reader)?;
 
         Ok(CardEventRecord {
             event_type,
@@ -618,30 +630,19 @@ impl CardEventRecord {
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
 pub struct CardEventData(Vec<Vec<CardEventRecord>>);
 impl CardEventData {
-    const MAX_BLOCK_SIZE: u16 = 1728;
-    const OUTER_RECORDS_AMOUNT: u16 = 6;
+    const OUTER_RECORDS_AMOUNT: usize = 6;
 
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
         let mut card_event_records = Vec::new();
-        let max_possible_records = Self::MAX_BLOCK_SIZE / CardEventRecord::SIZE;
-        let max_inner_records = max_possible_records / Self::OUTER_RECORDS_AMOUNT;
+        let inner_record_amounts = size / Self::OUTER_RECORDS_AMOUNT / CardEventRecord::SIZE;
 
         // According to the spec, there are ALWAYS 6 outer CardEventRecords, but we'll use the size from header anyway
         for _ in 0..Self::OUTER_RECORDS_AMOUNT {
             let mut inner_card_event_records = Vec::new();
-            for _ in 0..max_inner_records {
-                match CardEventRecord::parse(reader) {
-                    Ok(card_event_record) => inner_card_event_records.push(card_event_record),
-                    Err(_) => {
-                        // log::warn!(
-                        //     "Skipping CardEventRecord at outer idx {:?} and inner idx {:?}: {:?}",
-                        //     i,
-                        //     j,
-                        //     e
-                        // );
-                        continue;
-                    }
-                };
+            for _ in 0..inner_record_amounts {
+                if let Ok(card_event_record) = CardEventRecord::parse(reader) {
+                    inner_card_event_records.push(card_event_record);
+                }
             }
             // Only include the records if there are any
             if inner_card_event_records.len() > 0 {
@@ -663,12 +664,16 @@ pub struct CardFaultRecord {
 }
 
 impl CardFaultRecord {
-    pub const SIZE: u16 = 24;
+    const SIZE: usize = 24;
     pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let fault_type = EventFaultType::parse(reader)?;
-        let fault_begin_time = TimeReal::parse(reader)?;
-        let fault_end_time = TimeReal::parse(reader)?;
-        let fault_vehicle_registration = VehicleRegistrationIdentification::parse(reader)?;
+        let mut buf = vec![0u8; Self::SIZE];
+        reader.read_exact(&mut buf)?;
+        let inner_reader = &mut buf.as_slice();
+
+        let fault_type = EventFaultType::parse(inner_reader)?;
+        let fault_begin_time = TimeReal::parse(inner_reader)?;
+        let fault_end_time = TimeReal::parse(inner_reader)?;
+        let fault_vehicle_registration = VehicleRegistrationIdentification::parse(inner_reader)?;
 
         Ok(CardFaultRecord {
             fault_type,
@@ -684,31 +689,20 @@ impl CardFaultRecord {
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
 pub struct CardFaultData(Vec<Vec<CardFaultRecord>>);
 impl CardFaultData {
-    const MAX_BLOCK_SIZE: u16 = 1152;
-    const OUTER_RECORDS_AMOUNT: u16 = 6;
+    const OUTER_RECORDS_AMOUNT: usize = 2;
 
-    pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+    pub fn parse_dyn_size(reader: &mut dyn Read, size: usize) -> Result<Self> {
         let mut card_fault_records = Vec::new();
 
-        let max_possible_records = Self::MAX_BLOCK_SIZE / CardFaultRecord::SIZE;
-        let max_inner_records = max_possible_records / Self::OUTER_RECORDS_AMOUNT;
+        let max_inner_records = size / Self::OUTER_RECORDS_AMOUNT / CardFaultRecord::SIZE;
 
         // According to the spec, there are ALWAYS 2 outer CardFaultRecords, but we'll use the computed size just in case
         for _ in 0..Self::OUTER_RECORDS_AMOUNT {
             let mut inner_card_fault_records = Vec::new();
             for _ in 0..max_inner_records {
-                match CardFaultRecord::parse(reader) {
-                    Ok(card_fault_record) => inner_card_fault_records.push(card_fault_record),
-                    Err(_) => {
-                        // log::warn!(
-                        //     "Skipping CardFaultRecord at outer idx {:?} and inner idx {:?}: {:?}",
-                        //     i,
-                        //     j,
-                        //     e
-                        // );
-                        continue;
-                    }
-                };
+                if let Ok(card_fault_record) = CardFaultRecord::parse(reader) {
+                    inner_card_fault_records.push(card_fault_record);
+                }
             }
             // Only include the records if there are any
             if inner_card_fault_records.len() > 0 {
@@ -731,15 +725,19 @@ pub struct CardVehicleRecord {
     pub vu_data_block_counter: VuDataBlockCounter,
 }
 impl CardVehicleRecord {
-    const SIZE: u16 = 31;
+    const SIZE: usize = 31;
     pub fn parse(reader: &mut dyn Read) -> Result<Self> {
+        let mut buf = vec![0u8; Self::SIZE];
+        reader.read_exact(&mut buf)?;
+        let inner_reader = &mut buf.as_slice();
+
         Ok(CardVehicleRecord {
-            vehicle_odometer_begin: OdometerShort::parse(reader)?,
-            vehicle_odometer_end: OdometerShort::parse(reader)?,
-            vehicle_first_use: TimeReal::parse(reader)?,
-            vehicle_last_use: TimeReal::parse(reader)?,
-            vehicle_registration: VehicleRegistrationIdentification::parse(reader)?,
-            vu_data_block_counter: VuDataBlockCounter::parse(reader)?,
+            vehicle_odometer_begin: OdometerShort::parse(inner_reader)?,
+            vehicle_odometer_end: OdometerShort::parse(inner_reader)?,
+            vehicle_first_use: TimeReal::parse(inner_reader)?,
+            vehicle_last_use: TimeReal::parse(inner_reader)?,
+            vehicle_registration: VehicleRegistrationIdentification::parse(inner_reader)?,
+            vu_data_block_counter: VuDataBlockCounter::parse(inner_reader)?,
         })
     }
 }

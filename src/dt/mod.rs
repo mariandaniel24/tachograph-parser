@@ -64,6 +64,7 @@ impl IA5String {
             80 => encoding_rs::KOI8_U.decode(&buffer).0.to_string(),
             85 => encoding_rs::KOI8_R.decode(&buffer).0.to_string(),
             // TODO: Might want to error out instead?
+            // _ => anyhow::bail!("Unsupported code page: {}", code_page),
             _ => String::from_utf8_lossy(&buffer).to_string(),
         };
 
@@ -667,7 +668,11 @@ impl ActivityChangeInfo {
     pub const SIZE: usize = 2;
 
     pub fn parse(reader: &mut dyn Read) -> Result<Self> {
-        let value_buffer = reader
+        let mut buf = vec![0u8; Self::SIZE];
+        reader.read_exact(&mut buf)?;
+        let inner_reader = &mut buf.as_slice();
+
+        let value_buffer = inner_reader
             .read_u16::<BigEndian>()
             .context("Failed to read activity change info")?;
         let bits = extract_u16_bits_into_tup(value_buffer);

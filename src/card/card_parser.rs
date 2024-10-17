@@ -254,7 +254,10 @@ impl CardParser {
                 }
                 // EventsData Gen1
                 (0x0502, 0) => {
-                    events_data = Some(CardBlock::parse(&mut reader, gen1::CardEventData::parse)?);
+                    events_data = Some(CardBlock::parse_dyn_size(
+                        &mut reader,
+                        gen1::CardEventData::parse_dyn_size,
+                    )?);
                 }
                 // EventsData Signature Gen1
                 (0x0502, 1) => {
@@ -263,7 +266,10 @@ impl CardParser {
                 }
                 // FaultsData Gen1
                 (0x0503, 0) => {
-                    faults_data = Some(CardBlock::parse(&mut reader, gen1::CardFaultData::parse)?);
+                    faults_data = Some(CardBlock::parse_dyn_size(
+                        &mut reader,
+                        gen1::CardFaultData::parse_dyn_size,
+                    )?);
                 }
                 // FaultsData Signature Gen1
                 (0x0503, 1) => {
@@ -426,8 +432,10 @@ impl CardParser {
                     )?);
                 }
                 (0x0502, 2) => {
-                    events_data_gen2 =
-                        Some(CardBlock::parse(&mut reader, gen2::CardEventData::parse)?);
+                    events_data_gen2 = Some(CardBlock::parse_dyn_size(
+                        &mut reader,
+                        gen2::CardEventData::parse_dyn_size,
+                    )?);
                 }
                 (0x0502, 3) => {
                     events_data_signature_gen2 = Some(CardBlock::parse_dyn_size(
