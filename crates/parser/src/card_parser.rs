@@ -17,10 +17,10 @@ pub struct Gen1Blocks {
     pub member_state_certificate: gen1::Certificate,
     pub identification: dt::Identification,
     pub identification_signature: gen1::Signature,
-    pub card_download: dt::CardDownload,
-    pub card_download_signature: gen1::Signature,
-    pub driver_licence_info: dt::CardDrivingLicenceInformation,
-    pub driver_licence_info_signature: gen1::Signature,
+    pub card_download: Option<dt::CardDownload>,
+    pub card_download_signature: Option<gen1::Signature>,
+    pub driver_licence_info: Option<dt::CardDrivingLicenceInformation>,
+    pub driver_licence_info_signature: Option<gen1::Signature>,
     pub events_data: gen1::CardEventData,
     pub events_data_signature: gen1::Signature,
     pub faults_data: gen1::CardFaultData,
@@ -31,8 +31,8 @@ pub struct Gen1Blocks {
     pub vehicles_used_signature: gen1::Signature,
     pub places: gen1::CardPlaceDailyWorkPeriod,
     pub places_signature: gen1::Signature,
-    pub current_usage: dt::CurrentUsage,
-    pub current_usage_signature: gen1::Signature,
+    pub current_usage: Option<dt::CurrentUsage>,
+    pub current_usage_signature: Option<gen1::Signature>,
     pub control_activity_data: gen1::CardControlActivityDataRecord,
     pub control_activity_data_signature: gen1::Signature,
     pub specific_conditions: gen1::SpecificConditions,
@@ -51,10 +51,10 @@ pub struct Gen2Blocks {
     pub link_certificate: gen2::Certificate,
     pub identification: dt::Identification,
     pub identification_signature: gen2::Signature,
-    pub card_download: dt::CardDownload,
-    pub card_download_signature: gen2::Signature,
-    pub driver_licence_information: dt::CardDrivingLicenceInformation,
-    pub driver_licence_info_signature: gen2::Signature,
+    pub card_download: Option<dt::CardDownload>,
+    pub card_download_signature: Option<gen2::Signature>,
+    pub driver_licence_info: Option<dt::CardDrivingLicenceInformation>,
+    pub driver_licence_info_signature: Option<gen2::Signature>,
     pub events_data: gen2::CardEventData,
     pub events_data_signature: gen2::Signature,
     pub faults_data: gen2::CardFaultData,
@@ -65,8 +65,8 @@ pub struct Gen2Blocks {
     pub vehicles_used_signature: gen2::Signature,
     pub places: gen2::CardPlaceDailyWorkPeriod,
     pub places_signature: gen2::Signature,
-    pub current_usage: dt::CurrentUsage,
-    pub current_usage_signature: gen2::Signature,
+    pub current_usage: Option<dt::CurrentUsage>,
+    pub current_usage_signature: Option<gen2::Signature>,
     pub control_activity_data: gen2::CardControlActivityDataRecord,
     pub control_activity_data_signature: gen2::Signature,
     pub specific_conditions: gen2::SpecificConditions,
@@ -81,7 +81,7 @@ pub struct Gen2Blocks {
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct CardData {
     pub gen1_blocks: Gen1Blocks,
-    pub gen2_blocks: Gen2Blocks,
+    pub gen2_blocks: Option<Gen2Blocks>,
 }
 pub struct CardParser {
     input: Vec<u8>,
@@ -142,7 +142,7 @@ impl CardParser {
         let mut identification_signature_gen2: Option<gen2::Signature> = None;
         let mut card_download_gen2: Option<dt::CardDownload> = None;
         let mut card_download_signature_gen2: Option<gen2::Signature> = None;
-        let mut driver_licence_information_gen2: Option<dt::CardDrivingLicenceInformation> = None;
+        let mut driver_licence_info_gen2: Option<dt::CardDrivingLicenceInformation> = None;
         let mut driver_licence_info_signature_gen2: Option<gen2::Signature> = None;
         let mut events_data_gen2: Option<gen2::CardEventData> = None;
         let mut events_data_signature_gen2: Option<gen2::Signature> = None;
@@ -440,7 +440,7 @@ impl CardParser {
                 }
                 // DrivingLicenseInfo Gen2
                 (0x0521, 2) => {
-                    driver_licence_information_gen2 = Some(
+                    driver_licence_info_gen2 = Some(
                         CardBlock::parse(&mut cursor, dt::CardDrivingLicenceInformation::parse)?
                             .into_inner(),
                     );
@@ -592,130 +592,130 @@ impl CardParser {
 
         let gen1_blocks = Gen1Blocks {
             card_icc_identification: card_icc_identification
-                .context("unable to find card_icc_identification after parsing file")?,
+                .context("unable to find card_icc_identification gen1 after parsing file")?,
             card_chip_identification: card_chip_identification
-                .context("unable to find card_chip_identification after parsing file")?,
+                .context("unable to find card_chip_identification gen1 after parsing file")?,
             application_identification: application_identification
-                .context("unable to find application_identification after parsing file")?,
+                .context("unable to find application_identification gen1 after parsing file")?,
             application_identification_signature: application_identification_signature.context(
-                "unable to find application_identification_signature after parsing file",
+                "unable to find application_identification_signature gen1 after parsing file",
             )?,
             card_certificate: card_certificate
-                .context("unable to find card_certificate after parsing file")?,
+                .context("unable to find card_certificate gen1 after parsing file")?,
             member_state_certificate: member_state_certificate
-                .context("unable to find member_state_certificate after parsing file")?,
+                .context("unable to find member_state_certificate gen1 after parsing file")?,
             identification: identification
-                .context("unable to find identification after parsing file")?,
+                .context("unable to find identification gen1 after parsing file")?,
             identification_signature: identification_signature
-                .context("unable to find identification_signature after parsing file")?,
-            card_download: last_card_download
-                .context("unable to find card_download after parsing file")?,
-            card_download_signature: last_card_download_signature
-                .context("unable to find card_download_signature after parsing file")?,
-            driver_licence_info: driver_licence_information
-                .context("unable to find driver_licence_info after parsing file")?,
-            driver_licence_info_signature: driver_licence_info_signature
-                .context("unable to find driver_licence_info_signature after parsing file")?,
-            events_data: events_data.context("unable to find events_data after parsing file")?,
+                .context("unable to find identification_signature gen1 after parsing file")?,
+            card_download: last_card_download,
+            card_download_signature: last_card_download_signature,
+            driver_licence_info: driver_licence_information,
+            driver_licence_info_signature: driver_licence_info_signature,
+            events_data: events_data
+                .context("unable to find events_data gen1 after parsing file")?,
             events_data_signature: events_data_signature
-                .context("unable to find events_data_signature after parsing file")?,
-            faults_data: faults_data.context("unable to find faults_data after parsing file")?,
+                .context("unable to find events_data_signature gen1 after parsing file")?,
+            faults_data: faults_data
+                .context("unable to find faults_data gen1 after parsing file")?,
             faults_data_signature: faults_data_signature
-                .context("unable to find faults_data_signature after parsing file")?,
+                .context("unable to find faults_data_signature gen1 after parsing file")?,
             driver_activity_data: driver_activity_data
-                .context("unable to find driver_activity_data after parsing file")?,
+                .context("unable to find driver_activity_data gen1 after parsing file")?,
             driver_activity_data_signature: driver_activity_data_signature
-                .context("unable to find driver_activity_data_signature after parsing file")?,
+                .context("unable to find driver_activity_data_signature gen1 after parsing file")?,
             vehicles_used: vehicles_used
-                .context("unable to find vehicles_used after parsing file")?,
+                .context("unable to find vehicles_used gen1 after parsing file")?,
             vehicles_used_signature: vehicles_used_signature
-                .context("unable to find vehicles_used_signature after parsing file")?,
-            places: places.context("unable to find places after parsing file")?,
+                .context("unable to find vehicles_used_signature gen1 after parsing file")?,
+            places: places.context("unable to find places gen1 after parsing file")?,
             places_signature: places_signature
-                .context("unable to find places_signature after parsing file")?,
-            current_usage: current_usage
-                .context("unable to find current_usage after parsing file")?,
-            current_usage_signature: current_usage_signature
-                .context("unable to find current_usage_signature after parsing file")?,
+                .context("unable to find places_signature gen1 after parsing file")?,
+            current_usage: current_usage,
+            current_usage_signature: current_usage_signature,
             control_activity_data: control_activity_data
-                .context("unable to find control_activity_data after parsing file")?,
-            control_activity_data_signature: control_activity_data_signature
-                .context("unable to find control_activity_data_signature after parsing file")?,
+                .context("unable to find control_activity_data gen1 after parsing file")?,
+            control_activity_data_signature: control_activity_data_signature.context(
+                "unable to find control_activity_data_signature gen1 after parsing file",
+            )?,
             specific_conditions: specific_conditions
-                .context("unable to find specific_conditions after parsing file")?,
+                .context("unable to find specific_conditions gen1 after parsing file")?,
             specific_conditions_signature: specific_conditions_signature
-                .context("unable to find specific_conditions_signature after parsing file")?,
+                .context("unable to find specific_conditions_signature gen1 after parsing file")?,
         };
 
-        let gen2_blocks = Gen2Blocks {
-            card_icc_identification: card_icc_identification_gen2
-                .context("unable to find card_icc_identification after parsing file")?,
-            card_chip_identification: card_chip_identification_gen2
-                .context("unable to find card_chip_identification after parsing file")?,
-            application_identification: application_identification_gen2
-                .context("unable to find application_identification after parsing file")?,
-            application_identification_signature: application_identification_signature_gen2
-                .context(
-                    "unable to find application_identification_signature after parsing file",
+        let mut gen2_blocks: Option<Gen2Blocks> = None;
+
+        if card_icc_identification_gen2.is_some() {
+            let blocks = Gen2Blocks {
+                card_icc_identification: card_icc_identification_gen2
+                    .context("unable to find card_icc_identification gen2 after parsing file")?,
+                card_chip_identification: card_chip_identification_gen2
+                    .context("unable to find card_chip_identification gen2 after parsing file")?,
+                application_identification: application_identification_gen2
+                    .context("unable to find application_identification gen2 after parsing file")?,
+                application_identification_signature: application_identification_signature_gen2
+                    .context(
+                    "unable to find application_identification_signature gen2 after parsing file",
                 )?,
-            card_sign_certificate: card_sign_certificate_gen2
-                .context("unable to find card_sign_certificate after parsing file")?,
-            ca_certificate: ca_certificate_gen2
-                .context("unable to find ca_certificate after parsing file")?,
-            link_certificate: link_certificate_gen2
-                .context("unable to find link_certificate after parsing file")?,
-            identification: identification_gen2
-                .context("unable to find identification after parsing file")?,
-            identification_signature: identification_signature_gen2
-                .context("unable to find identification_signature after parsing file")?,
-            card_download: card_download_gen2
-                .context("unable to find card_download after parsing file")?,
-            card_download_signature: card_download_signature_gen2
-                .context("unable to find card_download_signature after parsing file")?,
-            driver_licence_information: driver_licence_information_gen2
-                .context("unable to find driver_licence_information after parsing file")?,
-            driver_licence_info_signature: driver_licence_info_signature_gen2
-                .context("unable to find driver_licence_info_signature after parsing file")?,
-            events_data: events_data_gen2
-                .context("unable to find events_data after parsing file")?,
-            events_data_signature: events_data_signature_gen2
-                .context("unable to find events_data_signature after parsing file")?,
-            faults_data: faults_data_gen2
-                .context("unable to find faults_data after parsing file")?,
-            faults_data_signature: faults_data_signature_gen2
-                .context("unable to find faults_data_signature after parsing file")?,
-            driver_activity_data: driver_activity_data_gen2
-                .context("unable to find driver_activity_data after parsing file")?,
-            driver_activity_data_signature: driver_activity_data_signature_gen2
-                .context("unable to find driver_activity_data_signature after parsing file")?,
-            vehicles_used: vehicles_used_gen2
-                .context("unable to find vehicles_used after parsing file")?,
-            vehicles_used_signature: vehicles_used_signature_gen2
-                .context("unable to find vehicles_used_signature after parsing file")?,
-            places: places_gen2.context("unable to find places after parsing file")?,
-            places_signature: places_signature_gen2
-                .context("unable to find places_signature after parsing file")?,
-            current_usage: current_usage_gen2
-                .context("unable to find current_usage after parsing file")?,
-            current_usage_signature: current_usage_signature_gen2
-                .context("unable to find current_usage_signature after parsing file")?,
-            control_activity_data: control_activity_data_gen2
-                .context("unable to find control_activity_data after parsing file")?,
-            control_activity_data_signature: control_activity_data_signature_gen2
-                .context("unable to find control_activity_data_signature after parsing file")?,
-            specific_conditions: specific_conditions_gen2
-                .context("unable to find specific_conditions after parsing file")?,
-            specific_conditions_signature: specific_conditions_signature_gen2
-                .context("unable to find specific_conditions_signature after parsing file")?,
-            vehicle_units_used: vehicle_units_used_gen2
-                .context("unable to find vehicle_units_used after parsing file")?,
-            vehicle_units_used_signature: vehicle_units_used_signature_gen2
-                .context("unable to find vehicle_units_used_signature after parsing file")?,
-            gnss_accumulated_driving: gnss_places_gen2
-                .context("unable to find gnss_accumulated_driving after parsing file")?,
-            gnss_places_signature: gnss_places_signature_gen2
-                .context("unable to find gnss_places_signature after parsing file")?,
-        };
+                card_sign_certificate: card_sign_certificate_gen2
+                    .context("unable to find card_sign_certificate gen2 after parsing file")?,
+                ca_certificate: ca_certificate_gen2
+                    .context("unable to find ca_certificate gen2 after parsing file")?,
+                link_certificate: link_certificate_gen2
+                    .context("unable to find link_certificate gen2 after parsing file")?,
+                identification: identification_gen2
+                    .context("unable to find identification gen2 after parsing file")?,
+                identification_signature: identification_signature_gen2
+                    .context("unable to find identification_signature gen2 after parsing file")?,
+                card_download: card_download_gen2,
+                card_download_signature: card_download_signature_gen2,
+                driver_licence_info: driver_licence_info_gen2,
+                driver_licence_info_signature: driver_licence_info_signature_gen2,
+                events_data: events_data_gen2
+                    .context("unable to find events_data gen2 after parsing file")?,
+                events_data_signature: events_data_signature_gen2
+                    .context("unable to find events_data_signature gen2 after parsing file")?,
+                faults_data: faults_data_gen2
+                    .context("unable to find faults_data gen2 after parsing file")?,
+                faults_data_signature: faults_data_signature_gen2
+                    .context("unable to find faults_data_signature gen2 after parsing file")?,
+                driver_activity_data: driver_activity_data_gen2
+                    .context("unable to find driver_activity_data gen2 after parsing file")?,
+                driver_activity_data_signature: driver_activity_data_signature_gen2.context(
+                    "unable to find driver_activity_data_signature gen2 after parsing file",
+                )?,
+                vehicles_used: vehicles_used_gen2
+                    .context("unable to find vehicles_used gen2 after parsing file")?,
+                vehicles_used_signature: vehicles_used_signature_gen2
+                    .context("unable to find vehicles_used_signature gen2 after parsing file")?,
+                places: places_gen2.context("unable to find places gen2 after parsing file")?,
+                places_signature: places_signature_gen2
+                    .context("unable to find places_signature gen2 after parsing file")?,
+                current_usage: current_usage_gen2,
+                current_usage_signature: current_usage_signature_gen2,
+                control_activity_data: control_activity_data_gen2
+                    .context("unable to find control_activity_data gen2 after parsing file")?,
+                control_activity_data_signature: control_activity_data_signature_gen2.context(
+                    "unable to find control_activity_data_signature gen2 after parsing file",
+                )?,
+                specific_conditions: specific_conditions_gen2
+                    .context("unable to find specific_conditions gen2 after parsing file")?,
+                specific_conditions_signature: specific_conditions_signature_gen2.context(
+                    "unable to find specific_conditions_signature gen2 after parsing file",
+                )?,
+                vehicle_units_used: vehicle_units_used_gen2
+                    .context("unable to find vehicle_units_used gen2 after parsing file")?,
+                vehicle_units_used_signature: vehicle_units_used_signature_gen2.context(
+                    "unable to find vehicle_units_used_signature gen2 after parsing file",
+                )?,
+                gnss_accumulated_driving: gnss_places_gen2
+                    .context("unable to find gnss_accumulated_driving gen2 after parsing file")?,
+                gnss_places_signature: gnss_places_signature_gen2
+                    .context("unable to find gnss_places_signature gen2 after parsing file")?,
+            };
+            gen2_blocks = Some(blocks);
+        }
 
         Ok(CardData {
             gen1_blocks: gen1_blocks,

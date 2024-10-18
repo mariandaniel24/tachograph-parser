@@ -1358,21 +1358,24 @@ impl CardPlaceDailyWorkPeriod {
 /// [CardControlActivityDataRecord appendix 2.15.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17002)
 pub struct CardControlActivityDataRecord {
     pub control_type: ControlType,
-    pub control_time: TimeReal,
+    pub control_time: Option<TimeReal>,
     pub control_card_number: FullCardNumber,
     pub control_vehicle_registration: VehicleRegistrationIdentification,
-    pub control_download_period_begin: TimeReal,
-    pub control_download_period_end: TimeReal,
+    pub control_download_period_begin: Option<TimeReal>,
+    pub control_download_period_end: Option<TimeReal>,
 }
 impl CardControlActivityDataRecord {
+    const SIZE: usize = 46;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+
         Ok(Self {
-            control_type: ControlType::parse(cursor)?,
-            control_time: TimeReal::parse(cursor)?,
-            control_card_number: FullCardNumber::parse(cursor)?,
-            control_vehicle_registration: VehicleRegistrationIdentification::parse(cursor)?,
-            control_download_period_begin: TimeReal::parse(cursor)?,
-            control_download_period_end: TimeReal::parse(cursor)?,
+            control_type: ControlType::parse(inner_cursor)?,
+            control_time: TimeReal::parse(inner_cursor).ok(),
+            control_card_number: FullCardNumber::parse(inner_cursor)?,
+            control_vehicle_registration: VehicleRegistrationIdentification::parse(inner_cursor)?,
+            control_download_period_begin: TimeReal::parse(inner_cursor).ok(),
+            control_download_period_end: TimeReal::parse(inner_cursor).ok(),
         })
     }
 }

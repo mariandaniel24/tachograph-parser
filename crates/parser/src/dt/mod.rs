@@ -202,6 +202,7 @@ pub struct TimeReal(pub chrono::DateTime<chrono::Utc>);
 // TODO: Determine what timezone is used in the DDD files
 // According to @mpi-wl, the timezone is UTC, see https://github.com/jugglingcats/tachograph-cursor/issues/54#issuecomment-603089791
 impl TimeReal {
+    const SIZE: usize = 4;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let unix_timestamp = cursor
             .read_u32::<BigEndian>()
@@ -867,11 +868,13 @@ pub type LastCardDownload = TimeReal;
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardDownload: appendix 4.2.2.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e41651)
 pub struct CardDownload {
-    pub last_card_download: LastCardDownload,
+    pub last_card_download: Option<LastCardDownload>,
 }
 impl CardDownload {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let last_card_download = LastCardDownload::parse(cursor)?;
+        let inner_cursor = &mut cursor.take_exact(LastCardDownload::SIZE);
+
+        let last_card_download = LastCardDownload::parse(inner_cursor).ok();
         Ok(CardDownload { last_card_download })
     }
 }
