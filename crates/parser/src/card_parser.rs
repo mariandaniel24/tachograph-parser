@@ -80,8 +80,8 @@ pub struct Gen2Blocks {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct CardData {
-    pub gen1: Gen1Blocks,
-    pub gen2: Gen2Blocks,
+    pub gen1_blocks: Gen1Blocks,
+    pub gen2_blocks: Gen2Blocks,
 }
 pub struct CardParser {
     input: Vec<u8>,
@@ -690,8 +690,8 @@ impl CardParser {
         };
 
         Ok(CardData {
-            gen1: gen1_blocks,
-            gen2: gen2_blocks,
+            gen1_blocks: gen1_blocks,
+            gen2_blocks: gen2_blocks,
         })
     }
 
