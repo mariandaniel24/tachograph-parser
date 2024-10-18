@@ -748,9 +748,8 @@ impl CardVehiclesUsed {
         let mut card_vehicle_records = Vec::new();
         let amount_of_records = size as usize / CardVehicleRecord::SIZE as usize;
         for i in 0..amount_of_records {
-            match CardVehicleRecord::parse(cursor) {
-                Ok(card_vehicle_record) => card_vehicle_records.push(card_vehicle_record),
-                Err(e) => log::error!("Failed to parse CardVehicleRecord: {:?}", e),
+            if let Ok(card_vehicle_record) = CardVehicleRecord::parse(cursor) {
+                card_vehicle_records.push(card_vehicle_record);
             }
             // If we've reached the newest record, break
             if i + 1 == vehicle_pointer_newest_record as usize {

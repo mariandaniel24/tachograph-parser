@@ -3,7 +3,8 @@ use byteorder::ReadBytesExt;
 use std::fmt::Display;
 use std::io::BufReader;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum TachoFileType {
     VehicleUnitGen1,
     VehicleUnitGen2,

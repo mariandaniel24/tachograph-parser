@@ -215,6 +215,9 @@ impl<T> RecordArray<T> {
             records,
         })
     }
+    pub fn into_inner(self) -> Vec<T> {
+        self.records
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -1301,10 +1304,6 @@ impl CardVehiclesUsed {
         let vehicle_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read vehicle_pointer_newest_record")?;
-        log::error!(
-            "vehicle_pointer_newest_record: {:?}",
-            vehicle_pointer_newest_record
-        );
         let mut card_vehicle_records = Vec::new();
         let amount_of_records = size as usize / CardVehicleRecord::SIZE as usize;
         for i in 0..amount_of_records {
@@ -1605,14 +1604,14 @@ impl VuPlaceDailyWorkPeriod {
     }
 }
 
-pub type DateOfDayDownloadedRecordArray = RecordArray<DateOfDayDownloaded>;
-pub type OdometerValueMidnightRecordArray = RecordArray<OdometerValueMidnight>;
-pub type VuCardIWRecordRecordArray = RecordArray<VuCardIWRecord>;
-pub type VuActivityDailyRecordArray = RecordArray<ActivityChangeInfo>;
-pub type VuPlaceDailyWorkPeriodRecordArray = RecordArray<VuPlaceDailyWorkPeriod>;
-pub type VuGNSSADRecordArray = RecordArray<VuGNSSADRecord>;
-pub type VuSpecificConditionRecordArray = RecordArray<SpecificConditionRecord>;
-pub type SignatureRecordArray = RecordArray<Signature>;
+pub type DateOfDayDownloadedRecordArray = Vec<DateOfDayDownloaded>;
+pub type OdometerValueMidnightRecordArray = Vec<OdometerValueMidnight>;
+pub type VuCardIWRecordRecordArray = Vec<VuCardIWRecord>;
+pub type VuActivityDailyRecordArray = Vec<ActivityChangeInfo>;
+pub type VuPlaceDailyWorkPeriodRecordArray = Vec<VuPlaceDailyWorkPeriod>;
+pub type VuGNSSADRecordArray = Vec<VuGNSSADRecord>;
+pub type VuSpecificConditionRecordArray = Vec<SpecificConditionRecord>;
+pub type SignatureRecordArray = Vec<Signature>;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
@@ -1630,51 +1629,49 @@ pub struct VuActivitiesBlock {
 impl VuActivitiesBlock {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuActivitiesBlock {
-            date_of_day_downloaded_record_array: DateOfDayDownloadedRecordArray::parse(
+            date_of_day_downloaded_record_array: RecordArray::parse(
                 cursor,
                 DateOfDayDownloaded::parse,
             )
-            .context("Failed to parse date_of_day_downloaded_record_array")?,
+            .context("Failed to parse date_of_day_downloaded_record_array")?
+            .into_inner(),
 
-            odometer_value_midnight_record_array: OdometerValueMidnightRecordArray::parse(
+            odometer_value_midnight_record_array: RecordArray::parse(
                 cursor,
                 OdometerValueMidnight::parse,
             )
-            .context("Failed to parse odometer_value_midnight_record_array")?,
+            .context("Failed to parse odometer_value_midnight_record_array")?
+            .into_inner(),
 
-            vu_card_iw_record_array: VuCardIWRecordRecordArray::parse(
-                cursor,
-                VuCardIWRecord::parse,
-            )
-            .context("Failed to parse vu_card_iw_record_array")?,
+            vu_card_iw_record_array: RecordArray::parse(cursor, VuCardIWRecord::parse)
+                .context("Failed to parse vu_card_iw_record_array")?
+                .into_inner(),
 
-            vu_activity_daily_record_array: VuActivityDailyRecordArray::parse(
-                cursor,
-                ActivityChangeInfo::parse,
-            )
-            .context("Failed to parse vu_activity_daily_record_array")?,
+            vu_activity_daily_record_array: RecordArray::parse(cursor, ActivityChangeInfo::parse)
+                .context("Failed to parse vu_activity_daily_record_array")?
+                .into_inner(),
 
-            vu_place_daily_work_period_record_array: VuPlaceDailyWorkPeriodRecordArray::parse(
+            vu_place_daily_work_period_record_array: RecordArray::parse(
                 cursor,
                 VuPlaceDailyWorkPeriod::parse,
             )
-            .context("Failed to parse vu_place_daily_work_period_record_array")?,
+            .context("Failed to parse vu_place_daily_work_period_record_array")?
+            .into_inner(),
 
-            vu_gnss_ad_record_array: VuGNSSADRecordArray::parse(cursor, VuGNSSADRecord::parse)
-                .context("Failed to parse vu_gnss_ad_record_array")?,
+            vu_gnss_ad_record_array: RecordArray::parse(cursor, VuGNSSADRecord::parse)
+                .context("Failed to parse vu_gnss_ad_record_array")?
+                .into_inner(),
 
-            vu_specific_condition_record_array: VuSpecificConditionRecordArray::parse(
+            vu_specific_condition_record_array: RecordArray::parse(
                 cursor,
                 SpecificConditionRecord::parse,
             )
-            .context("Failed to parse vu_specific_condition_record_array")?,
+            .context("Failed to parse vu_specific_condition_record_array")?
+            .into_inner(),
 
-            // This one remains unchanged because it uses a different parsing method
-            signature_record_array: SignatureRecordArray::parse_dyn_size(
-                cursor,
-                Signature::parse_dyn_size,
-            )
-            .context("Failed to parse signature_record_array")?,
+            signature_record_array: RecordArray::parse_dyn_size(cursor, Signature::parse_dyn_size)
+                .context("Failed to parse signature_record_array")?
+                .into_inner(),
         })
     }
 }
@@ -1938,13 +1935,13 @@ impl VuPowerSupplyInterruptionRecord {
     }
 }
 
-pub type VuIdentificationRecordArray = RecordArray<VuIdentification>;
-pub type VuSensorPairedRecordArray = RecordArray<SensorPairedRecord>;
-pub type VuSensorExternalGNSSCoupledRecordArray = RecordArray<SensorExternalGNSSCoupledRecord>;
-pub type VuCalibrationRecordArray = RecordArray<VuCalibrationRecord>;
-pub type VuCardRecordArray = RecordArray<VuCardRecord>;
-pub type VuITSConsentRecordArray = RecordArray<VuITSConsentRecord>;
-pub type VuPowerSupplyInterruptionRecordArray = RecordArray<VuPowerSupplyInterruptionRecord>;
+pub type VuIdentificationRecordArray = Vec<VuIdentification>;
+pub type VuSensorPairedRecordArray = Vec<SensorPairedRecord>;
+pub type VuSensorExternalGNSSCoupledRecordArray = Vec<SensorExternalGNSSCoupledRecord>;
+pub type VuCalibrationRecordArray = Vec<VuCalibrationRecord>;
+pub type VuCardRecordArray = Vec<VuCardRecord>;
+pub type VuITSConsentRecordArray = Vec<VuITSConsentRecord>;
+pub type VuPowerSupplyInterruptionRecordArray = Vec<VuPowerSupplyInterruptionRecord>;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
@@ -1962,56 +1959,48 @@ pub struct VuCompanyLocksBlock {
 impl VuCompanyLocksBlock {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuCompanyLocksBlock {
-            vu_identification_record_array: VuIdentificationRecordArray::parse(
+            vu_identification_record_array: RecordArray::parse(cursor, VuIdentification::parse)
+                .context("Failed to parse vu_identification_record_array")?
+                .into_inner(),
+
+            vu_sensor_paired_record_array: RecordArray::parse(cursor, SensorPairedRecord::parse)
+                .context("Failed to parse vu_sensor_paired_record_array")?
+                .into_inner(),
+
+            vu_sensor_external_gnss_coupled_record_array: RecordArray::parse(
                 cursor,
-                VuIdentification::parse,
+                SensorExternalGNSSCoupledRecord::parse,
             )
-            .context("Failed to parse vu_identification_record_array")?,
+            .context("Failed to parse vu_sensor_external_gnss_coupled_record_array")?
+            .into_inner(),
 
-            vu_sensor_paired_record_array: VuSensorPairedRecordArray::parse(
-                cursor,
-                SensorPairedRecord::parse,
-            )
-            .context("Failed to parse vu_sensor_paired_record_array")?,
+            vu_calibration_record_array: RecordArray::parse(cursor, VuCalibrationRecord::parse)
+                .context("Failed to parse vu_calibration_record_array")?
+                .into_inner(),
 
-            vu_sensor_external_gnss_coupled_record_array:
-                VuSensorExternalGNSSCoupledRecordArray::parse(
-                    cursor,
-                    SensorExternalGNSSCoupledRecord::parse,
-                )
-                .context("Failed to parse vu_sensor_external_gnss_coupled_record_array")?,
+            vu_card_record_array: RecordArray::parse(cursor, VuCardRecord::parse)
+                .context("Failed to parse vu_card_record_array")?
+                .into_inner(),
 
-            vu_calibration_record_array: VuCalibrationRecordArray::parse(
-                cursor,
-                VuCalibrationRecord::parse,
-            )
-            .context("Failed to parse vu_calibration_record_array")?,
+            vu_its_consent_record_array: RecordArray::parse(cursor, VuITSConsentRecord::parse)
+                .context("Failed to parse vu_its_consent_record_array")?
+                .into_inner(),
 
-            vu_card_record_array: VuCardRecordArray::parse(cursor, VuCardRecord::parse)
-                .context("Failed to parse vu_card_record_array")?,
-
-            vu_its_consent_record_array: VuITSConsentRecordArray::parse(
-                cursor,
-                VuITSConsentRecord::parse,
-            )
-            .context("Failed to parse vu_its_consent_record_array")?,
-
-            vu_power_supply_interruption_record_array: VuPowerSupplyInterruptionRecordArray::parse(
+            vu_power_supply_interruption_record_array: RecordArray::parse(
                 cursor,
                 VuPowerSupplyInterruptionRecord::parse,
             )
-            .context("Failed to parse vu_power_supply_interruption_record_array")?,
+            .context("Failed to parse vu_power_supply_interruption_record_array")?
+            .into_inner(),
 
-            signature_record_array: SignatureRecordArray::parse_dyn_size(
-                cursor,
-                Signature::parse_dyn_size,
-            )
-            .context("Failed to parse signature_record_array")?,
+            signature_record_array: RecordArray::parse_dyn_size(cursor, Signature::parse_dyn_size)
+                .context("Failed to parse signature_record_array")?
+                .into_inner(),
         })
     }
 }
 
-type VuDetailedSpeedBlockRecordArray = RecordArray<VuDetailedSpeedBlock>;
+type VuDetailedSpeedBlockRecordArray = Vec<VuDetailedSpeedBlock>;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
@@ -2023,17 +2012,16 @@ pub struct VuSpeedBlock {
 impl VuSpeedBlock {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuSpeedBlock {
-            vu_detailed_speed_block_record_array: VuDetailedSpeedBlockRecordArray::parse(
+            vu_detailed_speed_block_record_array: RecordArray::parse(
                 cursor,
                 VuDetailedSpeedBlock::parse,
             )
-            .context("Failed to parse vu_detailed_speed_block_record_array")?,
+            .context("Failed to parse vu_detailed_speed_block_record_array")?
+            .into_inner(),
 
-            signature_record_array: SignatureRecordArray::parse_dyn_size(
-                cursor,
-                Signature::parse_dyn_size,
-            )
-            .context("Failed to parse signature_record_array")?,
+            signature_record_array: RecordArray::parse_dyn_size(cursor, Signature::parse_dyn_size)
+                .context("Failed to parse signature_record_array")?
+                .into_inner(),
         })
     }
 }
@@ -2207,11 +2195,11 @@ impl VuTimeAdjustmentRecord {
     }
 }
 
-pub type VuFaultRecordArray = RecordArray<VuFaultRecord>;
-pub type VuEventRecordArray = RecordArray<VuEventRecord>;
-pub type VuOverSpeedingControlDataRecordArray = RecordArray<VuOverSpeedingControlData>;
-pub type VuOverSpeedingEventRecordArray = RecordArray<VuOverSpeedingEventRecord>;
-pub type VuTimeAdjustmentRecordArray = RecordArray<VuTimeAdjustmentRecord>;
+pub type VuFaultRecordArray = Vec<VuFaultRecord>;
+pub type VuEventRecordArray = Vec<VuEventRecord>;
+pub type VuOverSpeedingControlDataRecordArray = Vec<VuOverSpeedingControlData>;
+pub type VuOverSpeedingEventRecordArray = Vec<VuOverSpeedingEventRecord>;
+pub type VuTimeAdjustmentRecordArray = Vec<VuTimeAdjustmentRecord>;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuEventsAndFaultsBlock {
@@ -2226,31 +2214,33 @@ pub struct VuEventsAndFaultsBlock {
 impl VuEventsAndFaultsBlock {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuEventsAndFaultsBlock {
-            vu_fault_record_array: VuFaultRecordArray::parse(cursor, VuFaultRecord::parse)
-                .context("Failed to parse vu_fault_record_array")?,
-            vu_event_record_array: VuEventRecordArray::parse(cursor, VuEventRecord::parse)
-                .context("Failed to parse vu_event_record_array")?,
-            vu_over_speeding_control_data_record_array:
-                VuOverSpeedingControlDataRecordArray::parse(
-                    cursor,
-                    VuOverSpeedingControlData::parse,
-                )
-                .context("Failed to parse vu_over_speeding_control_data_record_array")?,
-            vu_over_speeding_event_record_array: VuOverSpeedingEventRecordArray::parse(
+            vu_fault_record_array: RecordArray::parse(cursor, VuFaultRecord::parse)
+                .context("Failed to parse vu_fault_record_array")?
+                .into_inner(),
+            vu_event_record_array: RecordArray::parse(cursor, VuEventRecord::parse)
+                .context("Failed to parse vu_event_record_array")?
+                .into_inner(),
+            vu_over_speeding_control_data_record_array: RecordArray::parse(
+                cursor,
+                VuOverSpeedingControlData::parse,
+            )
+            .context("Failed to parse vu_over_speeding_control_data_record_array")?
+            .into_inner(),
+            vu_over_speeding_event_record_array: RecordArray::parse(
                 cursor,
                 VuOverSpeedingEventRecord::parse,
             )
-            .context("Failed to parse vu_over_speeding_event_record_array")?,
-            vu_time_adjustment_record_array: VuTimeAdjustmentRecordArray::parse(
+            .context("Failed to parse vu_over_speeding_event_record_array")?
+            .into_inner(),
+            vu_time_adjustment_record_array: RecordArray::parse(
                 cursor,
                 VuTimeAdjustmentRecord::parse,
             )
-            .context("Failed to parse vu_time_adjustment_record_array")?,
-            signature_record_array: SignatureRecordArray::parse_dyn_size(
-                cursor,
-                Signature::parse_dyn_size,
-            )
-            .context("Failed to parse signature_record_array")?,
+            .context("Failed to parse vu_time_adjustment_record_array")?
+            .into_inner(),
+            signature_record_array: RecordArray::parse_dyn_size(cursor, Signature::parse_dyn_size)
+                .context("Failed to parse signature_record_array")?
+                .into_inner(),
         })
     }
 }
@@ -2330,16 +2320,16 @@ impl VuControlActivity {
     }
 }
 
-pub type MemberStateCertificateRecordArray = RecordArray<MemberStateCertificate>;
-pub type VuCertificateRecordArray = RecordArray<Certificate>;
-pub type VehicleIdentificationNumberRecordArray = RecordArray<VehicleIdentificationNumber>;
-pub type VehicleRegistrationNumberRecordArray = RecordArray<VehicleRegistrationNumber>;
-pub type CurrentDateTimeRecordArray = RecordArray<CurrentDateTime>;
-pub type VuDownloadablePeriodRecordArray = RecordArray<VuDownloadablePeriod>;
-pub type CardSlotsStatusRecordArray = RecordArray<CardSlotsStatus>;
-pub type VuDownloadActivityDataRecordArray = RecordArray<VuDownloadActivityData>;
-pub type VuCompanyLocksRecordArray = RecordArray<VuCompanyLocks>;
-pub type VuControlActivityRecordArray = RecordArray<VuControlActivity>;
+pub type MemberStateCertificateRecordArray = Vec<MemberStateCertificate>;
+pub type VuCertificateRecordArray = Vec<Certificate>;
+pub type VehicleIdentificationNumberRecordArray = Vec<VehicleIdentificationNumber>;
+pub type VehicleRegistrationNumberRecordArray = Vec<VehicleRegistrationNumber>;
+pub type CurrentDateTimeRecordArray = Vec<CurrentDateTime>;
+pub type VuDownloadablePeriodRecordArray = Vec<VuDownloadablePeriod>;
+pub type CardSlotsStatusRecordArray = Vec<CardSlotsStatus>;
+pub type VuDownloadActivityDataRecordArray = Vec<VuDownloadActivityData>;
+pub type VuCompanyLocksRecordArray = Vec<VuCompanyLocks>;
+pub type VuControlActivityRecordArray = Vec<VuControlActivity>;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
@@ -2360,63 +2350,57 @@ pub struct VuOverviewBlock {
 impl VuOverviewBlock {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuOverviewBlock {
-            member_state_certificate_record_array:
-                MemberStateCertificateRecordArray::parse_dyn_size(
-                    cursor,
-                    Certificate::parse_dyn_size,
-                )
-                .context("Failed to parse member_state_certificate_record_array")?,
-            vu_certificate_record_array: VuCertificateRecordArray::parse_dyn_size(
+            member_state_certificate_record_array: RecordArray::parse_dyn_size(
                 cursor,
                 Certificate::parse_dyn_size,
             )
-            .context("Failed to parse vu_certificate_record_array")?,
-            vehicle_identification_number_record_array:
-                VehicleIdentificationNumberRecordArray::parse(
-                    cursor,
-                    VehicleIdentificationNumber::parse,
-                )
-                .context("Failed to parse vehicle_identification_number_record_array")?,
-            vehicle_registration_number_record_array: VehicleRegistrationNumberRecordArray::parse(
+            .context("Failed to parse member_state_certificate_record_array")?
+            .into_inner(),
+            vu_certificate_record_array: RecordArray::parse_dyn_size(
+                cursor,
+                Certificate::parse_dyn_size,
+            )
+            .context("Failed to parse vu_certificate_record_array")?
+            .into_inner(),
+            vehicle_identification_number_record_array: RecordArray::parse(
+                cursor,
+                VehicleIdentificationNumber::parse,
+            )
+            .context("Failed to parse vehicle_identification_number_record_array")?
+            .into_inner(),
+            vehicle_registration_number_record_array: RecordArray::parse(
                 cursor,
                 VehicleRegistrationNumber::parse,
             )
-            .context("Failed to parse vehicle_registration_number_record_array")?,
-            current_date_time_record_array: CurrentDateTimeRecordArray::parse(
-                cursor,
-                CurrentDateTime::parse,
-            )
-            .context("Failed to parse current_date_time_record_array")?,
-            vu_downloadable_period_record_array: VuDownloadablePeriodRecordArray::parse(
+            .context("Failed to parse vehicle_registration_number_record_array")?
+            .into_inner(),
+            current_date_time_record_array: RecordArray::parse(cursor, CurrentDateTime::parse)
+                .context("Failed to parse current_date_time_record_array")?
+                .into_inner(),
+            vu_downloadable_period_record_array: RecordArray::parse(
                 cursor,
                 VuDownloadablePeriod::parse,
             )
-            .context("Failed to parse vu_downloadable_period_record_array")?,
-            card_slots_status_record_array: CardSlotsStatusRecordArray::parse(
-                cursor,
-                CardSlotsStatus::parse,
-            )
-            .context("Failed to parse card_slots_status_record_array")?,
-            vu_download_activity_data_record_array: VuDownloadActivityDataRecordArray::parse(
+            .context("Failed to parse vu_downloadable_period_record_array")?
+            .into_inner(),
+            card_slots_status_record_array: RecordArray::parse(cursor, CardSlotsStatus::parse)
+                .context("Failed to parse card_slots_status_record_array")?
+                .into_inner(),
+            vu_download_activity_data_record_array: RecordArray::parse(
                 cursor,
                 VuDownloadActivityData::parse,
             )
-            .context("Failed to parse vu_download_activity_data_record_array")?,
-            vu_company_locks_record_array: VuCompanyLocksRecordArray::parse(
-                cursor,
-                VuCompanyLocks::parse,
-            )
-            .context("Failed to parse vu_company_locks_record_array")?,
-            vu_control_activity_record_array: VuControlActivityRecordArray::parse(
-                cursor,
-                VuControlActivity::parse,
-            )
-            .context("Failed to parse vu_control_activity_record_array")?,
-            signature_record_array: SignatureRecordArray::parse_dyn_size(
-                cursor,
-                Signature::parse_dyn_size,
-            )
-            .context("Failed to parse signature_record_array")?,
+            .context("Failed to parse vu_download_activity_data_record_array")?
+            .into_inner(),
+            vu_company_locks_record_array: RecordArray::parse(cursor, VuCompanyLocks::parse)
+                .context("Failed to parse vu_company_locks_record_array")?
+                .into_inner(),
+            vu_control_activity_record_array: RecordArray::parse(cursor, VuControlActivity::parse)
+                .context("Failed to parse vu_control_activity_record_array")?
+                .into_inner(),
+            signature_record_array: RecordArray::parse_dyn_size(cursor, Signature::parse_dyn_size)
+                .context("Failed to parse signature_record_array")?
+                .into_inner(),
         })
     }
 }
