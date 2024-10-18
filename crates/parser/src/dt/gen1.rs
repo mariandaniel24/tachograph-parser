@@ -1301,7 +1301,7 @@ pub struct VuEventRecord {
     pub event_type: EventFaultType,
     pub event_record_purpose: EventFaultRecordPurpose,
     pub event_begin_time: TimeReal,
-    pub event_end_time: TimeReal,
+    pub event_end_time: Option<TimeReal>,
     pub card_number_driver_slot_begin: Option<FullCardNumber>,
     pub card_number_codriver_slot_begin: Option<FullCardNumber>,
     pub card_number_driver_slot_end: Option<FullCardNumber>,
@@ -1316,7 +1316,7 @@ impl VuEventRecord {
                 .context("Failed to parse event_record_purpose")?,
             event_begin_time: TimeReal::parse(cursor)
                 .context("Failed to parse event_begin_time")?,
-            event_end_time: TimeReal::parse(cursor).context("Failed to parse event_end_time")?,
+            event_end_time: TimeReal::parse(cursor).ok(),
             card_number_driver_slot_begin: FullCardNumber::parse(cursor)
                 .context("Failed to parse card_number_driver_slot_begin")
                 .ok(),
@@ -1364,18 +1364,19 @@ impl VuEventData {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VuOverSpeedingControlData: appendix 2.212.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27978)
 pub struct VuOverSpeedingControlData {
-    pub last_overspeed_control_time: TimeReal,
-    pub first_overspeed_since: TimeReal,
+    pub last_overspeed_control_time: Option<TimeReal>,
+    pub first_overspeed_since: Option<TimeReal>,
     pub number_of_overspeed_since: OverspeedNumber,
 }
 impl VuOverSpeedingControlData {
+    const SIZE: usize = 9;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+
         Ok(Self {
-            last_overspeed_control_time: TimeReal::parse(cursor)
-                .context("Failed to parse last_overspeed_control_time")?,
-            first_overspeed_since: TimeReal::parse(cursor)
-                .context("Failed to parse first_overspeed_since")?,
-            number_of_overspeed_since: OverspeedNumber::parse(cursor)
+            last_overspeed_control_time: TimeReal::parse(inner_cursor).ok(),
+            first_overspeed_since: TimeReal::parse(inner_cursor).ok(),
+            number_of_overspeed_since: OverspeedNumber::parse(inner_cursor)
                 .context("Failed to parse number_of_overspeed_since")?,
         })
     }
@@ -1631,9 +1632,7 @@ impl VuCalibrationRecord {
             workshop_address: Address::parse(cursor).context("Failed to parse workshop_address")?,
             workshop_card_number: FullCardNumber::parse(cursor)
                 .context("Failed to parse workshop_card_number")?,
-            workshop_card_expiry_date: TimeReal::parse(cursor)
-                .context("Failed to parse workshop_card_expiry_date")
-                .ok(),
+            workshop_card_expiry_date: TimeReal::parse(cursor).ok(),
             vehicle_identification_number: VehicleIdentificationNumber::parse(cursor)
                 .context("Failed to parse vehicle_identification_number")
                 .ok(),
@@ -1653,15 +1652,9 @@ impl VuCalibrationRecord {
                 .context("Failed to parse old_odometer_value")?,
             new_odometer_value: OdometerShort::parse(cursor)
                 .context("Failed to parse new_odometer_value")?,
-            old_time_value: TimeReal::parse(cursor)
-                .context("Failed to parse old_time_value")
-                .ok(),
-            new_time_value: TimeReal::parse(cursor)
-                .context("Failed to parse new_time_value")
-                .ok(),
-            next_calibration_date: TimeReal::parse(cursor)
-                .context("Failed to parse next_calibration_date")
-                .ok(),
+            old_time_value: TimeReal::parse(cursor).ok(),
+            new_time_value: TimeReal::parse(cursor).ok(),
+            next_calibration_date: TimeReal::parse(cursor).ok(),
         })
     }
 }

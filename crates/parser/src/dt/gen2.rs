@@ -420,13 +420,13 @@ impl Signature {
 /// [PreviousVehicleInfo: appendix 2.118.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23250)
 pub struct PreviousVehicleInfo {
     pub vehicle_registration_identification: VehicleRegistrationIdentification,
-    pub card_withdrawal_time: TimeReal,
+    pub card_withdrawal_time: Option<TimeReal>,
     pub vu_generation: Generation,
 }
 impl PreviousVehicleInfo {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let vehicle_registration_identification = VehicleRegistrationIdentification::parse(cursor)?;
-        let card_withdrawal_time = TimeReal::parse(cursor)?;
+        let card_withdrawal_time = TimeReal::parse(cursor).ok();
         let vu_generation = Generation::parse(cursor)?;
         Ok(PreviousVehicleInfo {
             vehicle_registration_identification,
@@ -1557,7 +1557,7 @@ pub struct VuCardIWRecord {
     pub card_insertion_date: TimeReal,
     pub vehicle_odometer_value_at_insertion: OdometerShort,
     pub card_slot_number: CardSlotNumber,
-    pub card_withdrawl_time: TimeReal,
+    pub card_withdrawl_time: Option<TimeReal>,
     pub vehicle_odometer_value_at_withdrawal: OdometerShort,
     pub previous_vehicle_info: PreviousVehicleInfo,
     pub manual_input_flag: ManualInputFlag,
@@ -1578,8 +1578,7 @@ impl VuCardIWRecord {
                 .context("Failed to parse vehicle_odometer_value_at_insertion")?,
             card_slot_number: CardSlotNumber::parse(cursor)
                 .context("Failed to parse card_slot_number")?,
-            card_withdrawl_time: TimeReal::parse(cursor)
-                .context("Failed to parse card_withdrawl_time")?,
+            card_withdrawl_time: TimeReal::parse(cursor).ok(),
             vehicle_odometer_value_at_withdrawal: OdometerShort::parse(cursor)
                 .context("Failed to parse vehicle_odometer_value_at_withdrawal")?,
             previous_vehicle_info: PreviousVehicleInfo::parse(cursor)
@@ -1593,15 +1592,14 @@ impl VuCardIWRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuPlaceDailyWorkPeriod {
-    pub full_card_number_and_generation: FullCardNumberAndGeneration,
+    pub full_card_number_and_generation: Option<FullCardNumberAndGeneration>,
     pub place_record: PlaceRecord,
 }
 
 impl VuPlaceDailyWorkPeriod {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuPlaceDailyWorkPeriod {
-            full_card_number_and_generation: FullCardNumberAndGeneration::parse(cursor)
-                .context("Failed to parse full_card_number_and_generation")?,
+            full_card_number_and_generation: FullCardNumberAndGeneration::parse(cursor),
             place_record: PlaceRecord::parse(cursor).context("Failed to parse place_record")?,
         })
     }
@@ -1769,9 +1767,9 @@ pub struct VuCalibrationRecord {
     pub workshop_name: Name,
     pub workshop_address: Address,
     pub workshop_card_number: FullCardNumber,
-    pub workshop_card_expiry_date: TimeReal,
-    pub vehicle_identification_number: VehicleIdentificationNumber,
-    pub vehicle_registration_identification: VehicleRegistrationIdentification,
+    pub workshop_card_expiry_date: Option<TimeReal>,
+    pub vehicle_identification_number: Option<VehicleIdentificationNumber>,
+    pub vehicle_registration_identification: Option<VehicleRegistrationIdentification>,
     pub w_vehicle_characteristic_constant: WVehicleCharacteristicConstant,
     pub k_constant_of_recording_equipment: KConstantOfRecordingEquipment,
     pub l_tyre_circumference: LTyreCircumference,
@@ -1779,9 +1777,9 @@ pub struct VuCalibrationRecord {
     pub authorised_speed: SpeedAuthorised,
     pub old_odometer_value: OdometerShort,
     pub new_odometer_value: OdometerShort,
-    pub old_time_value: TimeReal,
+    pub old_time_value: Option<TimeReal>,
     pub new_time_value: Option<TimeReal>,
-    pub next_calibration_date: TimeReal,
+    pub next_calibration_date: Option<TimeReal>,
     pub seal_data_vu: SealDataVu,
 }
 
@@ -1794,14 +1792,10 @@ impl VuCalibrationRecord {
             workshop_address: Address::parse(cursor).context("Failed to parse workshop_address")?,
             workshop_card_number: FullCardNumber::parse(cursor)
                 .context("Failed to parse workshop_card_number")?,
-            workshop_card_expiry_date: TimeReal::parse(cursor)
-                .context("Failed to parse workshop_card_expiry_date")?,
-            vehicle_identification_number: VehicleIdentificationNumber::parse(cursor)
-                .context("Failed to parse vehicle_identification_number")?,
+            workshop_card_expiry_date: TimeReal::parse(cursor).ok(),
+            vehicle_identification_number: VehicleIdentificationNumber::parse(cursor).ok(),
             vehicle_registration_identification: VehicleRegistrationIdentification::parse(cursor)
-                .context(
-                "Failed to parse vehicle_registration_identification",
-            )?,
+                .ok(),
             w_vehicle_characteristic_constant: WVehicleCharacteristicConstant::parse(cursor)
                 .context("Failed to parse w_vehicle_characteristic_constant")?,
             k_constant_of_recording_equipment: KConstantOfRecordingEquipment::parse(cursor)
@@ -1815,12 +1809,9 @@ impl VuCalibrationRecord {
                 .context("Failed to parse old_odometer_value")?,
             new_odometer_value: OdometerShort::parse(cursor)
                 .context("Failed to parse new_odometer_value")?,
-            old_time_value: TimeReal::parse(cursor).context("Failed to parse old_time_value")?,
-            new_time_value: TimeReal::parse(cursor)
-                .context("Failed to parse new_time_value")
-                .ok(),
-            next_calibration_date: TimeReal::parse(cursor)
-                .context("Failed to parse next_calibration_date")?,
+            old_time_value: TimeReal::parse(cursor).ok(),
+            new_time_value: TimeReal::parse(cursor).ok(),
+            next_calibration_date: TimeReal::parse(cursor).ok(),
             seal_data_vu: SealDataVu::parse(cursor).context("Failed to parse seal_data_vu")?,
         })
     }
@@ -2079,7 +2070,7 @@ pub struct VuEventRecord {
     pub event_type: EventFaultType,
     pub event_record_purpose: EventFaultRecordPurpose,
     pub event_begin_time: TimeReal,
-    pub event_end_time: TimeReal,
+    pub event_end_time: Option<TimeReal>,
     pub card_number_and_gen_driver_slot_begin: Option<FullCardNumberAndGeneration>,
     pub card_number_and_gen_codriver_slot_begin: Option<FullCardNumberAndGeneration>,
     pub card_number_and_gen_driver_slot_end: Option<FullCardNumberAndGeneration>,
@@ -2096,7 +2087,7 @@ impl VuEventRecord {
                 .context("Failed to parse event_record_purpose")?,
             event_begin_time: TimeReal::parse(cursor)
                 .context("Failed to parse event_begin_time")?,
-            event_end_time: TimeReal::parse(cursor).context("Failed to parse event_end_time")?,
+            event_end_time: TimeReal::parse(cursor).ok(),
             card_number_and_gen_driver_slot_begin: FullCardNumberAndGeneration::parse(cursor)
                 .context("Failed to parse card_number_and_gen_driver_slot_begin")
                 .ok(),
@@ -2251,21 +2242,16 @@ impl VuEventsAndFaultsBlock {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuDownloadActivityData {
-    pub downloading_time: TimeReal,
-    pub full_card_number_and_generation: FullCardNumberAndGeneration,
-    pub company_or_workshop_name: Name,
+    pub downloading_time: Option<TimeReal>,
+    pub full_card_number_and_generation: Option<FullCardNumberAndGeneration>,
+    pub company_or_workshop_name: Option<Name>,
 }
 impl VuDownloadActivityData {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuDownloadActivityData {
-            downloading_time: TimeReal::parse(cursor)
-                .context("Failed to parse downloading_time")?,
-            full_card_number_and_generation: FullCardNumberAndGeneration::parse(cursor)
-                .context("Failed to parse full_card_number_and_generation")
-                .ok()
-                .context("FullCardNumberAndGeneration is None")?,
-            company_or_workshop_name: Name::parse(cursor)
-                .context("Failed to parse company_or_workshop_name")?,
+            downloading_time: TimeReal::parse(cursor).ok(),
+            full_card_number_and_generation: FullCardNumberAndGeneration::parse(cursor),
+            company_or_workshop_name: Name::parse(cursor).ok(),
         })
     }
 }
