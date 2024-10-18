@@ -5,7 +5,7 @@ use std::io::Cursor;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [ManufacturerCode: appendix 2.94.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22253)
-pub struct ManufacturerCode(String);
+pub struct ManufacturerCode(pub String);
 impl ManufacturerCode {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let code = cursor
@@ -85,7 +85,7 @@ impl ManufacturerCode {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [NationNumeric: appendix 2.101.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22450)
-pub struct NationNumeric(String);
+pub struct NationNumeric(pub String);
 impl NationNumeric {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read nation numeric")?;

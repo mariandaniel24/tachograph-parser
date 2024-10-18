@@ -127,7 +127,7 @@ pub type SensorSerialNumber = ExtendedSerialNumber;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
-pub struct SensorApprovalNumber(IA5String);
+pub struct SensorApprovalNumber(pub IA5String);
 impl SensorApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 8)?;
@@ -138,7 +138,7 @@ impl SensorApprovalNumber {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
-pub struct VuApprovalNumber(IA5String);
+pub struct VuApprovalNumber(pub IA5String);
 impl VuApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 8)?;
@@ -276,8 +276,8 @@ impl SpecificConditionType {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [SpecificConditionRecord: appendix 2.152.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24614)
 pub struct SpecificConditionRecord {
-    entry_time: TimeReal,
-    specific_condition_type: SpecificConditionType,
+    pub entry_time: TimeReal,
+    pub specific_condition_type: SpecificConditionType,
 }
 impl SpecificConditionRecord {
     const SIZE: usize = 5;
@@ -325,7 +325,7 @@ impl SpecificConditions {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [Certificate: appendix 2.41.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18396)
-pub struct Certificate(Vec<u8>);
+pub struct Certificate(pub Vec<u8>);
 impl Certificate {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut value = vec![0u8; 194];
@@ -395,7 +395,7 @@ impl ControlType {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [Signature: appendix 2.149.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24501)
-pub struct Signature(Vec<u8>); // Octet string
+pub struct Signature(pub Vec<u8>); // Octet string
 impl Signature {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut signature_buffer = vec![0u8; 128];
@@ -621,7 +621,7 @@ impl CardEventRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
-pub struct CardEventData(Vec<Vec<CardEventRecord>>);
+pub struct CardEventData(pub Vec<Vec<CardEventRecord>>);
 impl CardEventData {
     const OUTER_RECORDS_AMOUNT: usize = 6;
 
@@ -678,7 +678,7 @@ impl CardFaultRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
-pub struct CardFaultData(Vec<Vec<CardFaultRecord>>);
+pub struct CardFaultData(pub Vec<Vec<CardFaultRecord>>);
 impl CardFaultData {
     const OUTER_RECORDS_AMOUNT: usize = 2;
 
@@ -735,8 +735,8 @@ impl CardVehicleRecord {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardVehiclesUsed: appendix 2.38.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18302)
 pub struct CardVehiclesUsed {
-    vehicle_pointer_newest_record: u16,
-    card_vehicle_records: Vec<CardVehicleRecord>,
+    pub vehicle_pointer_newest_record: u16,
+    pub card_vehicle_records: Vec<CardVehicleRecord>,
 }
 impl CardVehiclesUsed {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
@@ -770,8 +770,8 @@ type NoOfCardPlaceRecords = u8;
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardPlaceDailyWorkPeriod: appendix 2.27.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17729)
 pub struct CardPlaceDailyWorkPeriod {
-    place_pointer_newest_record: NoOfCardPlaceRecords,
-    place_records: Vec<PlaceRecord>,
+    pub place_pointer_newest_record: NoOfCardPlaceRecords,
+    pub place_records: Vec<PlaceRecord>,
 }
 impl CardPlaceDailyWorkPeriod {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {

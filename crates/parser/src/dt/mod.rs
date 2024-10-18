@@ -13,7 +13,7 @@ use textcode;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
-pub struct BCDString(String);
+pub struct BCDString(pub String);
 /// [BCDString: appendix 2.7.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16562)
 impl BCDString {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
@@ -33,7 +33,7 @@ impl BCDString {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
-pub struct IA5String(String);
+pub struct IA5String(pub String);
 impl IA5String {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut buffer = vec![0u8; size];
@@ -112,7 +112,7 @@ impl EmbedderIcAssemblerId {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardReplacementIndex: appendix 2.31.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17853)
-pub struct CardReplacementIndex(IA5String);
+pub struct CardReplacementIndex(pub IA5String);
 impl CardReplacementIndex {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 1)?;
@@ -123,7 +123,7 @@ impl CardReplacementIndex {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardConsecutiveIndex: appendix 2.14.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16973)
-pub struct CardConsecutiveIndex(IA5String);
+pub struct CardConsecutiveIndex(pub IA5String);
 impl CardConsecutiveIndex {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 1)?;
@@ -134,7 +134,7 @@ impl CardConsecutiveIndex {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardRenewalIndex: appendix 2.30.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17812)
-pub struct CardRenewalIndex(IA5String);
+pub struct CardRenewalIndex(pub IA5String);
 impl CardRenewalIndex {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 1)?;
@@ -198,7 +198,7 @@ impl CardNumber {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [TimeReal: appendix 2.162.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24993)
-pub struct TimeReal(chrono::DateTime<chrono::Utc>);
+pub struct TimeReal(pub chrono::DateTime<chrono::Utc>);
 // TODO: Determine what timezone is used in the DDD files
 // According to @mpi-wl, the timezone is UTC, see https://github.com/jugglingcats/tachograph-cursor/issues/54#issuecomment-603089791
 impl TimeReal {
@@ -224,7 +224,7 @@ impl TimeReal {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CurrentDateTime: appendix 2.54.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19437)
-pub struct CurrentDateTime(TimeReal);
+pub struct CurrentDateTime(pub TimeReal);
 impl CurrentDateTime {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(CurrentDateTime(TimeReal::parse(cursor)?))
@@ -234,7 +234,7 @@ impl CurrentDateTime {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardApprovalNumber: appendix 2.11.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16800)
-pub struct CardApprovalNumber(IA5String);
+pub struct CardApprovalNumber(pub IA5String);
 impl CardApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 8)?;
@@ -245,7 +245,7 @@ impl CardApprovalNumber {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [WVehicleCharacteristicConstant: appendix 2.239.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e29395)
-pub struct WVehicleCharacteristicConstant(u16);
+pub struct WVehicleCharacteristicConstant(pub u16);
 impl WVehicleCharacteristicConstant {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor
@@ -259,7 +259,7 @@ impl WVehicleCharacteristicConstant {
 #[serde(rename_all(serialize = "camelCase"))]
 
 /// [KConstantOfRecordingEquipment: appendix 2.85.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21927)
-pub struct KConstantOfRecordingEquipment(u16);
+pub struct KConstantOfRecordingEquipment(pub u16);
 impl KConstantOfRecordingEquipment {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor
@@ -304,7 +304,7 @@ impl CardStructureVersion {
 #[serde(rename_all(serialize = "camelCase"))]
 
 /// [LTyreCircumference: appendix 2.91.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22169)
-pub struct LTyreCircumference(u16);
+pub struct LTyreCircumference(pub u16);
 impl LTyreCircumference {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor
@@ -317,7 +317,7 @@ impl LTyreCircumference {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [TyreSize: appendix 2.163.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25026)
-pub struct TyreSize(IA5String);
+pub struct TyreSize(pub IA5String);
 impl TyreSize {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 15)?;
@@ -327,7 +327,7 @@ impl TyreSize {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [Speed: appendix 2.155.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24822)
-pub struct Speed(u8);
+pub struct Speed(pub u8);
 impl Speed {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read value for Speed")?;
@@ -386,7 +386,7 @@ pub type VuManufacturerAddress = Address;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VuSoftwareVersion: appendix 2.226.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28569)
-pub struct VuSoftwareVersion(IA5String);
+pub struct VuSoftwareVersion(pub IA5String);
 impl VuSoftwareVersion {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuSoftwareVersion(IA5String::parse_dyn_size(cursor, 4)?))
@@ -399,8 +399,8 @@ pub type VuSoftInstallationDate = TimeReal;
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VuSoftwareIdentification: appendix 2.225.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28538)
 pub struct VuSoftwareIdentification {
-    vu_software_version: VuSoftwareVersion,
-    vu_soft_installation_date: VuSoftInstallationDate,
+    pub vu_software_version: VuSoftwareVersion,
+    pub vu_soft_installation_date: VuSoftInstallationDate,
 }
 impl VuSoftwareIdentification {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -420,7 +420,7 @@ pub type VuManufacturingDate = TimeReal;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [SimilarEventsNumber: appendix 2.151.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24591)
-pub struct SimilarEventsNumber(u8);
+pub struct SimilarEventsNumber(pub u8);
 impl SimilarEventsNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor
@@ -469,7 +469,7 @@ impl EventFaultRecordPurpose {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VehicleIdentificationNumber: appendix 2.165.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25052)
-pub struct VehicleIdentificationNumber(IA5String);
+pub struct VehicleIdentificationNumber(pub IA5String);
 impl VehicleIdentificationNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let vin = IA5String::parse_dyn_size(cursor, 17)?;
@@ -580,7 +580,7 @@ impl CardSlotNumber {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [OdometerShort: appendix 2.113.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22854)
-pub struct OdometerShort(u32);
+pub struct OdometerShort(pub u32);
 impl OdometerShort {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut km_buffer = [0u8; 3];
@@ -599,8 +599,8 @@ pub type OdometerValueMidnight = OdometerShort;
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VehicleRegistrationIdentification: appendix 2.116.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25120)
 pub struct VehicleRegistrationIdentification {
-    vehicle_registration_nation: external::NationNumeric,
-    vehicle_registration_number: VehicleRegistrationNumber,
+    pub vehicle_registration_nation: external::NationNumeric,
+    pub vehicle_registration_number: VehicleRegistrationNumber,
 }
 impl VehicleRegistrationIdentification {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -663,11 +663,11 @@ pub enum ActivityChangeInfoCardActivity {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [ActivityChangeInfo: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)
 pub struct ActivityChangeInfo {
-    slot: ActivityChangeInfoSlot,
-    driving_status: ActivityChangeInfoDrivingStatus,
-    slot_status: ActivityChangeInfoCardStatusSlot,
-    activity: ActivityChangeInfoCardActivity,
-    minutes: u16,
+    pub slot: ActivityChangeInfoSlot,
+    pub driving_status: ActivityChangeInfoDrivingStatus,
+    pub slot_status: ActivityChangeInfoCardStatusSlot,
+    pub activity: ActivityChangeInfoCardActivity,
+    pub minutes: u16,
 }
 impl ActivityChangeInfo {
     pub const SIZE: usize = 2;
@@ -782,7 +782,7 @@ impl Datef {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
-pub struct Language(IA5String);
+pub struct Language(pub IA5String);
 impl Language {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Language(IA5String::parse_dyn_size(cursor, 2)?))
@@ -793,12 +793,12 @@ impl Language {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardIdentification: appendix 2.24.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17430)
 pub struct CardIdentification {
-    card_issuing_member_state: external::NationNumeric,
-    card_number: CardNumber,
-    card_issuing_authority_name: Name,
-    card_issue_date: TimeReal,
-    card_validity_begin: TimeReal,
-    card_expiry_date: TimeReal,
+    pub card_issuing_member_state: external::NationNumeric,
+    pub card_number: CardNumber,
+    pub card_issuing_authority_name: Name,
+    pub card_issue_date: TimeReal,
+    pub card_validity_begin: TimeReal,
+    pub card_expiry_date: TimeReal,
 }
 impl CardIdentification {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -825,9 +825,9 @@ impl CardIdentification {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [DriverCardHolderIdentification: appendix 2.62.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19928)
 pub struct DriverCardHolderIdentification {
-    card_holder_number: HolderName,
-    card_holder_birth_date: Datef,
-    card_holder_preferred_language: Language,
+    pub card_holder_number: HolderName,
+    pub card_holder_birth_date: Datef,
+    pub card_holder_preferred_language: Language,
 }
 impl DriverCardHolderIdentification {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -915,7 +915,7 @@ impl CardDrivingLicenceInfo {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [DailyPresenceCounter: appendix 2.56.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19510)
-pub struct DailyPresenceCounter(u16);
+pub struct DailyPresenceCounter(pub u16);
 impl DailyPresenceCounter {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = BCDString::parse_dyn_size(cursor, 2)?;
@@ -930,7 +930,7 @@ impl DailyPresenceCounter {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [Distance: appendix 2.60.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19665)
-pub struct Distance(u16);
+pub struct Distance(pub u16);
 impl Distance {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor
@@ -1089,7 +1089,7 @@ impl CardDriverActivity {
 #[serde(rename_all(serialize = "camelCase"))]
 /// EF Block page 281
 pub struct DriverActivityData {
-    card_driver_activity: CardDriverActivity,
+    pub card_driver_activity: CardDriverActivity,
 }
 impl DriverActivityData {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -1157,7 +1157,7 @@ impl RegionNumeric {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VuDataBlockCounter: appendix 2.189.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26512)
-pub struct VuDataBlockCounter(u16);
+pub struct VuDataBlockCounter(pub u16);
 
 impl VuDataBlockCounter {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -1275,7 +1275,7 @@ impl VuDetailedSpeedBlock {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VuPartNumber: appendix 2.217.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28257)
-pub struct VuPartNumber(IA5String);
+pub struct VuPartNumber(pub IA5String);
 impl VuPartNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuPartNumber(IA5String::parse_dyn_size(cursor, 16)?))

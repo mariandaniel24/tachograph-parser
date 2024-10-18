@@ -401,7 +401,7 @@ impl ControlType {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [Signature: appendix 2.149.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24501)
-pub struct Signature(Vec<u8>); // Octet string
+pub struct Signature(pub Vec<u8>); // Octet string
 impl Signature {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         if size < 64 || size > 132 {
@@ -419,9 +419,9 @@ impl Signature {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [PreviousVehicleInfo: appendix 2.118.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23250)
 pub struct PreviousVehicleInfo {
-    vehicle_registration_identification: VehicleRegistrationIdentification,
-    card_withdrawal_time: TimeReal,
-    vu_generation: Generation,
+    pub vehicle_registration_identification: VehicleRegistrationIdentification,
+    pub card_withdrawal_time: TimeReal,
+    pub vu_generation: Generation,
 }
 impl PreviousVehicleInfo {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -440,9 +440,9 @@ impl PreviousVehicleInfo {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [GNSSPlaceRecord: appendix 2.80.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21772)
 pub struct GNSSPlaceRecord {
-    time_stamp: TimeReal,
-    gnss_accuracy: GNSSAccuracy,
-    geo_coordinates: GeoCoordinates,
+    pub time_stamp: TimeReal,
+    pub gnss_accuracy: GNSSAccuracy,
+    pub geo_coordinates: GeoCoordinates,
 }
 impl GNSSPlaceRecord {
     const SIZE: usize = 7;
@@ -462,7 +462,7 @@ impl GNSSPlaceRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [GNSSAccuracy: appendix 2.77.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21573)
-pub struct GNSSAccuracy(u8);
+pub struct GNSSAccuracy(pub u8);
 impl GNSSAccuracy {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read GNSSAccuracy")?;
@@ -477,8 +477,8 @@ impl GNSSAccuracy {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [GeoCoordinates: appendix 2.76.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21534)
 pub struct GeoCoordinates {
-    latitude: f64,
-    longitude: f64,
+    pub latitude: f64,
+    pub longitude: f64,
 }
 impl GeoCoordinates {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -526,11 +526,11 @@ impl GeoCoordinates {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VuGNSSADRecord: appendix 2.203.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27345)
 pub struct VuGNSSADRecord {
-    time_stamp: TimeReal,
-    card_number_and_gen_driver_slot: Option<FullCardNumberAndGeneration>,
-    card_number_and_gen_codriver_slot: Option<FullCardNumberAndGeneration>,
-    gnss_place_record: GNSSPlaceRecord,
-    vehicle_odometer_value: OdometerShort,
+    pub time_stamp: TimeReal,
+    pub card_number_and_gen_driver_slot: Option<FullCardNumberAndGeneration>,
+    pub card_number_and_gen_codriver_slot: Option<FullCardNumberAndGeneration>,
+    pub gnss_place_record: GNSSPlaceRecord,
+    pub vehicle_odometer_value: OdometerShort,
 }
 impl VuGNSSADRecord {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -643,8 +643,8 @@ impl SpecificConditionType {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [SpecificConditionRecord: appendix 2.152.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24614)
 pub struct SpecificConditionRecord {
-    entry_time: TimeReal,
-    specific_condition_type: SpecificConditionType,
+    pub entry_time: TimeReal,
+    pub specific_condition_type: SpecificConditionType,
 }
 impl SpecificConditionRecord {
     const SIZE: usize = 5;
@@ -846,7 +846,7 @@ pub type VuSerialNumber = ExtendedSerialNumber;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
-pub struct VuApprovalNumber(IA5String);
+pub struct VuApprovalNumber(pub IA5String);
 impl VuApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuApprovalNumber(IA5String::parse_dyn_size(cursor, 16)?))
@@ -879,7 +879,7 @@ pub type SensorSerialNumber = ExtendedSerialNumber;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
-pub struct SensorApprovalNumber(IA5String);
+pub struct SensorApprovalNumber(pub IA5String);
 impl SensorApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 16)?;
@@ -893,7 +893,7 @@ pub type SensorGNSSSerialNumber = ExtendedSerialNumber;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [SensorExternalGNSSApprovalNumber: appendix 2.132.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23931)
-pub struct SensorExternalGNSSApprovalNumber(IA5String);
+pub struct SensorExternalGNSSApprovalNumber(pub IA5String);
 impl SensorExternalGNSSApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 16)?;
@@ -983,7 +983,7 @@ impl SealRecord {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [SealDataVu: appendix 2.129.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23827)
 pub struct SealDataVu {
-    seal_records: Vec<SealRecord>,
+    pub seal_records: Vec<SealRecord>,
 }
 
 impl SealDataVu {
@@ -1168,7 +1168,7 @@ impl CardEventRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
-pub struct CardEventData(Vec<Vec<CardEventRecord>>);
+pub struct CardEventData(pub Vec<Vec<CardEventRecord>>);
 impl CardEventData {
     const OUTER_RECORDS_AMOUNT: usize = 11;
     const INNER_RECORDS_AMOUNT: usize = 1;
@@ -1225,7 +1225,7 @@ impl CardFaultRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
-pub struct CardFaultData(Vec<Vec<CardFaultRecord>>);
+pub struct CardFaultData(pub Vec<Vec<CardFaultRecord>>);
 impl CardFaultData {
     const MAX_BLOCK_SIZE: usize = 1152;
     const OUTER_RECORDS_AMOUNT: usize = 6;
@@ -1295,8 +1295,8 @@ impl CardVehicleRecord {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardVehiclesUsed: appendix 2.38.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18302)
 pub struct CardVehiclesUsed {
-    vehicle_pointer_newest_record: u16,
-    card_vehicle_records: Vec<CardVehicleRecord>,
+    pub vehicle_pointer_newest_record: u16,
+    pub card_vehicle_records: Vec<CardVehicleRecord>,
 }
 impl CardVehiclesUsed {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
@@ -1327,8 +1327,8 @@ impl CardVehiclesUsed {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [CardPlaceDailyWorkPeriod: appendix 2.27.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17729)
 pub struct CardPlaceDailyWorkPeriod {
-    place_pointer_newest_record: NoOfCardPlaceRecords,
-    place_records: Vec<PlaceRecord>,
+    pub place_pointer_newest_record: NoOfCardPlaceRecords,
+    pub place_records: Vec<PlaceRecord>,
 }
 impl CardPlaceDailyWorkPeriod {
     pub fn parse(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
@@ -1535,7 +1535,7 @@ impl GNSSAccumulatedDriving {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
-pub struct DateOfDayDownloaded(TimeReal);
+pub struct DateOfDayDownloaded(pub TimeReal);
 
 impl DateOfDayDownloaded {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -1616,14 +1616,14 @@ pub type SignatureRecordArray = Vec<Signature>;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuActivitiesBlock {
-    date_of_day_downloaded_record_array: DateOfDayDownloadedRecordArray,
-    odometer_value_midnight_record_array: OdometerValueMidnightRecordArray,
-    vu_card_iw_record_array: VuCardIWRecordRecordArray,
-    vu_activity_daily_record_array: VuActivityDailyRecordArray,
-    vu_place_daily_work_period_record_array: VuPlaceDailyWorkPeriodRecordArray,
-    vu_gnss_ad_record_array: VuGNSSADRecordArray,
-    vu_specific_condition_record_array: VuSpecificConditionRecordArray,
-    signature_record_array: SignatureRecordArray,
+    pub date_of_day_downloaded_record_array: DateOfDayDownloadedRecordArray,
+    pub odometer_value_midnight_record_array: OdometerValueMidnightRecordArray,
+    pub vu_card_iw_record_array: VuCardIWRecordRecordArray,
+    pub vu_activity_daily_record_array: VuActivityDailyRecordArray,
+    pub vu_place_daily_work_period_record_array: VuPlaceDailyWorkPeriodRecordArray,
+    pub vu_gnss_ad_record_array: VuGNSSADRecordArray,
+    pub vu_specific_condition_record_array: VuSpecificConditionRecordArray,
+    pub signature_record_array: SignatureRecordArray,
 }
 
 impl VuActivitiesBlock {
@@ -1947,14 +1947,14 @@ pub type VuPowerSupplyInterruptionRecordArray = Vec<VuPowerSupplyInterruptionRec
 #[serde(rename_all(serialize = "camelCase"))]
 
 pub struct VuCompanyLocksBlock {
-    vu_identification_record_array: VuIdentificationRecordArray,
-    vu_sensor_paired_record_array: VuSensorPairedRecordArray,
-    vu_sensor_external_gnss_coupled_record_array: VuSensorExternalGNSSCoupledRecordArray,
-    vu_calibration_record_array: VuCalibrationRecordArray,
-    vu_card_record_array: VuCardRecordArray,
-    vu_its_consent_record_array: VuITSConsentRecordArray,
-    vu_power_supply_interruption_record_array: VuPowerSupplyInterruptionRecordArray,
-    signature_record_array: SignatureRecordArray,
+    pub vu_identification_record_array: VuIdentificationRecordArray,
+    pub vu_sensor_paired_record_array: VuSensorPairedRecordArray,
+    pub vu_sensor_external_gnss_coupled_record_array: VuSensorExternalGNSSCoupledRecordArray,
+    pub vu_calibration_record_array: VuCalibrationRecordArray,
+    pub vu_card_record_array: VuCardRecordArray,
+    pub vu_its_consent_record_array: VuITSConsentRecordArray,
+    pub vu_power_supply_interruption_record_array: VuPowerSupplyInterruptionRecordArray,
+    pub signature_record_array: SignatureRecordArray,
 }
 impl VuCompanyLocksBlock {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
