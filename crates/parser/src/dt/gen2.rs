@@ -1272,16 +1272,18 @@ pub struct CardVehicleRecord {
     pub vehicle_identification_number: VehicleIdentificationNumber,
 }
 impl CardVehicleRecord {
-    const SIZE: u16 = 31;
+    const SIZE: usize = 48;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+
         Ok(CardVehicleRecord {
-            vehicle_odometer_begin: OdometerShort::parse(cursor)?,
-            vehicle_odometer_end: OdometerShort::parse(cursor)?,
-            vehicle_first_use: TimeReal::parse(cursor)?,
-            vehicle_last_use: TimeReal::parse(cursor)?,
-            vehicle_registration: VehicleRegistrationIdentification::parse(cursor)?,
-            vu_data_block_counter: VuDataBlockCounter::parse(cursor)?,
-            vehicle_identification_number: VehicleIdentificationNumber::parse(cursor)?,
+            vehicle_odometer_begin: OdometerShort::parse(inner_cursor)?,
+            vehicle_odometer_end: OdometerShort::parse(inner_cursor)?,
+            vehicle_first_use: TimeReal::parse(inner_cursor)?,
+            vehicle_last_use: TimeReal::parse(inner_cursor)?,
+            vehicle_registration: VehicleRegistrationIdentification::parse(inner_cursor)?,
+            vu_data_block_counter: VuDataBlockCounter::parse(inner_cursor)?,
+            vehicle_identification_number: VehicleIdentificationNumber::parse(inner_cursor)?,
         })
     }
 }
@@ -1294,21 +1296,24 @@ pub struct CardVehiclesUsed {
     card_vehicle_records: Vec<CardVehicleRecord>,
 }
 impl CardVehiclesUsed {
-    const MAX_BLOCK_SIZE: u16 = 9600;
-    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(size);
         let vehicle_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read vehicle_pointer_newest_record")?;
-
-        // consume all the bytes in this block and then use this sub buffer to parse the records
-
-        let block_cursor = cursor.take(Self::MAX_BLOCK_SIZE as u64).into_inner();
-
+        log::error!(
+            "vehicle_pointer_newest_record: {:?}",
+            vehicle_pointer_newest_record
+        );
         let mut card_vehicle_records = Vec::new();
-        let amount_of_records = Self::MAX_BLOCK_SIZE / CardVehicleRecord::SIZE;
-        for _ in 0..amount_of_records {
-            if let Ok(card_vehicle_record) = CardVehicleRecord::parse(block_cursor) {
+        let amount_of_records = size as usize / CardVehicleRecord::SIZE as usize;
+        for i in 0..amount_of_records {
+            if let Ok(card_vehicle_record) = CardVehicleRecord::parse(cursor) {
                 card_vehicle_records.push(card_vehicle_record);
+            }
+            // If we've reached the newest record, break
+            if i + 1 == vehicle_pointer_newest_record as usize {
+                break;
             }
         }
 

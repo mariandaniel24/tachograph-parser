@@ -470,9 +470,9 @@ impl CardParser {
                     )?);
                 }
                 (0x0505, 2) => {
-                    vehicles_used_gen2 = Some(CardBlock::parse(
+                    vehicles_used_gen2 = Some(CardBlock::parse_dyn_size(
                         &mut cursor,
-                        gen2::CardVehiclesUsed::parse,
+                        gen2::CardVehiclesUsed::parse_dyn_size,
                     )?);
                 }
                 (0x0505, 3) => {

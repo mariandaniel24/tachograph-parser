@@ -740,15 +740,21 @@ pub struct CardVehiclesUsed {
 }
 impl CardVehiclesUsed {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(size);
         let vehicle_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read vehicle_pointer_newest_record")?;
 
         let mut card_vehicle_records = Vec::new();
         let amount_of_records = size as usize / CardVehicleRecord::SIZE as usize;
-        for _ in 0..amount_of_records {
-            if let Ok(card_vehicle_record) = CardVehicleRecord::parse(cursor) {
-                card_vehicle_records.push(card_vehicle_record);
+        for i in 0..amount_of_records {
+            match CardVehicleRecord::parse(cursor) {
+                Ok(card_vehicle_record) => card_vehicle_records.push(card_vehicle_record),
+                Err(e) => log::error!("Failed to parse CardVehicleRecord: {:?}", e),
+            }
+            // If we've reached the newest record, break
+            if i + 1 == vehicle_pointer_newest_record as usize {
+                break;
             }
         }
 
