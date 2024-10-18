@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::bytes::TakeExact;
 use crate::dt::*;
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
@@ -281,12 +282,10 @@ pub struct SpecificConditionRecord {
 impl SpecificConditionRecord {
     const SIZE: usize = 5;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let mut buf = vec![0u8; Self::SIZE];
-        cursor.read_exact(&mut buf).context("Failed to read buf")?;
-        let mut inner_cursor = Cursor::new(buf.as_slice());
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
 
-        let entry_time = TimeReal::parse(&mut inner_cursor)?;
-        let specific_condition_type = SpecificConditionType::parse(&mut inner_cursor)?;
+        let entry_time = TimeReal::parse(inner_cursor)?;
+        let specific_condition_type = SpecificConditionType::parse(inner_cursor)?;
         if specific_condition_type == SpecificConditionType::RFU {
             return Err(anyhow::anyhow!(
                 "RFU value found in SpecificConditionRecord"
@@ -516,15 +515,13 @@ pub struct PlaceRecord {
 impl PlaceRecord {
     const SIZE: usize = 10;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let mut buf = vec![0u8; Self::SIZE];
-        cursor.read_exact(&mut buf).context("Failed to read buf")?;
-        let mut inner_cursor = Cursor::new(buf.as_slice());
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
 
-        let entry_time = TimeReal::parse(&mut inner_cursor)?;
-        let entry_type_daily_work_period = EntryTypeDailyWorkPeriod::parse(&mut inner_cursor)?;
-        let daily_work_period_country = external::NationNumeric::parse(&mut inner_cursor)?;
-        let daily_work_period_region = RegionNumeric::parse(&mut inner_cursor)?;
-        let vehicle_odometer_value = OdometerShort::parse(&mut inner_cursor)?;
+        let entry_time = TimeReal::parse(inner_cursor)?;
+        let entry_type_daily_work_period = EntryTypeDailyWorkPeriod::parse(inner_cursor)?;
+        let daily_work_period_country = external::NationNumeric::parse(inner_cursor)?;
+        let daily_work_period_region = RegionNumeric::parse(inner_cursor)?;
+        let vehicle_odometer_value = OdometerShort::parse(inner_cursor)?;
         if entry_time.0.timestamp() == 0 {
             anyhow::bail!("Invalid entry_time in PlaceRecord");
         }
@@ -605,15 +602,12 @@ pub struct CardEventRecord {
 impl CardEventRecord {
     const SIZE: usize = 24;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let mut buf = vec![0u8; Self::SIZE];
-        cursor.read_exact(&mut buf).context("Failed to read buf")?;
-        let mut inner_cursor = Cursor::new(buf.as_slice());
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
 
-        let event_type = EventFaultType::parse(&mut inner_cursor)?;
-        let event_begin_time = TimeReal::parse(&mut inner_cursor)?;
-        let event_end_time = TimeReal::parse(&mut inner_cursor)?;
-        let event_vehicle_registration =
-            VehicleRegistrationIdentification::parse(&mut inner_cursor)?;
+        let event_type = EventFaultType::parse(inner_cursor)?;
+        let event_begin_time = TimeReal::parse(inner_cursor)?;
+        let event_end_time = TimeReal::parse(inner_cursor)?;
+        let event_vehicle_registration = VehicleRegistrationIdentification::parse(inner_cursor)?;
 
         Ok(CardEventRecord {
             event_type,
@@ -665,15 +659,12 @@ pub struct CardFaultRecord {
 impl CardFaultRecord {
     const SIZE: usize = 24;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let mut buf = vec![0u8; Self::SIZE];
-        cursor.read_exact(&mut buf).context("Failed to read buf")?;
-        let mut inner_cursor = Cursor::new(buf.as_slice());
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
 
-        let fault_type = EventFaultType::parse(&mut inner_cursor)?;
-        let fault_begin_time = TimeReal::parse(&mut inner_cursor)?;
-        let fault_end_time = TimeReal::parse(&mut inner_cursor)?;
-        let fault_vehicle_registration =
-            VehicleRegistrationIdentification::parse(&mut inner_cursor)?;
+        let fault_type = EventFaultType::parse(inner_cursor)?;
+        let fault_begin_time = TimeReal::parse(inner_cursor)?;
+        let fault_end_time = TimeReal::parse(inner_cursor)?;
+        let fault_vehicle_registration = VehicleRegistrationIdentification::parse(inner_cursor)?;
 
         Ok(CardFaultRecord {
             fault_type,
@@ -727,17 +718,15 @@ pub struct CardVehicleRecord {
 impl CardVehicleRecord {
     const SIZE: usize = 31;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let mut buf = vec![0u8; Self::SIZE];
-        cursor.read_exact(&mut buf).context("Failed to read buf")?;
-        let mut inner_cursor = Cursor::new(buf.as_slice());
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
 
         Ok(CardVehicleRecord {
-            vehicle_odometer_begin: OdometerShort::parse(&mut inner_cursor)?,
-            vehicle_odometer_end: OdometerShort::parse(&mut inner_cursor)?,
-            vehicle_first_use: TimeReal::parse(&mut inner_cursor)?,
-            vehicle_last_use: TimeReal::parse(&mut inner_cursor)?,
-            vehicle_registration: VehicleRegistrationIdentification::parse(&mut inner_cursor)?,
-            vu_data_block_counter: VuDataBlockCounter::parse(&mut inner_cursor)?,
+            vehicle_odometer_begin: OdometerShort::parse(inner_cursor)?,
+            vehicle_odometer_end: OdometerShort::parse(inner_cursor)?,
+            vehicle_first_use: TimeReal::parse(inner_cursor)?,
+            vehicle_last_use: TimeReal::parse(inner_cursor)?,
+            vehicle_registration: VehicleRegistrationIdentification::parse(inner_cursor)?,
+            vu_data_block_counter: VuDataBlockCounter::parse(inner_cursor)?,
         })
     }
 }

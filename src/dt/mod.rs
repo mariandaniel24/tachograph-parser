@@ -3,6 +3,7 @@ pub mod external;
 pub mod gen1;
 pub mod gen2;
 pub mod gen2v2;
+use crate::bytes::TakeExact;
 use crate::bytes::{extract_u16_bits_into_tup, extract_u8_bits_into_tup};
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
@@ -672,9 +673,7 @@ impl ActivityChangeInfo {
     pub const SIZE: usize = 2;
 
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let mut buf = vec![0u8; Self::SIZE];
-        cursor.read_exact(&mut buf)?;
-        let inner_cursor = &mut buf.as_slice();
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
 
         let value_buffer = inner_cursor
             .read_u16::<BigEndian>()
