@@ -1,10 +1,12 @@
 use anyhow::{Context, Result};
 use byteorder::ReadBytesExt;
+#[cfg(feature = "napi")]
+use napi_derive::napi;
 use std::fmt::Display;
 use std::io::BufReader;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "napi", napi)]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 pub enum TachoFileType {
     VehicleUnitGen1,
     VehicleUnitGen2,
