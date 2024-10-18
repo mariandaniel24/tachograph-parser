@@ -3,7 +3,12 @@ use clap::{value_parser, Arg, Command};
 use flexi_logger::Logger;
 use std::fs;
 use std::path::PathBuf;
-use tachograph_parser::{process_file_json, FileType};
+use tachograph_parser::{process_card_file_json, process_vu_file_json};
+
+enum FileType {
+    VU,
+    Card,
+}
 
 fn main() -> Result<()> {
     let matches = Command::new("Tachograph Parser")
@@ -59,8 +64,13 @@ fn main() -> Result<()> {
             .context("Failed to start logger")?;
     }
 
-    let json_output = process_file_json(file_type, input.to_str().unwrap())
-        .context("Failed to process input file")?;
+    let json_output = match file_type {
+        FileType::VU => {
+            process_vu_file_json(input.to_str().unwrap()).context("Failed to process input file")?
+        }
+        FileType::Card => process_card_file_json(input.to_str().unwrap())
+            .context("Failed to process input file")?,
+    };
 
     fs::write(output, json_output).context("Failed to write output file")?;
 

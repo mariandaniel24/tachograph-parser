@@ -214,7 +214,7 @@ impl VuParser {
                 }
             }
         }
-
+        log::warn!("VuGen2V2 parsing is not yet fully implemented");
         Ok(VuData::VuGen2V2Blocks(VuGen2V2Blocks {
             vu_overview: vu_overview
                 .context("unable to find VuOverviewBlock after parsing file")?,
