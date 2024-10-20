@@ -1514,14 +1514,16 @@ pub struct GNSSAccumulatedDriving {
 }
 impl GNSSAccumulatedDriving {
     pub fn parse(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let gnss_ad_pointer_newest_record = cursor
+        let inner_cursor = &mut cursor.take_exact(size);
+        let gnss_ad_pointer_newest_record = inner_cursor
             .read_u16::<BigEndian>()
             .context("Failed to read gnss_ad_pointer_newest_record")?;
 
         let mut gnss_accumulated_driving_records = Vec::new();
         let no_of_records = size as usize / GNSSAccumulatedDrivingRecord::SIZE as usize;
         for _ in 0..no_of_records {
-            if let Ok(gnss_accumulated_driving_record) = GNSSAccumulatedDrivingRecord::parse(cursor)
+            if let Ok(gnss_accumulated_driving_record) =
+                GNSSAccumulatedDrivingRecord::parse(inner_cursor)
             {
                 gnss_accumulated_driving_records.push(gnss_accumulated_driving_record);
             }
