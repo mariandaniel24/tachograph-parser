@@ -3,12 +3,10 @@ use clap::{value_parser, Arg, Command};
 use flexi_logger::Logger;
 use std::fs;
 use std::path::PathBuf;
-use tachograph_parser::{process_card_file_json, process_vu_file_json};
-
-enum FileType {
-    VU,
-    Card,
-}
+use tachograph_parser::{
+    detector::{self, TachoFileType},
+    process_card_file_json, process_vu_file_json,
+};
 
 fn main() -> Result<()> {
     let matches = Command::new("Tachograph Parser")
@@ -16,12 +14,6 @@ fn main() -> Result<()> {
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
-        .arg(
-            Arg::new("input_type")
-                .value_parser(["vu", "card"])
-                .required(true)
-                .help("Type of input file (VU or Card)"),
-        )
         .arg(
             Arg::new("input")
                 .short('i')
@@ -47,14 +39,14 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let file_type = match matches.get_one::<String>("input_type").unwrap().as_str() {
-        "vu" => FileType::VU,
-        "card" => FileType::Card,
-        _ => unreachable!(),
-    };
-
-    let input = matches.get_one::<PathBuf>("input").unwrap();
+    let input = matches
+        .get_one::<PathBuf>("input")
+        .unwrap()
+        .to_str()
+        .unwrap();
     let output = matches.get_one::<PathBuf>("output").unwrap();
+
+    let detected_file_type = detector::detect_from_file(input)?;
 
     // Set up logging if verbose flag is used
     if matches.get_count("verbose") > 0 {
@@ -64,17 +56,27 @@ fn main() -> Result<()> {
             .context("Failed to start logger")?;
     }
 
-    let json_output = match file_type {
-        FileType::VU => {
-            process_vu_file_json(input.to_str().unwrap()).context("Failed to process input file")?
+    let json_output = match detected_file_type {
+        TachoFileType::VehicleUnitGen1
+        | TachoFileType::VehicleUnitGen2
+        | TachoFileType::VehicleUnitGen2V2 => {
+            process_vu_file_json(input).context("Failed to process input file")?
         }
-        FileType::Card => process_card_file_json(input.to_str().unwrap())
-            .context("Failed to process input file")?,
+        TachoFileType::DriverCardGen1
+        | TachoFileType::DriverCardGen2
+        | TachoFileType::DriverCardGen2V2 => {
+            process_card_file_json(input).context("Failed to process input file")?
+        }
     };
 
     fs::write(output, json_output).context("Failed to write output file")?;
 
-    println!("Processing complete. Output written to: {:?}", output);
+    println!(
+        "Processing of {} complete with file type: {:?}. Output written to: {}",
+        input,
+        detected_file_type,
+        output.to_str().unwrap()
+    );
 
     Ok(())
 }
