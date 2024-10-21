@@ -584,7 +584,7 @@ pub struct PlaceRecord {
     pub entry_time: TimeReal,
     pub entry_type_daily_work_period: EntryTypeDailyWorkPeriod,
     pub daily_work_period_country: external::NationNumeric,
-    pub daily_work_period_region: RegionNumeric,
+    pub daily_work_period_region: external::RegionNumeric,
     pub vehicle_odometer_value: OdometerShort,
     pub entry_gnss_place_record: GNSSPlaceRecord,
 }
@@ -596,7 +596,7 @@ impl PlaceRecord {
         let entry_time = TimeReal::parse(inner_cursor)?;
         let entry_type_daily_work_period = EntryTypeDailyWorkPeriod::parse(inner_cursor)?;
         let daily_work_period_country = external::NationNumeric::parse(inner_cursor)?;
-        let daily_work_period_region = RegionNumeric::parse(inner_cursor)?;
+        let daily_work_period_region = external::RegionNumeric::parse(inner_cursor)?;
         let vehicle_odometer_value = OdometerShort::parse(inner_cursor)?;
         let entry_gnss_place_record = GNSSPlaceRecord::parse(inner_cursor)?;
         if entry_time.0.timestamp() == 0 {

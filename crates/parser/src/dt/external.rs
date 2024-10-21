@@ -155,3 +155,60 @@ impl NationNumeric {
         Ok(NationNumeric(parsed_country.to_string()))
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "napi", napi(string_enum))]
+/// [RegionNumeric: appendix 2.122.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23612)
+pub enum RegionNumeric {
+    NoInformation,
+    Andalucia,
+    Aragon,
+    Asturias,
+    Cantabria,
+    Cataluna,
+    CastillaLeon,
+    CastillaLaMancha,
+    Valencia,
+    Extremadura,
+    Galicia,
+    Baleares,
+    Canarias,
+    LaRioja,
+    Madrid,
+    Murcia,
+    Navarra,
+    PaisVasco,
+    Ceuta,
+    Melilla,
+}
+impl RegionNumeric {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor.read_u8().context("Failed to read region_numeric")?;
+        let region = match value {
+            // Gen1 (these are statically defined in the standard)
+            0x00 => RegionNumeric::NoInformation,
+            0x01 => RegionNumeric::Andalucia,
+            0x02 => RegionNumeric::Aragon,
+            0x03 => RegionNumeric::Asturias,
+            0x04 => RegionNumeric::Cantabria,
+            0x05 => RegionNumeric::Cataluna,
+            0x06 => RegionNumeric::CastillaLeon,
+            0x07 => RegionNumeric::CastillaLaMancha,
+            0x08 => RegionNumeric::Valencia,
+            0x09 => RegionNumeric::Extremadura,
+            0x0A => RegionNumeric::Galicia,
+            0x0B => RegionNumeric::Baleares,
+            0x0C => RegionNumeric::Canarias,
+            0x0D => RegionNumeric::LaRioja,
+            0x0E => RegionNumeric::Madrid,
+            0x0F => RegionNumeric::Murcia,
+            0x10 => RegionNumeric::Navarra,
+            0x11 => RegionNumeric::PaisVasco,
+            // Gen2 (regions are kept up to date here: https://dtc.jrc.ec.europa.eu/dtc_spain_region_codes.php.html)
+            0x12 => RegionNumeric::Ceuta,
+            0x13 => RegionNumeric::Melilla,
+            _ => anyhow::bail!("Invalid RegionNumeric value: {}", value),
+        };
+        Ok(region)
+    }
+}

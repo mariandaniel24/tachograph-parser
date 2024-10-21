@@ -425,56 +425,6 @@ impl PreviousVehicleInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-/// [RegionNumeric: appendix 2.122.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23612)
-pub enum RegionNumeric {
-    NoInformation,
-    Andalucia,
-    Aragon,
-    Asturias,
-    Cantabria,
-    Cataluna,
-    CastillaLeon,
-    CastillaLaMancha,
-    Valencia,
-    Extremadura,
-    Galicia,
-    Baleares,
-    Canarias,
-    LaRioja,
-    Madrid,
-    Murcia,
-    Navarra,
-    PaisVasco,
-}
-
-impl RegionNumeric {
-    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = cursor.read_u8().context("Failed to read region_numeric")?;
-        match value {
-            0x00 => Ok(RegionNumeric::NoInformation),
-            0x01 => Ok(RegionNumeric::Andalucia),
-            0x02 => Ok(RegionNumeric::Aragon),
-            0x03 => Ok(RegionNumeric::Asturias),
-            0x04 => Ok(RegionNumeric::Cantabria),
-            0x05 => Ok(RegionNumeric::Cataluna),
-            0x06 => Ok(RegionNumeric::CastillaLeon),
-            0x07 => Ok(RegionNumeric::CastillaLaMancha),
-            0x08 => Ok(RegionNumeric::Valencia),
-            0x09 => Ok(RegionNumeric::Extremadura),
-            0x0A => Ok(RegionNumeric::Galicia),
-            0x0B => Ok(RegionNumeric::Baleares),
-            0x0C => Ok(RegionNumeric::Canarias),
-            0x0D => Ok(RegionNumeric::LaRioja),
-            0x0E => Ok(RegionNumeric::Madrid),
-            0x0F => Ok(RegionNumeric::Murcia),
-            0x10 => Ok(RegionNumeric::Navarra),
-            0x11 => Ok(RegionNumeric::PaisVasco),
-            _ => anyhow::bail!("Invalid RegionNumeric value: {}", value),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 /// [EntryTypeDailyWorkPeriod: appendix 2.66.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20044)
 pub enum EntryTypeDailyWorkPeriod {
     BeginRelatedTimeCardInsertionTimeOrTimeOfEntry,
@@ -509,7 +459,7 @@ pub struct PlaceRecord {
     pub entry_time: TimeReal,
     pub entry_type_daily_work_period: EntryTypeDailyWorkPeriod,
     pub daily_work_period_country: external::NationNumeric,
-    pub daily_work_period_region: RegionNumeric,
+    pub daily_work_period_region: external::RegionNumeric,
     pub vehicle_odometer_value: OdometerShort,
 }
 impl PlaceRecord {
@@ -520,7 +470,7 @@ impl PlaceRecord {
         let entry_time = TimeReal::parse(inner_cursor)?;
         let entry_type_daily_work_period = EntryTypeDailyWorkPeriod::parse(inner_cursor)?;
         let daily_work_period_country = external::NationNumeric::parse(inner_cursor)?;
-        let daily_work_period_region = RegionNumeric::parse(inner_cursor)?;
+        let daily_work_period_region = external::RegionNumeric::parse(inner_cursor)?;
         let vehicle_odometer_value = OdometerShort::parse(inner_cursor)?;
         if entry_time.0.timestamp() == 0 {
             anyhow::bail!("Invalid entry_time in PlaceRecord");
