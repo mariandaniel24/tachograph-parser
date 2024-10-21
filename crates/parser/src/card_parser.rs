@@ -103,6 +103,11 @@ pub enum CardData {
         gen2v2_blocks: Gen2V2Blocks,
     },
 }
+
+fn panic_on_duplicate_block_type(block_type: &str) {
+    panic!("{}: duplicate block type detected. This suggests an unexpected structure in the Card files, where multiple instances of the same block type are present within a single generation. This indicates a bug in the parser.", block_type);
+}
+
 pub struct CardParser {
     input: Vec<u8>,
 }
@@ -203,6 +208,9 @@ impl CardParser {
             match (sfid, file_id) {
                 // CardIccIdentification Gen1
                 (0x0002, 0) => {
+                    if card_icc_identification.is_some() {
+                        panic_on_duplicate_block_type("card_icc_identification");
+                    }
                     card_icc_identification = Some(
                         CardBlock::parse(&mut cursor, gen1::CardIccIdentification::parse)?
                             .into_inner(),
@@ -210,6 +218,9 @@ impl CardParser {
                 }
                 // CardChipIdentification Gen1
                 (0x0005, 0) => {
+                    if card_chip_identification.is_some() {
+                        panic_on_duplicate_block_type("card_chip_identification");
+                    }
                     card_chip_identification = Some(
                         CardBlock::parse(&mut cursor, dt::CardChipIdentification::parse)?
                             .into_inner(),
@@ -217,6 +228,9 @@ impl CardParser {
                 }
                 // ApplicationIdentification Gen1
                 (0x0501, 0) => {
+                    if application_identification.is_some() {
+                        panic_on_duplicate_block_type("application_identification");
+                    }
                     application_identification = Some(
                         CardBlock::parse(
                             &mut cursor,
@@ -242,6 +256,9 @@ impl CardParser {
                 }
                 // Identification Gen1
                 (0x0520, 0) => {
+                    if identification.is_some() {
+                        panic_on_duplicate_block_type("identification");
+                    }
                     identification = Some(
                         CardBlock::parse(&mut cursor, dt::Identification::parse)?.into_inner(),
                     );
@@ -263,6 +280,9 @@ impl CardParser {
                 }
                 // DrivingLicenseInfo Gen1
                 (0x0521, 0) => {
+                    if driver_licence_information.is_some() {
+                        panic_on_duplicate_block_type("driver_licence_information");
+                    }
                     driver_licence_information = Some(
                         CardBlock::parse(&mut cursor, dt::CardDrivingLicenceInformation::parse)?
                             .into_inner(),
@@ -275,6 +295,9 @@ impl CardParser {
                 }
                 // EventsData Gen1
                 (0x0502, 0) => {
+                    if events_data.is_some() {
+                        panic_on_duplicate_block_type("events_data");
+                    }
                     events_data = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -290,6 +313,9 @@ impl CardParser {
                 }
                 // FaultsData Gen1
                 (0x0503, 0) => {
+                    if faults_data.is_some() {
+                        panic_on_duplicate_block_type("faults_data");
+                    }
                     faults_data = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -305,6 +331,9 @@ impl CardParser {
                 }
                 // DriverActivityData Gen1
                 (0x0504, 0) => {
+                    if driver_activity_data.is_some() {
+                        panic_on_duplicate_block_type("driver_activity_data");
+                    }
                     driver_activity_data = Some(
                         CardBlock::parse(&mut cursor, dt::DriverActivityData::parse)?.into_inner(),
                     );
@@ -316,6 +345,9 @@ impl CardParser {
                 }
                 // VehiclesUsed Gen1
                 (0x0505, 0) => {
+                    if vehicles_used.is_some() {
+                        panic_on_duplicate_block_type("vehicles_used");
+                    }
                     vehicles_used = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -331,6 +363,9 @@ impl CardParser {
                 }
                 // Places Gen1
                 (0x0506, 0) => {
+                    if places.is_some() {
+                        panic_on_duplicate_block_type("places");
+                    }
                     places = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -356,6 +391,9 @@ impl CardParser {
                 }
                 // ControlActivityData Gen1
                 (0x0508, 0) => {
+                    if control_activity_data.is_some() {
+                        panic_on_duplicate_block_type("control_activity_data");
+                    }
                     control_activity_data = Some(
                         CardBlock::parse(&mut cursor, gen1::CardControlActivityDataRecord::parse)?
                             .into_inner(),
@@ -368,6 +406,9 @@ impl CardParser {
                 }
                 // SpecificConditions Gen1
                 (0x0522, 0) => {
+                    if specific_conditions.is_some() {
+                        panic_on_duplicate_block_type("specific_conditions");
+                    }
                     specific_conditions = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -384,6 +425,9 @@ impl CardParser {
                 // IMPL GEN2
                 // CardIccIdentification Gen2
                 (0x0002, 2) => {
+                    if card_icc_identification_gen2.is_some() {
+                        panic_on_duplicate_block_type("card_icc_identification_gen2");
+                    }
                     card_icc_identification_gen2 = Some(
                         CardBlock::parse(&mut cursor, gen2::CardIccIdentificationGen2::parse)?
                             .into_inner(),
@@ -391,6 +435,9 @@ impl CardParser {
                 }
                 // CardChipIdentification Gen2
                 (0x0005, 2) => {
+                    if card_chip_identification_gen2.is_some() {
+                        panic_on_duplicate_block_type("card_chip_identification_gen2");
+                    }
                     card_chip_identification_gen2 = Some(
                         CardBlock::parse(&mut cursor, dt::CardChipIdentification::parse)?
                             .into_inner(),
@@ -398,6 +445,9 @@ impl CardParser {
                 }
                 // ApplicationIdentification Gen2
                 (0x0501, 2) => {
+                    if application_identification_gen2.is_some() {
+                        panic_on_duplicate_block_type("application_identification_gen2");
+                    }
                     application_identification_gen2 = Some(
                         CardBlock::parse(
                             &mut cursor,
@@ -408,6 +458,9 @@ impl CardParser {
                 }
                 // ApplicationIdentification Signature Gen2
                 (0x0501, 3) => {
+                    if application_identification_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("application_identification_signature_gen2");
+                    }
                     application_identification_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -418,6 +471,9 @@ impl CardParser {
                 }
                 // CardSignCertificate Gen2
                 (0xC101, 2) => {
+                    if card_sign_certificate_gen2.is_some() {
+                        panic_on_duplicate_block_type("card_sign_certificate_gen2");
+                    }
                     card_sign_certificate_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -428,6 +484,9 @@ impl CardParser {
                 }
                 // MemberStateCertificate Gen2
                 (0xC108, 2) => {
+                    if ca_certificate_gen2.is_some() {
+                        panic_on_duplicate_block_type("ca_certificate_gen2");
+                    }
                     ca_certificate_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -438,6 +497,9 @@ impl CardParser {
                 }
                 // LinkCertificate Gen2
                 (0xC109, 2) => {
+                    if link_certificate_gen2.is_some() {
+                        panic_on_duplicate_block_type("link_certificate_gen2");
+                    }
                     link_certificate_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -448,12 +510,18 @@ impl CardParser {
                 }
                 // Identification Gen2
                 (0x0520, 2) => {
+                    if identification_gen2.is_some() {
+                        panic_on_duplicate_block_type("identification_gen2");
+                    }
                     identification_gen2 = Some(
                         CardBlock::parse(&mut cursor, dt::Identification::parse)?.into_inner(),
                     );
                 }
                 // Identification Signature Gen2
                 (0x0520, 3) => {
+                    if identification_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("identification_signature_gen2");
+                    }
                     identification_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -469,6 +537,9 @@ impl CardParser {
                 }
                 // CardDownload Signature Gen2
                 (0x050E, 3) => {
+                    if card_download_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("card_download_signature_gen2");
+                    }
                     card_download_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -479,12 +550,18 @@ impl CardParser {
                 }
                 // DrivingLicenseInfo Gen2
                 (0x0521, 2) => {
+                    if driver_licence_info_gen2.is_some() {
+                        panic_on_duplicate_block_type("driver_licence_info_gen2");
+                    }
                     driver_licence_info_gen2 = Some(
                         CardBlock::parse(&mut cursor, dt::CardDrivingLicenceInformation::parse)?
                             .into_inner(),
                     );
                 }
                 (0x0521, 3) => {
+                    if driver_licence_info_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("driver_licence_info_signature_gen2");
+                    }
                     driver_licence_info_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -494,6 +571,9 @@ impl CardParser {
                     );
                 }
                 (0x0502, 2) => {
+                    if events_data_gen2.is_some() {
+                        panic_on_duplicate_block_type("events_data_gen2");
+                    }
                     events_data_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -503,6 +583,9 @@ impl CardParser {
                     );
                 }
                 (0x0502, 3) => {
+                    if events_data_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("events_data_signature_gen2");
+                    }
                     events_data_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -512,11 +595,17 @@ impl CardParser {
                     );
                 }
                 (0x0503, 2) => {
+                    if faults_data_gen2.is_some() {
+                        panic_on_duplicate_block_type("faults_data_gen2");
+                    }
                     faults_data_gen2 = Some(
                         CardBlock::parse(&mut cursor, gen2::CardFaultDataGen2::parse)?.into_inner(),
                     );
                 }
                 (0x0503, 3) => {
+                    if faults_data_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("faults_data_signature_gen2");
+                    }
                     faults_data_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -526,11 +615,17 @@ impl CardParser {
                     );
                 }
                 (0x0504, 2) => {
+                    if driver_activity_data_gen2.is_some() {
+                        panic_on_duplicate_block_type("driver_activity_data_gen2");
+                    }
                     driver_activity_data_gen2 = Some(
                         CardBlock::parse(&mut cursor, dt::DriverActivityData::parse)?.into_inner(),
                     );
                 }
                 (0x0504, 3) => {
+                    if driver_activity_data_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("driver_activity_data_signature_gen2");
+                    }
                     driver_activity_data_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -540,6 +635,9 @@ impl CardParser {
                     );
                 }
                 (0x0505, 2) => {
+                    if vehicles_used_gen2.is_some() {
+                        panic_on_duplicate_block_type("vehicles_used_gen2");
+                    }
                     vehicles_used_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -549,6 +647,9 @@ impl CardParser {
                     );
                 }
                 (0x0505, 3) => {
+                    if vehicles_used_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("vehicles_used_signature_gen2");
+                    }
                     vehicles_used_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -558,6 +659,9 @@ impl CardParser {
                     );
                 }
                 (0x0506, 2) => {
+                    if places_gen2.is_some() {
+                        panic_on_duplicate_block_type("places_gen2");
+                    }
                     places_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -567,6 +671,9 @@ impl CardParser {
                     );
                 }
                 (0x0506, 3) => {
+                    if places_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("places_signature_gen2");
+                    }
                     places_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -580,6 +687,9 @@ impl CardParser {
                         Some(CardBlock::parse(&mut cursor, dt::CurrentUsage::parse)?.into_inner());
                 }
                 (0x0507, 3) => {
+                    if current_usage_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("current_usage_signature_gen2");
+                    }
                     current_usage_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -589,6 +699,9 @@ impl CardParser {
                     );
                 }
                 (0x0508, 2) => {
+                    if control_activity_data_gen2.is_some() {
+                        panic_on_duplicate_block_type("control_activity_data_gen2");
+                    }
                     control_activity_data_gen2 = Some(
                         CardBlock::parse(
                             &mut cursor,
@@ -598,6 +711,9 @@ impl CardParser {
                     );
                 }
                 (0x0508, 3) => {
+                    if control_activity_data_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("control_activity_data_signature_gen2");
+                    }
                     control_activity_data_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -607,6 +723,9 @@ impl CardParser {
                     );
                 }
                 (0x0522, 2) => {
+                    if specific_conditions_gen2.is_some() {
+                        panic_on_duplicate_block_type("specific_conditions_gen2");
+                    }
                     specific_conditions_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -616,6 +735,9 @@ impl CardParser {
                     );
                 }
                 (0x0522, 3) => {
+                    if specific_conditions_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("specific_conditions_signature_gen2");
+                    }
                     specific_conditions_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -625,6 +747,9 @@ impl CardParser {
                     );
                 }
                 (0x0523, 2) => {
+                    if vehicle_units_used_gen2.is_some() {
+                        panic_on_duplicate_block_type("vehicle_units_used_gen2");
+                    }
                     vehicle_units_used_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -634,6 +759,9 @@ impl CardParser {
                     );
                 }
                 (0x0523, 3) => {
+                    if vehicle_units_used_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("vehicle_units_used_signature_gen2");
+                    }
                     vehicle_units_used_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -643,6 +771,9 @@ impl CardParser {
                     );
                 }
                 (0x0524, 2) => {
+                    if gnss_places_gen2.is_some() {
+                        panic_on_duplicate_block_type("gnss_places_gen2");
+                    }
                     gnss_places_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
@@ -652,6 +783,9 @@ impl CardParser {
                     );
                 }
                 (0x0524, 3) => {
+                    if gnss_places_signature_gen2.is_some() {
+                        panic_on_duplicate_block_type("gnss_places_signature_gen2");
+                    }
                     gnss_places_signature_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,

@@ -652,7 +652,8 @@ impl CardSlotNumber {
 /// [OdometerShort: appendix 2.113.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22854)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct OdometerShort {
-    pub value: u32,
+    /// Value in km in the operating range 0 to 9 999 999 km.
+    pub km: u32,
 }
 impl OdometerShort {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -662,7 +663,7 @@ impl OdometerShort {
             .context("Failed to read odometer short km value")?;
         // odometer short is 3 bytes, so we must pad the buffer with 1 byte to use a u32
         let km = u32::from_be_bytes([0, km_buffer[0], km_buffer[1], km_buffer[2]]);
-        Ok(OdometerShort { value: km })
+        Ok(OdometerShort { km })
     }
 }
 /// [OdometerValueMidnight: appendix 2.114.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22880)
