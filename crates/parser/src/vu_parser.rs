@@ -21,11 +21,11 @@ pub struct VuGen1Blocks {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct VuGen2Blocks {
-    pub vu_overview: gen2::VuOverviewBlock,
-    pub vu_activities: Vec<gen2::VuActivitiesBlock>,
-    pub vu_events_and_faults: Vec<gen2::VuEventsAndFaultsBlock>,
-    pub vu_detailed_speed: Vec<gen2::VuSpeedBlock>,
-    pub vu_company_locks: Vec<gen2::VuCompanyLocksBlock>,
+    pub vu_overview: gen2::VuOverviewBlockGen2,
+    pub vu_activities: Vec<gen2::VuActivitiesBlockGen2>,
+    pub vu_events_and_faults: Vec<gen2::VuEventsAndFaultsBlockGen2>,
+    pub vu_detailed_speed: Vec<gen2::VuSpeedBlockGen2>,
+    pub vu_company_locks: Vec<gen2::VuCompanyLocksBlockGen2>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -143,11 +143,11 @@ impl VuParser {
     }
 
     fn parse_gen2(&self, cursor: &mut Cursor<&[u8]>) -> Result<VuData> {
-        let mut vu_overview: Option<gen2::VuOverviewBlock> = None;
-        let mut vu_activities: Vec<gen2::VuActivitiesBlock> = Vec::new();
-        let mut vu_events_and_faults: Vec<gen2::VuEventsAndFaultsBlock> = Vec::new();
-        let mut vu_speed: Vec<gen2::VuSpeedBlock> = Vec::new();
-        let mut vu_company_locks: Vec<gen2::VuCompanyLocksBlock> = Vec::new();
+        let mut vu_overview: Option<gen2::VuOverviewBlockGen2> = None;
+        let mut vu_activities: Vec<gen2::VuActivitiesBlockGen2> = Vec::new();
+        let mut vu_events_and_faults: Vec<gen2::VuEventsAndFaultsBlockGen2> = Vec::new();
+        let mut vu_speed: Vec<gen2::VuSpeedBlockGen2> = Vec::new();
+        let mut vu_company_locks: Vec<gen2::VuCompanyLocksBlockGen2> = Vec::new();
 
         while !cursor.fill_buf()?.is_empty() {
             let sid = cursor.read_u8().context("Failed to read sid")?;
@@ -160,23 +160,24 @@ impl VuParser {
             match (sid, trep) {
                 (0x76, 0x21) => {
                     vu_overview = Some(
-                        gen2::VuOverviewBlock::parse(cursor)
+                        gen2::VuOverviewBlockGen2::parse(cursor)
                             .context("Failed to parse VuOverviewGen2")?,
                     )
                 }
                 (0x76, 0x22) => vu_activities.push(
-                    gen2::VuActivitiesBlock::parse(cursor)
+                    gen2::VuActivitiesBlockGen2::parse(cursor)
                         .context("Failed to parse VuActivitiesGen2")?,
                 ),
                 (0x76, 0x23) => vu_events_and_faults.push(
-                    gen2::VuEventsAndFaultsBlock::parse(cursor)
+                    gen2::VuEventsAndFaultsBlockGen2::parse(cursor)
                         .context("Failed to parse VuEventsAndFaultsGen2")?,
                 ),
                 (0x76, 0x24) => vu_speed.push(
-                    gen2::VuSpeedBlock::parse(cursor).context("Failed to parse VuDetailedSpeed")?,
+                    gen2::VuSpeedBlockGen2::parse(cursor)
+                        .context("Failed to parse VuDetailedSpeed")?,
                 ),
                 (0x76, 0x25) => vu_company_locks.push(
-                    gen2::VuCompanyLocksBlock::parse(cursor)
+                    gen2::VuCompanyLocksBlockGen2::parse(cursor)
                         .context("Failed to parse VuCompanyLocksGen2")?,
                 ),
                 _ => {

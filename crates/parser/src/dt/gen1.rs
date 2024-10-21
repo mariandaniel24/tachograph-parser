@@ -134,11 +134,13 @@ pub type SensorSerialNumber = ExtendedSerialNumber;
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
-pub struct SensorApprovalNumber(pub IA5String);
+pub struct SensorApprovalNumber {
+    pub value: IA5String,
+}
 impl SensorApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 8)?;
-        Ok(SensorApprovalNumber(value))
+        Ok(SensorApprovalNumber { value })
     }
 }
 
@@ -146,11 +148,13 @@ impl SensorApprovalNumber {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
-pub struct VuApprovalNumber(pub IA5String);
+pub struct VuApprovalNumber {
+    pub value: IA5String,
+}
 impl VuApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = IA5String::parse_dyn_size(cursor, 8)?;
-        Ok(VuApprovalNumber(value))
+        Ok(VuApprovalNumber { value })
     }
 }
 
@@ -326,8 +330,12 @@ impl SpecificConditions {
             }
         }
         // Sort the records by time_stamp in ascending order
-        specific_condition_records
-            .sort_by(|a, b| a.entry_time.0.timestamp().cmp(&b.entry_time.0.timestamp()));
+        specific_condition_records.sort_by(|a, b| {
+            a.entry_time
+                .value
+                .timestamp()
+                .cmp(&b.entry_time.value.timestamp())
+        });
         Ok(SpecificConditions {
             specific_condition_records: specific_condition_records,
         })
@@ -338,14 +346,16 @@ impl SpecificConditions {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 /// [Certificate: appendix 2.41.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18396)
-pub struct Certificate(pub Vec<u8>);
+pub struct Certificate {
+    pub value: Vec<u8>,
+}
 impl Certificate {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut value = vec![0u8; 194];
         cursor
             .read_exact(&mut value)
             .context("Failed to read certificate")?;
-        Ok(Certificate(value))
+        Ok(Certificate { value })
     }
 }
 
@@ -411,14 +421,18 @@ impl ControlType {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 /// [Signature: appendix 2.149.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24501)
-pub struct Signature(pub Vec<u8>); // Octet string
+pub struct Signature {
+    pub value: Vec<u8>,
+}
 impl Signature {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut signature_buffer = vec![0u8; 128];
         cursor
             .read_exact(&mut signature_buffer)
             .context("Failed to read signature buffer")?;
-        Ok(Signature(signature_buffer))
+        Ok(Signature {
+            value: signature_buffer,
+        })
     }
 }
 
@@ -491,7 +505,7 @@ impl PlaceRecord {
         let daily_work_period_country = external::NationNumeric::parse(inner_cursor)?;
         let daily_work_period_region = external::RegionNumeric::parse(inner_cursor)?;
         let vehicle_odometer_value = OdometerShort::parse(inner_cursor)?;
-        if entry_time.0.timestamp() == 0 {
+        if entry_time.value.timestamp() == 0 {
             anyhow::bail!("Invalid entry_time in PlaceRecord");
         }
         Ok(PlaceRecord {
@@ -593,7 +607,9 @@ impl CardEventRecord {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
-pub struct CardEventData(pub Vec<Vec<CardEventRecord>>);
+pub struct CardEventData {
+    pub value: Vec<Vec<CardEventRecord>>,
+}
 impl CardEventData {
     const OUTER_RECORDS_AMOUNT: usize = 6;
 
@@ -614,7 +630,9 @@ impl CardEventData {
                 card_event_records.push(inner_card_event_records);
             }
         }
-        Ok(CardEventData(card_event_records))
+        Ok(CardEventData {
+            value: card_event_records,
+        })
     }
 }
 
@@ -652,7 +670,9 @@ impl CardFaultRecord {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
-pub struct CardFaultData(pub Vec<Vec<CardFaultRecord>>);
+pub struct CardFaultData {
+    pub value: Vec<Vec<CardFaultRecord>>,
+}
 impl CardFaultData {
     const OUTER_RECORDS_AMOUNT: usize = 2;
 
@@ -674,7 +694,9 @@ impl CardFaultData {
                 card_fault_records.push(inner_card_fault_records);
             }
         }
-        Ok(CardFaultData(card_fault_records))
+        Ok(CardFaultData {
+            value: card_fault_records,
+        })
     }
 }
 
@@ -766,7 +788,12 @@ impl CardPlaceDailyWorkPeriod {
             }
         }
         // Sort the records by entry_time in ascending order
-        place_records.sort_by(|a, b| a.entry_time.0.timestamp().cmp(&b.entry_time.0.timestamp()));
+        place_records.sort_by(|a, b| {
+            a.entry_time
+                .value
+                .timestamp()
+                .cmp(&b.entry_time.value.timestamp())
+        });
         Ok(CardPlaceDailyWorkPeriod {
             place_pointer_newest_record,
             place_records,

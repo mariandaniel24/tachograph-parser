@@ -9,7 +9,9 @@ use std::io::Cursor;
 #[serde(rename_all(serialize = "camelCase"))]
 #[napi(object)]
 /// [ManufacturerCode: appendix 2.94.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22253)
-pub struct ManufacturerCode(pub String);
+pub struct ManufacturerCode {
+    pub value: String,
+}
 impl ManufacturerCode {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let code = cursor
@@ -82,7 +84,9 @@ impl ManufacturerCode {
             0xE0 => "Turker Roll Paper Trade",
             _ => anyhow::bail!("Unknown ManufacturerCode: {}", code),
         };
-        Ok(ManufacturerCode(name.to_string()))
+        Ok(ManufacturerCode {
+            value: name.to_string(),
+        })
     }
 }
 
@@ -90,7 +94,9 @@ impl ManufacturerCode {
 #[serde(rename_all(serialize = "camelCase"))]
 /// [NationNumeric: appendix 2.101.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22450)
 #[napi(object)]
-pub struct NationNumeric(pub String);
+pub struct NationNumeric {
+    pub value: String,
+}
 impl NationNumeric {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read nation numeric")?;
@@ -157,7 +163,9 @@ impl NationNumeric {
             0xFF => "Rest of the World",
             _ => "Reserved for Future Use",
         };
-        Ok(NationNumeric(parsed_country.to_string()))
+        Ok(NationNumeric {
+            value: parsed_country.to_string(),
+        })
     }
 }
 
@@ -165,7 +173,9 @@ impl NationNumeric {
 #[serde(rename_all(serialize = "camelCase"))]
 #[napi(object)]
 /// [RegionNumeric: appendix 2.122.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23612)
-pub struct RegionNumeric(pub String);
+pub struct RegionNumeric {
+    pub value: String,
+}
 impl RegionNumeric {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read region_numeric")?;
@@ -194,6 +204,8 @@ impl RegionNumeric {
             0x13 => "Melilla",
             _ => anyhow::bail!("Invalid RegionNumeric value: {}", value),
         };
-        Ok(RegionNumeric(region.to_string()))
+        Ok(RegionNumeric {
+            value: region.to_string(),
+        })
     }
 }

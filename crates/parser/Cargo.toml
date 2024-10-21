@@ -23,6 +23,7 @@ napi = { version = "3.0.0-alpha.15", default-features = false, features = ["napi
 napi-derive = "3.0.0-alpha.15"
 
 clap = { version = "4.3", features = ["derive"] }
+base64 = "0.22.1"
 
 
 

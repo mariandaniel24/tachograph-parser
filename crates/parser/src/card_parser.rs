@@ -46,47 +46,62 @@ pub struct Gen1Blocks {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct Gen2Blocks {
-    pub card_icc_identification: gen2::CardIccIdentification,
+    pub card_icc_identification: gen2::CardIccIdentificationGen2,
     pub card_chip_identification: dt::CardChipIdentification,
-    pub application_identification: gen2::DriverCardApplicationIdentification,
-    pub application_identification_signature: gen2::Signature,
-    pub card_sign_certificate: gen2::Certificate,
-    pub ca_certificate: gen2::Certificate,
-    pub link_certificate: gen2::Certificate,
+    pub application_identification: gen2::DriverCardApplicationIdentificationGen2,
+    pub application_identification_signature: gen2::SignatureGen2,
+    pub card_sign_certificate: gen2::CertificateGen2,
+    pub ca_certificate: gen2::CertificateGen2,
+    pub link_certificate: gen2::CertificateGen2,
     pub identification: dt::Identification,
-    pub identification_signature: gen2::Signature,
+    pub identification_signature: gen2::SignatureGen2,
     pub card_download: Option<dt::CardDownload>,
-    pub card_download_signature: Option<gen2::Signature>,
+    pub card_download_signature: Option<gen2::SignatureGen2>,
     pub driver_licence_info: Option<dt::CardDrivingLicenceInformation>,
-    pub driver_licence_info_signature: Option<gen2::Signature>,
-    pub events_data: gen2::CardEventData,
-    pub events_data_signature: gen2::Signature,
-    pub faults_data: gen2::CardFaultData,
-    pub faults_data_signature: gen2::Signature,
+    pub driver_licence_info_signature: Option<gen2::SignatureGen2>,
+    pub events_data: gen2::CardEventDataGen2,
+    pub events_data_signature: gen2::SignatureGen2,
+    pub faults_data: gen2::CardFaultDataGen2,
+    pub faults_data_signature: gen2::SignatureGen2,
     pub driver_activity_data: dt::DriverActivityData,
-    pub driver_activity_data_signature: gen2::Signature,
-    pub vehicles_used: gen2::CardVehiclesUsed,
-    pub vehicles_used_signature: gen2::Signature,
-    pub places: gen2::CardPlaceDailyWorkPeriod,
-    pub places_signature: gen2::Signature,
+    pub driver_activity_data_signature: gen2::SignatureGen2,
+    pub vehicles_used: gen2::CardVehiclesUsedGen2,
+    pub vehicles_used_signature: gen2::SignatureGen2,
+    pub places: gen2::CardPlaceDailyWorkPeriodGen2,
+    pub places_signature: gen2::SignatureGen2,
     pub current_usage: Option<dt::CurrentUsage>,
-    pub current_usage_signature: Option<gen2::Signature>,
-    pub control_activity_data: gen2::CardControlActivityDataRecord,
-    pub control_activity_data_signature: gen2::Signature,
-    pub specific_conditions: gen2::SpecificConditions,
-    pub specific_conditions_signature: gen2::Signature,
-    pub vehicle_units_used: gen2::CardVehicleUnitsUsed,
-    pub vehicle_units_used_signature: gen2::Signature,
-    pub gnss_accumulated_driving: gen2::GNSSAccumulatedDriving,
-    pub gnss_places_signature: gen2::Signature,
+    pub current_usage_signature: Option<gen2::SignatureGen2>,
+    pub control_activity_data: gen2::CardControlActivityDataRecordGen2,
+    pub control_activity_data_signature: gen2::SignatureGen2,
+    pub specific_conditions: gen2::SpecificConditionsGen2,
+    pub specific_conditions_signature: gen2::SignatureGen2,
+    pub vehicle_units_used: gen2::CardVehicleUnitsUsedGen2,
+    pub vehicle_units_used_signature: gen2::SignatureGen2,
+    pub gnss_accumulated_driving: gen2::GNSSAccumulatedDrivingGen2,
+    pub gnss_places_signature: gen2::SignatureGen2,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
-pub struct CardData {
-    pub gen1_blocks: Gen1Blocks,
-    pub gen2_blocks: Option<Gen2Blocks>,
+pub struct Gen2V2Blocks {}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi)]
+pub enum CardData {
+    Gen1 {
+        gen1_blocks: Gen1Blocks,
+    },
+    Gen2 {
+        gen1_blocks: Gen1Blocks,
+        gen2_blocks: Gen2Blocks,
+    },
+    Gen2V2 {
+        gen1_blocks: Gen1Blocks,
+        gen2_blocks: Gen2Blocks,
+        gen2v2_blocks: Gen2V2Blocks,
+    },
 }
 pub struct CardParser {
     input: Vec<u8>,
@@ -135,40 +150,41 @@ impl CardParser {
         let mut specific_conditions_signature: Option<gen1::Signature> = None;
 
         // GEN2
-        let mut card_icc_identification_gen2: Option<gen2::CardIccIdentification> = None;
+        let mut card_icc_identification_gen2: Option<gen2::CardIccIdentificationGen2> = None;
         let mut card_chip_identification_gen2: Option<dt::CardChipIdentification> = None;
-        let mut application_identification_gen2: Option<gen2::DriverCardApplicationIdentification> =
-            None;
-        let mut application_identification_signature_gen2: Option<gen2::Signature> = None;
-        let mut card_sign_certificate_gen2: Option<gen2::Certificate> = None;
-        let mut ca_certificate_gen2: Option<gen2::Certificate> = None;
-        let mut link_certificate_gen2: Option<gen2::Certificate> = None;
+        let mut application_identification_gen2: Option<
+            gen2::DriverCardApplicationIdentificationGen2,
+        > = None;
+        let mut application_identification_signature_gen2: Option<gen2::SignatureGen2> = None;
+        let mut card_sign_certificate_gen2: Option<gen2::CertificateGen2> = None;
+        let mut ca_certificate_gen2: Option<gen2::CertificateGen2> = None;
+        let mut link_certificate_gen2: Option<gen2::CertificateGen2> = None;
         let mut identification_gen2: Option<dt::Identification> = None;
-        let mut identification_signature_gen2: Option<gen2::Signature> = None;
+        let mut identification_signature_gen2: Option<gen2::SignatureGen2> = None;
         let mut card_download_gen2: Option<dt::CardDownload> = None;
-        let mut card_download_signature_gen2: Option<gen2::Signature> = None;
+        let mut card_download_signature_gen2: Option<gen2::SignatureGen2> = None;
         let mut driver_licence_info_gen2: Option<dt::CardDrivingLicenceInformation> = None;
-        let mut driver_licence_info_signature_gen2: Option<gen2::Signature> = None;
-        let mut events_data_gen2: Option<gen2::CardEventData> = None;
-        let mut events_data_signature_gen2: Option<gen2::Signature> = None;
-        let mut faults_data_gen2: Option<gen2::CardFaultData> = None;
-        let mut faults_data_signature_gen2: Option<gen2::Signature> = None;
+        let mut driver_licence_info_signature_gen2: Option<gen2::SignatureGen2> = None;
+        let mut events_data_gen2: Option<gen2::CardEventDataGen2> = None;
+        let mut events_data_signature_gen2: Option<gen2::SignatureGen2> = None;
+        let mut faults_data_gen2: Option<gen2::CardFaultDataGen2> = None;
+        let mut faults_data_signature_gen2: Option<gen2::SignatureGen2> = None;
         let mut driver_activity_data_gen2: Option<dt::DriverActivityData> = None;
-        let mut driver_activity_data_signature_gen2: Option<gen2::Signature> = None;
-        let mut vehicles_used_gen2: Option<gen2::CardVehiclesUsed> = None;
-        let mut vehicles_used_signature_gen2: Option<gen2::Signature> = None;
-        let mut places_gen2: Option<gen2::CardPlaceDailyWorkPeriod> = None;
-        let mut places_signature_gen2: Option<gen2::Signature> = None;
+        let mut driver_activity_data_signature_gen2: Option<gen2::SignatureGen2> = None;
+        let mut vehicles_used_gen2: Option<gen2::CardVehiclesUsedGen2> = None;
+        let mut vehicles_used_signature_gen2: Option<gen2::SignatureGen2> = None;
+        let mut places_gen2: Option<gen2::CardPlaceDailyWorkPeriodGen2> = None;
+        let mut places_signature_gen2: Option<gen2::SignatureGen2> = None;
         let mut current_usage_gen2: Option<dt::CurrentUsage> = None;
-        let mut current_usage_signature_gen2: Option<gen2::Signature> = None;
-        let mut control_activity_data_gen2: Option<gen2::CardControlActivityDataRecord> = None;
-        let mut control_activity_data_signature_gen2: Option<gen2::Signature> = None;
-        let mut specific_conditions_gen2: Option<gen2::SpecificConditions> = None;
-        let mut specific_conditions_signature_gen2: Option<gen2::Signature> = None;
-        let mut vehicle_units_used_gen2: Option<gen2::CardVehicleUnitsUsed> = None;
-        let mut vehicle_units_used_signature_gen2: Option<gen2::Signature> = None;
-        let mut gnss_places_gen2: Option<gen2::GNSSAccumulatedDriving> = None;
-        let mut gnss_places_signature_gen2: Option<gen2::Signature> = None;
+        let mut current_usage_signature_gen2: Option<gen2::SignatureGen2> = None;
+        let mut control_activity_data_gen2: Option<gen2::CardControlActivityDataRecordGen2> = None;
+        let mut control_activity_data_signature_gen2: Option<gen2::SignatureGen2> = None;
+        let mut specific_conditions_gen2: Option<gen2::SpecificConditionsGen2> = None;
+        let mut specific_conditions_signature_gen2: Option<gen2::SignatureGen2> = None;
+        let mut vehicle_units_used_gen2: Option<gen2::CardVehicleUnitsUsedGen2> = None;
+        let mut vehicle_units_used_signature_gen2: Option<gen2::SignatureGen2> = None;
+        let mut gnss_places_gen2: Option<gen2::GNSSAccumulatedDrivingGen2> = None;
+        let mut gnss_places_signature_gen2: Option<gen2::SignatureGen2> = None;
 
         // all data blocks for card files follow the structure
         // file_id (2 bytes), sfid (1 byte), size (2 bytes)
@@ -369,7 +385,7 @@ impl CardParser {
                 // CardIccIdentification Gen2
                 (0x0002, 2) => {
                     card_icc_identification_gen2 = Some(
-                        CardBlock::parse(&mut cursor, gen2::CardIccIdentification::parse)?
+                        CardBlock::parse(&mut cursor, gen2::CardIccIdentificationGen2::parse)?
                             .into_inner(),
                     );
                 }
@@ -385,7 +401,7 @@ impl CardParser {
                     application_identification_gen2 = Some(
                         CardBlock::parse(
                             &mut cursor,
-                            gen2::DriverCardApplicationIdentification::parse,
+                            gen2::DriverCardApplicationIdentificationGen2::parse,
                         )?
                         .into_inner(),
                     );
@@ -393,29 +409,41 @@ impl CardParser {
                 // ApplicationIdentification Signature Gen2
                 (0x0501, 3) => {
                     application_identification_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 // CardSignCertificate Gen2
                 (0xC101, 2) => {
                     card_sign_certificate_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Certificate::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::CertificateGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 // MemberStateCertificate Gen2
                 (0xC108, 2) => {
                     ca_certificate_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Certificate::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::CertificateGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 // LinkCertificate Gen2
                 (0xC109, 2) => {
                     link_certificate_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Certificate::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::CertificateGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 // Identification Gen2
@@ -427,8 +455,11 @@ impl CardParser {
                 // Identification Signature Gen2
                 (0x0520, 3) => {
                     identification_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 // CardDownload Gen2
@@ -439,8 +470,11 @@ impl CardParser {
                 // CardDownload Signature Gen2
                 (0x050E, 3) => {
                     card_download_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 // DrivingLicenseInfo Gen2
@@ -452,34 +486,43 @@ impl CardParser {
                 }
                 (0x0521, 3) => {
                     driver_licence_info_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0502, 2) => {
                     events_data_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
-                            gen2::CardEventData::parse_dyn_size,
+                            gen2::CardEventDataGen2::parse_dyn_size,
                         )?
                         .into_inner(),
                     );
                 }
                 (0x0502, 3) => {
                     events_data_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0503, 2) => {
                     faults_data_gen2 = Some(
-                        CardBlock::parse(&mut cursor, gen2::CardFaultData::parse)?.into_inner(),
+                        CardBlock::parse(&mut cursor, gen2::CardFaultDataGen2::parse)?.into_inner(),
                     );
                 }
                 (0x0503, 3) => {
                     faults_data_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0504, 2) => {
@@ -489,38 +532,47 @@ impl CardParser {
                 }
                 (0x0504, 3) => {
                     driver_activity_data_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0505, 2) => {
                     vehicles_used_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
-                            gen2::CardVehiclesUsed::parse_dyn_size,
+                            gen2::CardVehiclesUsedGen2::parse_dyn_size,
                         )?
                         .into_inner(),
                     );
                 }
                 (0x0505, 3) => {
                     vehicles_used_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0506, 2) => {
                     places_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
-                            gen2::CardPlaceDailyWorkPeriod::parse,
+                            gen2::CardPlaceDailyWorkPeriodGen2::parse,
                         )?
                         .into_inner(),
                     );
                 }
                 (0x0506, 3) => {
                     places_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0507, 2) => {
@@ -529,59 +581,83 @@ impl CardParser {
                 }
                 (0x0507, 3) => {
                     current_usage_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0508, 2) => {
                     control_activity_data_gen2 = Some(
-                        CardBlock::parse(&mut cursor, gen2::CardControlActivityDataRecord::parse)?
-                            .into_inner(),
+                        CardBlock::parse(
+                            &mut cursor,
+                            gen2::CardControlActivityDataRecordGen2::parse,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0508, 3) => {
                     control_activity_data_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0522, 2) => {
                     specific_conditions_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::SpecificConditions::parse)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SpecificConditionsGen2::parse,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0522, 3) => {
                     specific_conditions_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0523, 2) => {
                     vehicle_units_used_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::CardVehicleUnitsUsed::parse)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::CardVehicleUnitsUsedGen2::parse,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0523, 3) => {
                     vehicle_units_used_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 (0x0524, 2) => {
                     gnss_places_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
-                            gen2::GNSSAccumulatedDriving::parse,
+                            gen2::GNSSAccumulatedDrivingGen2::parse,
                         )?
                         .into_inner(),
                     );
                 }
                 (0x0524, 3) => {
                     gnss_places_signature_gen2 = Some(
-                        CardBlock::parse_dyn_size(&mut cursor, gen2::Signature::parse_dyn_size)?
-                            .into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 _ => {
@@ -722,9 +798,12 @@ impl CardParser {
             gen2_blocks = Some(blocks);
         }
 
-        Ok(CardData {
-            gen1_blocks: gen1_blocks,
-            gen2_blocks: gen2_blocks,
+        Ok(match (gen1_blocks, gen2_blocks) {
+            (gen1, None) => CardData::Gen1 { gen1_blocks: gen1 },
+            (gen1, Some(gen2)) => CardData::Gen2 {
+                gen1_blocks: gen1,
+                gen2_blocks: gen2,
+            },
         })
     }
 

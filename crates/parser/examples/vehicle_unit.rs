@@ -1,6 +1,6 @@
 use anyhow::Result;
 use std::env;
-use tachograph_parser::process_vu_file_json;
+use tachograph_parser::parse_vu_from_file_to_json;
 
 fn main() -> Result<()> {
     std::env::set_var("RUST_LOG", "trace");
@@ -13,7 +13,7 @@ fn main() -> Result<()> {
     }
 
     let path = &args[1];
-    let card_data = process_vu_file_json(path)?;
+    let card_data = parse_vu_from_file_to_json(path)?;
 
     std::fs::write(format!("{path}.json"), card_data)?;
     // println!("Vehicle Unit Data: {:?}", card_data);

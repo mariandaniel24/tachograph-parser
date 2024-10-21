@@ -5,7 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 use tachograph_parser::{
     detector::{self, TachoFileType},
-    process_card_file_json, process_vu_file_json,
+    parse_card_from_file_to_json, parse_vu_from_file_to_json,
 };
 
 fn main() -> Result<()> {
@@ -60,12 +60,12 @@ fn main() -> Result<()> {
         TachoFileType::VehicleUnitGen1
         | TachoFileType::VehicleUnitGen2
         | TachoFileType::VehicleUnitGen2V2 => {
-            process_vu_file_json(input).context("Failed to process input file")?
+            parse_vu_from_file_to_json(input).context("Failed to process input file")?
         }
         TachoFileType::DriverCardGen1
         | TachoFileType::DriverCardGen2
         | TachoFileType::DriverCardGen2V2 => {
-            process_card_file_json(input).context("Failed to process input file")?
+            parse_card_from_file_to_json(input).context("Failed to process input file")?
         }
     };
 
