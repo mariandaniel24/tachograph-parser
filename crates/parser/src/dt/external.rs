@@ -1,9 +1,13 @@
 use anyhow::{Context, Result};
 use byteorder::ReadBytesExt;
+// #[cfg(feature = "napi")]
+use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use std::io::Cursor;
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[napi(object)]
 /// [ManufacturerCode: appendix 2.94.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22253)
 pub struct ManufacturerCode(pub String);
 impl ManufacturerCode {
@@ -85,6 +89,7 @@ impl ManufacturerCode {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [NationNumeric: appendix 2.101.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22450)
+#[napi(object)]
 pub struct NationNumeric(pub String);
 impl NationNumeric {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -157,58 +162,38 @@ impl NationNumeric {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[serde(rename_all(serialize = "camelCase"))]
+#[napi(object)]
 /// [RegionNumeric: appendix 2.122.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23612)
-pub enum RegionNumeric {
-    NoInformation,
-    Andalucia,
-    Aragon,
-    Asturias,
-    Cantabria,
-    Cataluna,
-    CastillaLeon,
-    CastillaLaMancha,
-    Valencia,
-    Extremadura,
-    Galicia,
-    Baleares,
-    Canarias,
-    LaRioja,
-    Madrid,
-    Murcia,
-    Navarra,
-    PaisVasco,
-    Ceuta,
-    Melilla,
-}
+pub struct RegionNumeric(pub String);
 impl RegionNumeric {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read region_numeric")?;
         let region = match value {
             // Gen1 (these are statically defined in the standard)
-            0x00 => RegionNumeric::NoInformation,
-            0x01 => RegionNumeric::Andalucia,
-            0x02 => RegionNumeric::Aragon,
-            0x03 => RegionNumeric::Asturias,
-            0x04 => RegionNumeric::Cantabria,
-            0x05 => RegionNumeric::Cataluna,
-            0x06 => RegionNumeric::CastillaLeon,
-            0x07 => RegionNumeric::CastillaLaMancha,
-            0x08 => RegionNumeric::Valencia,
-            0x09 => RegionNumeric::Extremadura,
-            0x0A => RegionNumeric::Galicia,
-            0x0B => RegionNumeric::Baleares,
-            0x0C => RegionNumeric::Canarias,
-            0x0D => RegionNumeric::LaRioja,
-            0x0E => RegionNumeric::Madrid,
-            0x0F => RegionNumeric::Murcia,
-            0x10 => RegionNumeric::Navarra,
-            0x11 => RegionNumeric::PaisVasco,
+            0x00 => "No information available",
+            0x01 => "Andalucia",
+            0x02 => "Aragon",
+            0x03 => "Asturias",
+            0x04 => "Cantabria",
+            0x05 => "Cataluna",
+            0x06 => "Castilla Leon",
+            0x07 => "Castilla La Mancha",
+            0x08 => "Valencia",
+            0x09 => "Extremadura",
+            0x0A => "Galicia",
+            0x0B => "Baleares",
+            0x0C => "Canarias",
+            0x0D => "La Rioja",
+            0x0E => "Madrid",
+            0x0F => "Murcia",
+            0x10 => "Navarra",
+            0x11 => "Pais Vasco",
             // Gen2 (regions are kept up to date here: https://dtc.jrc.ec.europa.eu/dtc_spain_region_codes.php.html)
-            0x12 => RegionNumeric::Ceuta,
-            0x13 => RegionNumeric::Melilla,
+            0x12 => "Ceuta",
+            0x13 => "Melilla",
             _ => anyhow::bail!("Invalid RegionNumeric value: {}", value),
         };
-        Ok(region)
+        Ok(RegionNumeric(region.to_string()))
     }
 }

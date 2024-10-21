@@ -3,11 +3,14 @@ use crate::dt::gen2;
 use crate::dt::{self};
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
+#[cfg(feature = "napi")]
+use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, Cursor, Read};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct Gen1Blocks {
     pub card_icc_identification: gen1::CardIccIdentification,
     pub card_chip_identification: dt::CardChipIdentification,
@@ -41,6 +44,7 @@ pub struct Gen1Blocks {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct Gen2Blocks {
     pub card_icc_identification: gen2::CardIccIdentification,
     pub card_chip_identification: dt::CardChipIdentification,
@@ -79,6 +83,7 @@ pub struct Gen2Blocks {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct CardData {
     pub gen1_blocks: Gen1Blocks,
     pub gen2_blocks: Option<Gen2Blocks>,

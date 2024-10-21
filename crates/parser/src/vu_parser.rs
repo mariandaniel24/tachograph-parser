@@ -1,11 +1,14 @@
 use crate::dt::{gen1, gen2, gen2v2};
 use anyhow::{Context, Result};
 use byteorder::ReadBytesExt;
+#[cfg(feature = "napi")]
+use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, Cursor};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct VuGen1Blocks {
     pub vu_overview: gen1::VuOverviewBlock,
     pub vu_activities: Vec<gen1::VuActivitiesBlock>,
@@ -16,6 +19,7 @@ pub struct VuGen1Blocks {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct VuGen2Blocks {
     pub vu_overview: gen2::VuOverviewBlock,
     pub vu_activities: Vec<gen2::VuActivitiesBlock>,
@@ -26,12 +30,14 @@ pub struct VuGen2Blocks {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct VuGen2V2Blocks {
     pub vu_overview: gen2v2::VuOverviewBlock,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi)]
 pub enum VuData {
     VuGen1Blocks(VuGen1Blocks),
     VuGen2Blocks(VuGen2Blocks),

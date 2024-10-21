@@ -3,10 +3,14 @@ use crate::bytes::TakeExact;
 use crate::dt::*;
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
+#[cfg(feature = "napi")]
+use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "napi", napi(string_enum))]
+/// [EquipmentType: appendix 2.67.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20100)
 pub enum EquipmentType {
     Reserved,
     DriverCard,
@@ -18,7 +22,6 @@ pub enum EquipmentType {
     MotionSensor,
     RFU,
 }
-/// [EquipmentType: appendix 2.67.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20100)
 impl EquipmentType {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let equipment_type = cursor.read_u8().context("Failed to read equipment type")?;
@@ -38,6 +41,7 @@ impl EquipmentType {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [ExtendedSerialNumber: appendix 2.72.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21307)
 pub struct ExtendedSerialNumber {
     pub serial_number: u32,
@@ -64,6 +68,7 @@ impl ExtendedSerialNumber {
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [CardIccIdentification: appendix 2.23.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17372)
 pub struct CardIccIdentification {
     pub clock_stop: u8,
@@ -71,7 +76,7 @@ pub struct CardIccIdentification {
     pub card_approval_number: CardApprovalNumber,
     pub card_personaliser_id: external::ManufacturerCode,
     pub embedder_ic_assembler_id: EmbedderIcAssemblerId,
-    pub ic_identifier: [u8; 2],
+    pub ic_identifier: Vec<u8>,
 }
 impl CardIccIdentification {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -93,11 +98,12 @@ impl CardIccIdentification {
             card_approval_number,
             card_personaliser_id,
             embedder_ic_assembler_id,
-            ic_identifier,
+            ic_identifier: ic_identifier.to_vec(),
         })
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 /// [CalibrationPurpose: appendix 2.8.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16597)
 pub enum CalibrationPurpose {
     Reserved,
@@ -126,6 +132,7 @@ impl CalibrationPurpose {
 pub type SensorSerialNumber = ExtendedSerialNumber;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
 pub struct SensorApprovalNumber(pub IA5String);
 impl SensorApprovalNumber {
@@ -137,6 +144,7 @@ impl SensorApprovalNumber {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
 pub struct VuApprovalNumber(pub IA5String);
 impl VuApprovalNumber {
@@ -147,6 +155,7 @@ impl VuApprovalNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 /// [EventFaultType: appendix 2.70.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20338)
 pub enum EventFaultType {
     NoFurtherDetails,
@@ -249,6 +258,7 @@ impl EventFaultType {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 /// [SpecificConditionType: appendix 2.154.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24685)
 pub enum SpecificConditionType {
     RFU,
@@ -274,6 +284,7 @@ impl SpecificConditionType {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [SpecificConditionRecord: appendix 2.152.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24614)
 pub struct SpecificConditionRecord {
     pub entry_time: TimeReal,
@@ -300,6 +311,7 @@ impl SpecificConditionRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [SpecificConditions: appendix 2.153.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24644)
 pub struct SpecificConditions {
     pub specific_condition_records: Vec<SpecificConditionRecord>,
@@ -324,6 +336,7 @@ impl SpecificConditions {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [Certificate: appendix 2.41.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18396)
 pub struct Certificate(pub Vec<u8>);
 impl Certificate {
@@ -338,6 +351,7 @@ impl Certificate {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [FullCardNumber: appendix 2.73.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21400)
 pub struct FullCardNumber {
     pub card_type: EquipmentType,
@@ -370,6 +384,7 @@ impl FullCardNumber {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [ControlType: appendix 2.53.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19148)
 pub struct ControlType {
     pub card_downloading: bool,
@@ -394,6 +409,7 @@ impl ControlType {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [Signature: appendix 2.149.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24501)
 pub struct Signature(pub Vec<u8>); // Octet string
 impl Signature {
@@ -408,10 +424,11 @@ impl Signature {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [PreviousVehicleInfo: appendix 2.118.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23250)
 pub struct PreviousVehicleInfo {
-    vehicle_registration_identification: VehicleRegistrationIdentification,
-    card_withdrawal_time: TimeReal,
+    pub vehicle_registration_identification: VehicleRegistrationIdentification,
+    pub card_withdrawal_time: TimeReal,
 }
 impl PreviousVehicleInfo {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -425,6 +442,7 @@ impl PreviousVehicleInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 /// [EntryTypeDailyWorkPeriod: appendix 2.66.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20044)
 pub enum EntryTypeDailyWorkPeriod {
     BeginRelatedTimeCardInsertionTimeOrTimeOfEntry,
@@ -454,6 +472,7 @@ impl EntryTypeDailyWorkPeriod {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [PlaceRecord: appendix 2.117.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23112)
 pub struct PlaceRecord {
     pub entry_time: TimeReal,
@@ -487,10 +506,11 @@ impl PlaceRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [DriverCardApplicationIdentification: appendix 2.61.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19751)
 pub struct DriverCardApplicationIdentification {
     pub type_of_tachograph_card_id: EquipmentType,
-    pub card_structure_version: [u8; 2],
+    pub card_structure_version: Vec<u8>,
     pub no_of_events_per_type: u8,
     pub no_of_faults_per_type: u8,
     pub activity_structure_length: u16,
@@ -529,7 +549,7 @@ impl DriverCardApplicationIdentification {
 
         Ok(DriverCardApplicationIdentification {
             type_of_tachograph_card_id,
-            card_structure_version,
+            card_structure_version: card_structure_version.to_vec(),
             no_of_events_per_type,
             no_of_faults_per_type,
             activity_structure_length,
@@ -541,6 +561,7 @@ impl DriverCardApplicationIdentification {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [CardEventRecord: appendix 2.20.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17247)
 pub struct CardEventRecord {
     pub event_type: EventFaultType,
@@ -570,6 +591,7 @@ impl CardEventRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
 pub struct CardEventData(pub Vec<Vec<CardEventRecord>>);
 impl CardEventData {
@@ -598,6 +620,7 @@ impl CardEventData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [CardFaultData: appendix 2.21.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17292)
 pub struct CardFaultRecord {
     pub fault_type: EventFaultType,
@@ -627,6 +650,7 @@ impl CardFaultRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
 pub struct CardFaultData(pub Vec<Vec<CardFaultRecord>>);
 impl CardFaultData {
@@ -656,6 +680,7 @@ impl CardFaultData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [CardVehicleRecord: appendix 2.37.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18163)
 pub struct CardVehicleRecord {
     pub vehicle_odometer_begin: OdometerShort,
@@ -683,6 +708,7 @@ impl CardVehicleRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [CardVehiclesUsed: appendix 2.38.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18302)
 pub struct CardVehiclesUsed {
     pub vehicle_pointer_newest_record: u16,
@@ -718,6 +744,7 @@ impl CardVehiclesUsed {
 type NoOfCardPlaceRecords = u8;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [CardPlaceDailyWorkPeriod: appendix 2.27.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17729)
 pub struct CardPlaceDailyWorkPeriod {
     pub place_pointer_newest_record: NoOfCardPlaceRecords,
@@ -749,6 +776,7 @@ impl CardPlaceDailyWorkPeriod {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [CardControlActivityDataRecord appendix 2.15.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17002)
 pub struct CardControlActivityDataRecord {
     pub control_type: ControlType,
@@ -776,6 +804,7 @@ impl CardControlActivityDataRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuDownloadActivityData: appendix 2.195.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26758)
 pub struct VuDownloadActivityData {
     pub downloading_time: TimeReal,
@@ -798,6 +827,7 @@ impl VuDownloadActivityData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuCompanyLocksData: appendix 2.183.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26258)
 pub struct VuCompanyLocksData {
     pub no_of_locks: u8,
@@ -824,6 +854,7 @@ impl VuCompanyLocksData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuCompanyLocksRecord: appendix 2.184.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26153)
 pub struct VuCompanyLocksRecord {
     pub lock_in_time: TimeReal,
@@ -849,6 +880,7 @@ impl VuCompanyLocksRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuControlActivityData: appendix 2.186.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26342)
 pub struct VuControlActivityData {
     pub no_of_controls: u8,
@@ -876,6 +908,7 @@ impl VuControlActivityData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuControlActivityRecord: appendix 2.187.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26392)
 pub struct VuControlActivityRecord {
     pub control_type: ControlType,
@@ -902,6 +935,7 @@ impl VuControlActivityRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuOverviewBlock page 342]
 pub struct VuOverviewBlock {
     pub member_state_certificate: Certificate,
@@ -958,6 +992,7 @@ impl VuOverviewBlock {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuCardIWData {
     pub no_of_iw_records: u16,
@@ -985,6 +1020,7 @@ impl VuCardIWData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuCardIWRecord: appendix 2.177.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25809)
 pub struct VuCardIWRecord {
     pub card_holder_name: HolderName,
@@ -1029,6 +1065,7 @@ impl VuCardIWRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuActivityDailyData: appendix 2.170.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25344)
 pub struct VuActivityDailyData {
     pub no_of_activity_changes: u16,
@@ -1057,6 +1094,7 @@ impl VuActivityDailyData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuPlaceDailyWorkPeriodRecord: appendix 2.219.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28313)
 pub struct VuPlaceDailyWorkPeriodRecord {
     pub full_card_number: FullCardNumber,
@@ -1075,6 +1113,7 @@ impl VuPlaceDailyWorkPeriodRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuPlaceDailyWorkPeriodData: appendix 2.218.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28280)
 pub struct VuPlaceDailyWorkPeriodData {
     pub no_of_place_records: u8,
@@ -1105,6 +1144,7 @@ impl VuPlaceDailyWorkPeriodData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuSpecificConditionRecord: appendix 2.152.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24614)
 pub struct VuSpecificConditionRecord {
     pub entry_time: TimeReal,
@@ -1123,6 +1163,7 @@ impl VuSpecificConditionRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuSpecificConditionData: appendix 2.227.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28591)
 pub struct VuSpecificConditionData {
     pub no_of_specific_conditions: u16,
@@ -1152,6 +1193,7 @@ impl VuSpecificConditionData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// Page 344 TREP 02
 pub struct VuActivitiesBlock {
     pub time_real: TimeReal,
@@ -1183,6 +1225,7 @@ impl VuActivitiesBlock {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuFaultRecord: appendix 2.201.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27156)
 pub struct VuFaultRecord {
     pub fault_type: EventFaultType,
@@ -1221,6 +1264,7 @@ impl VuFaultRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuFaultRecord: appendix 2.200.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27122)
 pub struct VuFaultData {
     pub no_of_vu_fault_records: u8,
@@ -1246,6 +1290,7 @@ impl VuFaultData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuEventRecord: appendix 2.197.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26910)
 pub struct VuEventRecord {
     pub event_type: EventFaultType,
@@ -1287,6 +1332,7 @@ impl VuEventRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuEventData: appendix 2.197.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26876)
 pub struct VuEventData {
     pub no_of_vu_event_records: u8,
@@ -1312,6 +1358,7 @@ impl VuEventData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuOverSpeedingControlData: appendix 2.212.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27978)
 pub struct VuOverSpeedingControlData {
     pub last_overspeed_control_time: Option<TimeReal>,
@@ -1333,6 +1380,7 @@ impl VuOverSpeedingControlData {
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuOverSpeedingEventRecord: appendix 2.215.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28097)
 pub struct VuOverSpeedingEventRecord {
     pub event_type: EventFaultType,
@@ -1366,6 +1414,7 @@ impl VuOverSpeedingEventRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuOverSpeedingEventData: appendix 2.214.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28064)
 pub struct VuOverSpeedingEventData {
     pub no_of_vu_over_speeding_events: u8,
@@ -1394,6 +1443,7 @@ impl VuOverSpeedingEventData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuTimeAdjustmentRecord: appendix 2.232.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28728)
 pub struct VuTimeAdjustmentRecord {
     pub old_time_value: TimeReal,
@@ -1417,6 +1467,7 @@ impl VuTimeAdjustmentRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuTimeAdjustmentData: appendix 2.229.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28675)
 pub struct VuTimeAdjustmentData {
     pub no_of_vu_time_adj_records: u8,
@@ -1444,6 +1495,7 @@ impl VuTimeAdjustmentData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// TREP 03 page 346
 pub struct VuEventsAndFaultsBlock {
     pub vu_fault_data: VuFaultData,
@@ -1470,6 +1522,7 @@ impl VuEventsAndFaultsBlock {
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuDetailedSpeedData: appendix 2.192.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26618)
 pub struct VuDetailedSpeedData {
     pub no_of_speed_blocks: u8,
@@ -1496,6 +1549,7 @@ impl VuDetailedSpeedData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuIdentification {
     pub vu_manufacturer_name: VuManufacturerName,
@@ -1532,6 +1586,7 @@ pub type VuSerialNumber = ExtendedSerialNumber;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [SensorPaired: appendix 2.144.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24360)
 pub struct SensorPaired {
     pub sensor_serial_number: SensorSerialNumber,
@@ -1553,6 +1608,7 @@ impl SensorPaired {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuCalibrationRecord: appendix 2.174.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25500)
 pub struct VuCalibrationRecord {
     pub calibration_purpose: CalibrationPurpose,
@@ -1611,6 +1667,7 @@ impl VuCalibrationRecord {
 
 /// [VuCalibrationData: appendix 2.173.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25471)
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuCalibrationData {
     pub no_of_vu_calibration_records: u8,
@@ -1637,6 +1694,7 @@ impl VuCalibrationData {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [VuCompanyLocksBlock: appendix 2.236.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28868)
 pub struct VuCompanyLocksBlock {
     pub vu_identification: VuIdentification,
