@@ -5,7 +5,7 @@ extern crate napi_derive;
 
 #[napi]
 pub fn parse_vu(bytes: Buffer) -> Result<tachograph_parser::vu_parser::VuData, napi::Error> {
-    tachograph_parser::process_vu_from_bytes(&bytes)
+    tachograph_parser::parse_vu_from_bytes(&bytes)
         .map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 

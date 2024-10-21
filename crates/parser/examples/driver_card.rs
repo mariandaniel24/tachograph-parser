@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::env;
-use tachograph_parser::parse_card_from_file_to_json;
+use std::time::Instant;
+use tachograph_parser::parse_card_from_bytes;
 
 fn main() -> Result<()> {
     std::env::set_var("RUST_LOG", "trace");
@@ -12,8 +13,16 @@ fn main() -> Result<()> {
     }
 
     let path = &args[1];
-    let card_data = parse_card_from_file_to_json(path)?;
-    std::fs::write(format!("{path}.json"), card_data)?;
+    let bytes = std::fs::read(path)?;
+    let start = Instant::now();
+    let card_data = parse_card_from_bytes(&bytes)?;
+    let duration = start.elapsed();
+    println!(
+        "Parsing took {} nanos ({:.2} ms)",
+        duration.as_nanos(),
+        duration.as_secs_f64() * 1000.0
+    );
+    std::fs::write(format!("{path}.json"), serde_json::to_string(&card_data)?)?;
 
     Ok(())
 }

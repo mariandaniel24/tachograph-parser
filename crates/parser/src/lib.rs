@@ -24,7 +24,7 @@ pub fn parse_vu_from_file_to_json(file_path: &str) -> Result<String> {
     Ok(vu_data_json)
 }
 
-pub fn process_vu_from_bytes(bytes: &[u8]) -> Result<vu_parser::VuData> {
+pub fn parse_vu_from_bytes(bytes: &[u8]) -> Result<vu_parser::VuData> {
     let output = VuParser::new_from_bytes(bytes)
         .context("Failed to create VuParser")?
         .parse();
@@ -38,7 +38,7 @@ pub fn parse_vu_from_bytes_to_json(bytes: &[u8]) -> Result<String> {
 }
 
 // Card
-pub fn process_card_from_file_to_json(file_path: &str) -> Result<card_parser::CardData> {
+pub fn parse_card_from_file(file_path: &str) -> Result<card_parser::CardData> {
     let output = CardParser::new_from_file(file_path)
         .context("Failed to create CardParser")?
         .parse();
@@ -120,7 +120,7 @@ mod tests {
                     if file_name.starts_with("C_")
                         && (file_name.ends_with(".ddd") || file_name.ends_with(".DDD"))
                     {
-                        match process_card_from_file_to_json(path.to_str().unwrap()) {
+                        match parse_card_from_file(path.to_str().unwrap()) {
                             Ok(card_data) => {
                                 println!("Successfully parsed file: {}", path.display());
 

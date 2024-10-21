@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::env;
+use std::{env, time::Instant};
 use tachograph_parser::parse_vu_from_file_to_json;
 
 fn main() -> Result<()> {
@@ -13,10 +13,16 @@ fn main() -> Result<()> {
     }
 
     let path = &args[1];
+    let start = Instant::now();
     let card_data = parse_vu_from_file_to_json(path)?;
+    let duration = start.elapsed();
+    println!(
+        "Parsing took {} nanos ({:.2} ms)",
+        duration.as_nanos(),
+        duration.as_secs_f64() * 1000.0
+    );
 
     std::fs::write(format!("{path}.json"), card_data)?;
-    // println!("Vehicle Unit Data: {:?}", card_data);
 
     Ok(())
 }
