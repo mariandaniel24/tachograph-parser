@@ -813,7 +813,7 @@ export interface OdometerShort {
   value: number
 }
 
-export declare function parseCard(path: string): CardData
+export declare function parseCard(bytes: Buffer): CardData
 
 export declare function parseTachoFile(bytes: Buffer): TachoData
 
