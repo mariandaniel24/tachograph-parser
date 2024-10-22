@@ -13,4 +13,4 @@ napi-derive = "3.0.0-alpha.15"
 tachograph_parser = { path = "../parser", features = ["napi"] }
 
 [build-dependencies]
-napi-build = "2.0.1"
+napi-build = "2.1.1"

@@ -34,7 +34,7 @@ export declare const enum ActivityChangeInfoSlot {
 /** [Address: appendix 2.2.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16375) */
 export interface Address {
   codePage: number
-  address: Ia5String
+  address: string
 }
 
 export interface ApplicationIdentificationGen2 {
@@ -79,7 +79,7 @@ export interface CardActivityDailyRecord {
 
 /** [CardApprovalNumber: appendix 2.11.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16800) */
 export interface CardApprovalNumber {
-  value: Ia5String
+  value: string
 }
 
 /** [CardChipIdentification: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027) */
@@ -90,7 +90,7 @@ export interface CardChipIdentification {
 
 /** [CardConsecutiveIndex: appendix 2.14.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16973) */
 export interface CardConsecutiveIndex {
-  value: Ia5String
+  value: string
 }
 
 /** [CardControlActivityDataRecord appendix 2.15.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17002) */
@@ -120,9 +120,9 @@ export interface CardCurrentUse {
 }
 
 export type CardData =
-  | { type: 'Gen1', gen1Blocks: Gen1Blocks }
-  | { type: 'Gen2', gen1Blocks: Gen1Blocks, gen2Blocks: Gen2Blocks }
-  | { type: 'Gen2V2', gen1Blocks: Gen1Blocks, gen2Blocks: Gen2Blocks, gen2V2Blocks: Gen2V2Blocks }
+  | { type: 'Gen1', gen1Blocks: CardGen1Blocks }
+  | { type: 'Gen2', gen1Blocks: CardGen1Blocks, gen2Blocks: CardGen2Blocks }
+  | { type: 'Gen2V2', gen1Blocks: CardGen1Blocks, gen2Blocks: CardGen2Blocks, gen2V2Blocks: CardGen2V2Blocks }
 
 /** [CardDownload: appendix 4.2.2.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e41651) */
 export interface CardDownload {
@@ -145,17 +145,17 @@ export interface CardDrivingLicenceInfo {
 export interface CardDrivingLicenceInformation {
   drivingLicenceIssuingAuthority: Name
   drivingLicenceIssuingNation: NationNumeric
-  drivingLicenceNumber: Ia5String
+  drivingLicenceNumber: string
 }
 
 /** [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180) */
 export interface CardEventData {
-  value: Array<Array<CardEventRecord>>
+  records: Array<Array<CardEventRecord>>
 }
 
 /** [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180) */
 export interface CardEventDataGen2 {
-  value: Array<Array<CardEventRecordGen2>>
+  records: Array<Array<CardEventRecordGen2>>
 }
 
 /** [CardEventRecord: appendix 2.20.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17247) */
@@ -176,12 +176,12 @@ export interface CardEventRecordGen2 {
 
 /** [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340) */
 export interface CardFaultData {
-  value: Array<Array<CardFaultRecord>>
+  records: Array<Array<CardFaultRecord>>
 }
 
 /** [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340) */
 export interface CardFaultDataGen2 {
-  value: Array<Array<CardFaultRecordGen2>>
+  records: Array<Array<CardFaultRecordGen2>>
 }
 
 /** [CardFaultData: appendix 2.21.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17292) */
@@ -198,6 +198,77 @@ export interface CardFaultRecordGen2 {
   faultBeginTime: TimeReal
   faultEndTime: TimeReal
   faultVehicleRegistration: VehicleRegistrationIdentification
+}
+
+export interface CardGen1Blocks {
+  cardIccIdentification: CardIccIdentification
+  cardChipIdentification: CardChipIdentification
+  applicationIdentification: DriverCardApplicationIdentification
+  applicationIdentificationSignature: Signature
+  cardCertificate: Certificate
+  memberStateCertificate: Certificate
+  identification: Identification
+  identificationSignature: Signature
+  cardDownload?: CardDownload
+  cardDownloadSignature?: Signature
+  driverLicenceInfo?: CardDrivingLicenceInformation
+  driverLicenceInfoSignature?: Signature
+  eventsData: CardEventData
+  eventsDataSignature: Signature
+  faultsData: CardFaultData
+  faultsDataSignature: Signature
+  driverActivityData: DriverActivityData
+  driverActivityDataSignature: Signature
+  vehiclesUsed: CardVehiclesUsed
+  vehiclesUsedSignature: Signature
+  places: CardPlaceDailyWorkPeriod
+  placesSignature: Signature
+  currentUsage?: CurrentUsage
+  currentUsageSignature?: Signature
+  controlActivityData: CardControlActivityDataRecord
+  controlActivityDataSignature: Signature
+  specificConditions: SpecificConditions
+  specificConditionsSignature: Signature
+}
+
+export interface CardGen2Blocks {
+  cardIccIdentification: CardIccIdentificationGen2
+  cardChipIdentification: CardChipIdentification
+  applicationIdentification: DriverCardApplicationIdentificationGen2
+  applicationIdentificationSignature: SignatureGen2
+  cardSignCertificate: CertificateGen2
+  caCertificate: CertificateGen2
+  linkCertificate: CertificateGen2
+  identification: Identification
+  identificationSignature: SignatureGen2
+  cardDownload?: CardDownload
+  cardDownloadSignature?: SignatureGen2
+  driverLicenceInfo?: CardDrivingLicenceInformation
+  driverLicenceInfoSignature?: SignatureGen2
+  eventsData: CardEventDataGen2
+  eventsDataSignature: SignatureGen2
+  faultsData: CardFaultDataGen2
+  faultsDataSignature: SignatureGen2
+  driverActivityData: DriverActivityData
+  driverActivityDataSignature: SignatureGen2
+  vehiclesUsed: CardVehiclesUsedGen2
+  vehiclesUsedSignature: SignatureGen2
+  places: CardPlaceDailyWorkPeriodGen2
+  placesSignature: SignatureGen2
+  currentUsage?: CurrentUsage
+  currentUsageSignature?: SignatureGen2
+  controlActivityData: CardControlActivityDataRecordGen2
+  controlActivityDataSignature: SignatureGen2
+  specificConditions: SpecificConditionsGen2
+  specificConditionsSignature: SignatureGen2
+  vehicleUnitsUsed: CardVehicleUnitsUsedGen2
+  vehicleUnitsUsedSignature: SignatureGen2
+  gnssAccumulatedDriving: GnssAccumulatedDrivingGen2
+  gnssPlacesSignature: SignatureGen2
+}
+
+export interface CardGen2V2Blocks {
+
 }
 
 /** [CardIccIdentification: appendix 2.23.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17372) */
@@ -232,8 +303,8 @@ export interface CardIdentification {
 
 /** [CardNumber: appendix 2.26.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17629) */
 export type CardNumber =
-  | { type: 'Driver', driverIdentification: Ia5String, cardReplacementIndex: CardReplacementIndex, cardRenewalIndex: CardRenewalIndex }
-  | { type: 'Owner', ownerIdentification: Ia5String, cardConsecutiveIndex: CardConsecutiveIndex, cardReplacementIndex: CardReplacementIndex, cardRenewalIndex: CardRenewalIndex }
+  | { type: 'Driver', driverIdentification: string, cardReplacementIndex: CardReplacementIndex, cardRenewalIndex: CardRenewalIndex }
+  | { type: 'Owner', ownerIdentification: string, cardConsecutiveIndex: CardConsecutiveIndex, cardReplacementIndex: CardReplacementIndex, cardRenewalIndex: CardRenewalIndex }
   | { type: 'None' }
 
 /** [CardPlaceDailyWorkPeriod: appendix 2.27.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17729) */
@@ -250,12 +321,12 @@ export interface CardPlaceDailyWorkPeriodGen2 {
 
 /** [CardRenewalIndex: appendix 2.30.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17812) */
 export interface CardRenewalIndex {
-  value: Ia5String
+  value: string
 }
 
 /** [CardReplacementIndex: appendix 2.31.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17853) */
 export interface CardReplacementIndex {
-  value: Ia5String
+  value: string
 }
 
 /** [CardSlotNumber: appendix 2.33.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17911) */
@@ -361,7 +432,7 @@ export interface ControlTypeGen2 {
 
 /** [CurrentDateTime: appendix 2.54.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19437) */
 export interface CurrentDateTime {
-  value: TimeReal
+  value: Date
 }
 
 /** EF Block page 281 */
@@ -382,7 +453,7 @@ export interface Datef {
 }
 
 export interface DateOfDayDownloadedGen2 {
-  value: TimeReal
+  value: Date
 }
 
 export declare function detectTachoFileType(bytes: Buffer): TachoFileType
@@ -636,77 +707,6 @@ export interface FullCardNumberGen2 {
   cardNumber: CardNumber
 }
 
-export interface Gen1Blocks {
-  cardIccIdentification: CardIccIdentification
-  cardChipIdentification: CardChipIdentification
-  applicationIdentification: DriverCardApplicationIdentification
-  applicationIdentificationSignature: Signature
-  cardCertificate: Certificate
-  memberStateCertificate: Certificate
-  identification: Identification
-  identificationSignature: Signature
-  cardDownload?: CardDownload
-  cardDownloadSignature?: Signature
-  driverLicenceInfo?: CardDrivingLicenceInformation
-  driverLicenceInfoSignature?: Signature
-  eventsData: CardEventData
-  eventsDataSignature: Signature
-  faultsData: CardFaultData
-  faultsDataSignature: Signature
-  driverActivityData: DriverActivityData
-  driverActivityDataSignature: Signature
-  vehiclesUsed: CardVehiclesUsed
-  vehiclesUsedSignature: Signature
-  places: CardPlaceDailyWorkPeriod
-  placesSignature: Signature
-  currentUsage?: CurrentUsage
-  currentUsageSignature?: Signature
-  controlActivityData: CardControlActivityDataRecord
-  controlActivityDataSignature: Signature
-  specificConditions: SpecificConditions
-  specificConditionsSignature: Signature
-}
-
-export interface Gen2Blocks {
-  cardIccIdentification: CardIccIdentificationGen2
-  cardChipIdentification: CardChipIdentification
-  applicationIdentification: DriverCardApplicationIdentificationGen2
-  applicationIdentificationSignature: SignatureGen2
-  cardSignCertificate: CertificateGen2
-  caCertificate: CertificateGen2
-  linkCertificate: CertificateGen2
-  identification: Identification
-  identificationSignature: SignatureGen2
-  cardDownload?: CardDownload
-  cardDownloadSignature?: SignatureGen2
-  driverLicenceInfo?: CardDrivingLicenceInformation
-  driverLicenceInfoSignature?: SignatureGen2
-  eventsData: CardEventDataGen2
-  eventsDataSignature: SignatureGen2
-  faultsData: CardFaultDataGen2
-  faultsDataSignature: SignatureGen2
-  driverActivityData: DriverActivityData
-  driverActivityDataSignature: SignatureGen2
-  vehiclesUsed: CardVehiclesUsedGen2
-  vehiclesUsedSignature: SignatureGen2
-  places: CardPlaceDailyWorkPeriodGen2
-  placesSignature: SignatureGen2
-  currentUsage?: CurrentUsage
-  currentUsageSignature?: SignatureGen2
-  controlActivityData: CardControlActivityDataRecordGen2
-  controlActivityDataSignature: SignatureGen2
-  specificConditions: SpecificConditionsGen2
-  specificConditionsSignature: SignatureGen2
-  vehicleUnitsUsed: CardVehicleUnitsUsedGen2
-  vehicleUnitsUsedSignature: SignatureGen2
-  gnssAccumulatedDriving: GNSSAccumulatedDrivingGen2
-  gnssPlacesSignature: SignatureGen2
-}
-
-export interface Gen2V2Blocks {
-
-}
-
 /** [Generation: appendix 2.75.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23342) */
 export declare const enum GenerationGen2 {
   Generation1 = 'Generation1',
@@ -722,7 +722,7 @@ export interface GeoCoordinatesGen2 {
 
 /** [GNSSAccumulatedDriving: appendix 2.79.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21595) */
 export interface GnssAccumulatedDrivingGen2 {
-  gnssAdPointerNewestRecord: NoOfGNSSADRecords
+  gnssAdPointerNewestRecord: NoOfGnssAdRecordsGen2
   gnssAccumulatedDrivingRecords: Array<GnssAccumulatedDrivingRecordGen2>
 }
 
@@ -741,7 +741,7 @@ export interface GnssAccuracyGen2 {
 /** [GNSSPlaceRecord: appendix 2.80.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21772) */
 export interface GnssPlaceRecordGen2 {
   timeStamp: TimeReal
-  gnssAccuracy: GNSSAccuracyGen2
+  gnssAccuracy: GnssAccuracyGen2
   geoCoordinates: GeoCoordinatesGen2
 }
 
@@ -767,7 +767,7 @@ export interface KConstantOfRecordingEquipment {
 }
 
 export interface Language {
-  value: Ia5String
+  value: string
 }
 
 /** [LTyreCircumference: appendix 2.91.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22169) */
@@ -800,7 +800,7 @@ export interface MonthYear {
 /** [Name: appendix 2.299.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22398) */
 export interface Name {
   codePage: number
-  name: Ia5String
+  name: string
 }
 
 /** [NationNumeric: appendix 2.101.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22450) */
@@ -810,7 +810,8 @@ export interface NationNumeric {
 
 /** [OdometerShort: appendix 2.113.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22854) */
 export interface OdometerShort {
-  value: number
+  /** Value in km in the operating range 0 to 9 999 999 km. */
+  km: number
 }
 
 export declare function parseCard(bytes: Buffer): CardData
@@ -865,7 +866,7 @@ export declare const enum RecordTypeGen2 {
   VehicleIdentificationNumber = 'VehicleIdentificationNumber',
   VehicleRegistrationNumber = 'VehicleRegistrationNumber',
   VuCalibrationRecord = 'VuCalibrationRecord',
-  VuCardIWRecord = 'VuCardIWRecord',
+  VuCardIwRecord = 'VuCardIwRecord',
   VuCardRecord = 'VuCardRecord',
   VuCertificate = 'VuCertificate',
   VuCompanyLocksRecord = 'VuCompanyLocksRecord',
@@ -908,23 +909,23 @@ export interface SealRecordGen2 {
 
 /** [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887) */
 export interface SensorApprovalNumber {
-  value: IA5String
+  value: string
 }
 
 /** [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887) */
 export interface SensorApprovalNumberGen2 {
-  value: IA5String
+  value: string
 }
 
 /** [SensorExternalGNSSApprovalNumber: appendix 2.132.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23931) */
 export interface SensorExternalGnssApprovalNumberGen2 {
-  value: IA5String
+  value: string
 }
 
 export interface SensorExternalGnssCoupledRecordGen2 {
-  sensorSerialNumber: SensorGNSSSerialNumber
+  sensorSerialNumber: SensorGnssSerialNumberGen2
   sensorApprovalNumber: SensorExternalGnssApprovalNumberGen2
-  sensorCouplingDate: SensorGNSSCouplingDate
+  sensorCouplingDate: SensorGnssCouplingDateGen2
 }
 
 /** [SensorPaired: appendix 2.144.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24360) */
@@ -1001,8 +1002,8 @@ export interface Speed {
 }
 
 export type TachoData =
-  | { type: 'Card', field0: CardData }
-  | { type: 'Vu', field0: VuData }
+  | { type: 'Card', cardData: CardData }
+  | { type: 'Vu', vuData: VuData }
 
 export declare const enum TachoFileType {
   VehicleUnitGen1 = 'VehicleUnitGen1',
@@ -1020,12 +1021,12 @@ export interface TimeReal {
 
 /** [TyreSize: appendix 2.163.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25026) */
 export interface TyreSize {
-  value: Ia5String
+  value: string
 }
 
 /** [VehicleIdentificationNumber: appendix 2.165.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25052) */
 export interface VehicleIdentificationNumber {
-  value: Ia5String
+  value: string
 }
 
 /** [VehicleRegistrationIdentification: appendix 2.116.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25120) */
@@ -1037,7 +1038,7 @@ export interface VehicleRegistrationIdentification {
 /** [VehicleRegistrationNumber: appendix 2.168.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25188) */
 export interface VehicleRegistrationNumber {
   codePage: number
-  vehicleRegNumber: Ia5String
+  vehicleRegNumber: string
 }
 
 /** [VuAbility: appendix 2.169.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25277) */
@@ -1059,14 +1060,14 @@ export interface VuActivitiesBlock {
 }
 
 export interface VuActivitiesBlockGen2 {
-  dateOfDayDownloadedRecordArray: DateOfDayDownloadedRecordArrayGen2
-  odometerValueMidnightRecordArray: OdometerValueMidnightRecordArrayGen2
-  vuCardIwRecordArray: VuCardIWRecordRecordArrayGen2
-  vuActivityDailyRecordArray: VuActivityDailyRecordArrayGen2
-  vuPlaceDailyWorkPeriodRecordArray: VuPlaceDailyWorkPeriodRecordArrayGen2
-  vuGnssAdRecordArray: VuGNSSADRecordArrayGen2
-  vuSpecificConditionRecordArray: VuSpecificConditionRecordArrayGen2
-  signatureRecordArray: SignatureRecordArrayGen2
+  dateOfDayDownloadedRecordArray: Array<DateOfDayDownloadedGen2>
+  odometerValueMidnightRecordArray: Array<OdometerValueMidnight>
+  vuCardIwRecordArray: Array<VuCardIwRecordGen2>
+  vuActivityDailyRecordArray: Array<ActivityChangeInfo>
+  vuPlaceDailyWorkPeriodRecordArray: Array<VuPlaceDailyWorkPeriodGen2>
+  vuGnssAdRecordArray: Array<VuGnssadRecordGen2>
+  vuSpecificConditionRecordArray: Array<SpecificConditionRecordGen2>
+  signatureRecordArray: Array<SignatureGen2>
 }
 
 /** [VuActivityDailyData: appendix 2.170.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25344) */
@@ -1077,12 +1078,12 @@ export interface VuActivityDailyData {
 
 /** [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427) */
 export interface VuApprovalNumber {
-  value: IA5String
+  value: string
 }
 
 /** [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427) */
 export interface VuApprovalNumberGen2 {
-  value: IA5String
+  value: string
 }
 
 /** [VuCalibrationData: appendix 2.173.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25471) */
@@ -1135,10 +1136,10 @@ export interface VuCalibrationRecordGen2 {
 
 export interface VuCardIwData {
   noOfIwRecords: number
-  vuCardIwRecords: Array<VuCardIWRecord>
+  vuCardIwRecords: Array<VuCardIwRecord>
 }
 
-/** [VuCardIWRecord: appendix 2.177.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25809) */
+/** [VuCardIwRecord: appendix 2.177.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25809) */
 export interface VuCardIwRecord {
   cardHolderName: HolderName
   fullCardNumber: FullCardNumber
@@ -1181,14 +1182,14 @@ export interface VuCompanyLocksBlock {
 }
 
 export interface VuCompanyLocksBlockGen2 {
-  vuIdentificationRecordArray: VuIdentificationRecordArrayGen2
-  vuSensorPairedRecordArray: VuSensorPairedRecordArrayGen2
-  vuSensorExternalGnssCoupledRecordArray: VuSensorExternalGNSSCoupledRecordArrayGen2
-  vuCalibrationRecordArray: VuCalibrationRecordArrayGen2
-  vuCardRecordArray: VuCardRecordArrayGen2
-  vuItsConsentRecordArray: VuITSConsentRecordArrayGen2
-  vuPowerSupplyInterruptionRecordArray: VuPowerSupplyInterruptionRecordArrayGen2
-  signatureRecordArray: SignatureRecordArrayGen2
+  vuIdentificationRecordArray: Array<VuIdentificationGen2>
+  vuSensorPairedRecordArray: Array<SensorPairedRecordGen2>
+  vuSensorExternalGnssCoupledRecordArray: Array<SensorExternalGnssCoupledRecordGen2>
+  vuCalibrationRecordArray: Array<VuCalibrationRecordGen2>
+  vuCardRecordArray: Array<VuCardRecordGen2>
+  vuItsConsentRecordArray: Array<VuItsConsentRecordGen2>
+  vuPowerSupplyInterruptionRecordArray: Array<VuPowerSupplyInterruptionRecordGen2>
+  signatureRecordArray: Array<SignatureGen2>
 }
 
 /** [VuCompanyLocksData: appendix 2.183.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26258) */
@@ -1238,9 +1239,9 @@ export interface VuControlActivityRecord {
 }
 
 export type VuData =
-  | { type: 'VuGen1Blocks', field0: VuGen1Blocks }
-  | { type: 'VuGen2Blocks', field0: VuGen2Blocks }
-  | { type: 'VuGen2V2Blocks', field0: VuGen2V2Blocks }
+  | { type: 'VuGen1Blocks', data: VuGen1Blocks }
+  | { type: 'VuGen2Blocks', data: VuGen2Blocks }
+  | { type: 'VuGen2V2Blocks', data: VuGen2V2Blocks }
 
 /** [VuDataBlockCounter: appendix 2.189.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26512) */
 export interface VuDataBlockCounter {
@@ -1321,12 +1322,12 @@ export interface VuEventsAndFaultsBlock {
 }
 
 export interface VuEventsAndFaultsBlockGen2 {
-  vuFaultRecordArray: VuFaultRecordArrayGen2
-  vuEventRecordArray: VuEventRecordArrayGen2
-  vuOverSpeedingControlDataRecordArray: VuOverSpeedingControlDataRecordArrayGen2
-  vuOverSpeedingEventRecordArray: VuOverSpeedingEventRecordArrayGen2
-  vuTimeAdjustmentRecordArray: VuTimeAdjustmentRecordArrayGen2
-  signatureRecordArray: SignatureRecordArrayGen2
+  vuFaultRecordArray: Array<VuFaultRecordGen2>
+  vuEventRecordArray: Array<VuEventRecordGen2>
+  vuOverSpeedingControlDataRecordArray: Array<VuOverSpeedingControlDataGen2>
+  vuOverSpeedingEventRecordArray: Array<VuOverSpeedingEventRecordGen2>
+  vuTimeAdjustmentRecordArray: Array<VuTimeAdjustmentRecordGen2>
+  signatureRecordArray: Array<SignatureGen2>
 }
 
 /** [VuFaultRecord: appendix 2.200.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27122) */
@@ -1473,29 +1474,29 @@ export interface VuOverviewBlock {
 }
 
 export interface VuOverviewBlock {
-  memberStateCertificateRecordArray: MemberStateCertificateRecordArray
-  vuCertificateRecordArray: VuCertificateRecordArray
-  vehicleIdentificationNumberRecordArray: VehicleIdentificationNumberRecordArray
-  vehicleRegistrationNumberRecordArray: VehicleRegistrationNumberRecordArray
+  memberStateCertificateRecordArray: Array<MemberStateCertificateGen2>
+  vuCertificateRecordArray: Array<VuCertificateGen2>
+  vehicleIdentificationNumberRecordArray: Array<VehicleIdentificationNumber>
+  vehicleRegistrationNumberRecordArray: Array<VehicleRegistrationNumber>
 }
 
 export interface VuOverviewBlockGen2 {
-  memberStateCertificateRecordArray: MemberStateCertificateRecordArrayGen2
-  vuCertificateRecordArray: VuCertificateRecordArrayGen2
-  vehicleIdentificationNumberRecordArray: VehicleIdentificationNumberRecordArrayGen2
-  vehicleRegistrationNumberRecordArray: VehicleRegistrationNumberRecordArrayGen2
-  currentDateTimeRecordArray: CurrentDateTimeRecordArrayGen2
-  vuDownloadablePeriodRecordArray: VuDownloadablePeriodRecordArrayGen2
-  cardSlotsStatusRecordArray: CardSlotsStatusRecordArrayGen2
-  vuDownloadActivityDataRecordArray: VuDownloadActivityDataRecordArrayGen2
-  vuCompanyLocksRecordArray: VuCompanyLocksRecordArrayGen2
-  vuControlActivityRecordArray: VuControlActivityRecordArrayGen2
-  signatureRecordArray: SignatureRecordArrayGen2
+  memberStateCertificateRecordArray: Array<MemberStateCertificateGen2>
+  vuCertificateRecordArray: Array<VuCertificateGen2>
+  vehicleIdentificationNumberRecordArray: Array<VehicleIdentificationNumber>
+  vehicleRegistrationNumberRecordArray: Array<VehicleRegistrationNumber>
+  currentDateTimeRecordArray: Array<CurrentDateTime>
+  vuDownloadablePeriodRecordArray: Array<VuDownloadablePeriod>
+  cardSlotsStatusRecordArray: Array<CardSlotsStatus>
+  vuDownloadActivityDataRecordArray: Array<VuDownloadActivityDataGen2>
+  vuCompanyLocksRecordArray: Array<VuCompanyLocksGen2>
+  vuControlActivityRecordArray: Array<VuControlActivityGen2>
+  signatureRecordArray: Array<SignatureGen2>
 }
 
 /** [VuPartNumber: appendix 2.217.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28257) */
 export interface VuPartNumber {
-  value: Ia5String
+  value: string
 }
 
 /** [VuPlaceDailyWorkPeriodData: appendix 2.218.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28280) */
@@ -1535,7 +1536,7 @@ export interface VuSoftwareIdentification {
 
 /** [VuSoftwareVersion: appendix 2.226.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28569) */
 export interface VuSoftwareVersion {
-  value: Ia5String
+  value: string
 }
 
 /** [VuSpecificConditionData: appendix 2.227.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28591) */
@@ -1551,8 +1552,8 @@ export interface VuSpecificConditionRecord {
 }
 
 export interface VuSpeedBlockGen2 {
-  vuDetailedSpeedBlockRecordArray: VuDetailedSpeedBlockRecordArray
-  signatureRecordArray: SignatureRecordArrayGen2
+  vuDetailedSpeedBlockRecordArray: Array<VuDetailedSpeedBlock>
+  signatureRecordArray: Array<SignatureGen2>
 }
 
 /** [VuTimeAdjustmentData: appendix 2.229.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28675) */
@@ -1563,8 +1564,8 @@ export interface VuTimeAdjustmentData {
 
 /** [VuTimeAdjustmentRecord: appendix 2.232.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28728) */
 export interface VuTimeAdjustmentRecord {
-  oldTimeValue: TimeReal
-  newTimeValue: TimeReal
+  oldTimeValue: Date
+  newTimeValue: Date
   workshopName: Name
   workshopAddress: Address
   workshopCardNumber: FullCardNumber
@@ -1572,8 +1573,8 @@ export interface VuTimeAdjustmentRecord {
 
 /** [VuTimeAdjustmentRecord: appendix 2.232.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28728)  */
 export interface VuTimeAdjustmentRecordGen2 {
-  oldTimeValue: TimeReal
-  newTimeValue: TimeReal
+  oldTimeValue: Date
+  newTimeValue: Date
   workshopName: Name
   workshopAddress: Address
   workshopCardNumberAndGeneration?: FullCardNumberAndGenerationGen2
@@ -1589,14 +1590,17 @@ export interface WVehicleCharacteristicConstant {
 
 export type SensorSerialNumber = ExtendedSerialNumber;
 
+/** [NoOfCardPlaceRecords: appendix 2.104.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22566) */
+export type NoOfCardPlaceRecords = number;
+
 /** [VuSerialNumber: appendix 2.223.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28497) */
 export type VuSerialNumber = ExtendedSerialNumber;
 
 /** [MemberStateCertificate: appendix 2.96.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22309) */
-export type MemberStateCertificate = CertificateGen2;
+export type MemberStateCertificateGen2 = CertificateGen2;
 
 /** [VuCertificate: appendix 2.181.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26086) */
-export type VuCertificate = CertificateGen2;
+export type VuCertificateGen2 = CertificateGen2;
 
 /** [VuSerialNumber: appendix 2.223.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28497) */
 export type VuSerialNumberGen2 = ExtendedSerialNumberGen2;
@@ -1605,9 +1609,9 @@ export type VuSerialNumberGen2 = ExtendedSerialNumberGen2;
 export type SensorSerialNumberGen2 = ExtendedSerialNumberGen2;
 
 /** [SensorGNSSSerialNumber: appendix 2.139.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24175) */
-export type SensorGNSSSerialNumber = ExtendedSerialNumberGen2;
+export type SensorGnssSerialNumberGen2 = ExtendedSerialNumberGen2;
 
-export type SensorGNSSCouplingDate = TimeReal;
+export type SensorGnssCouplingDateGen2 = TimeReal;
 
 /** [NoOfEventsPerType: appendix 2.109.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22706) */
 export type NoOfEventsPerTypeGen2 = number;
@@ -1629,9 +1633,6 @@ export type NoOfSpecificConditionRecordsGen2 = number;
 
 /** [NoOfCardVehicleUnitRecords: appendix 2.106.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22635) */
 export type NoOfCardVehicleUnitRecordsGen2 = number;
-
-/** [NoOfGNSSADRecords: appendix 2.111.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22756) */
-export type NoOfGNSSADRecords = number;
 
 /** [SpeedAuthorised: appendix 2.156.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24843) */
 export type SpeedAuthorised = Speed;

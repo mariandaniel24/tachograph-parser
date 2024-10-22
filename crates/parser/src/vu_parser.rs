@@ -39,9 +39,9 @@ pub struct VuGen2V2Blocks {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi)]
 pub enum VuData {
-    VuGen1Blocks(VuGen1Blocks),
-    VuGen2Blocks(VuGen2Blocks),
-    VuGen2V2Blocks(VuGen2V2Blocks),
+    VuGen1Blocks { data: VuGen1Blocks },
+    VuGen2Blocks { data: VuGen2Blocks },
+    VuGen2V2Blocks { data: VuGen2V2Blocks },
 }
 
 pub struct VuParser {
@@ -132,14 +132,16 @@ impl VuParser {
         }
 
         // Implement Gen1 parsing logic here
-        Ok(VuData::VuGen1Blocks(VuGen1Blocks {
-            vu_overview: vu_overview
-                .context("unable to find VuOverviewBlock after parsing file")?,
-            vu_activities,
-            vu_events_and_faults,
-            vu_detailed_speed,
-            vu_company_locks,
-        }))
+        Ok(VuData::VuGen1Blocks {
+            data: VuGen1Blocks {
+                vu_overview: vu_overview
+                    .context("unable to find VuOverviewBlock after parsing file")?,
+                vu_activities,
+                vu_events_and_faults,
+                vu_detailed_speed,
+                vu_company_locks,
+            },
+        })
     }
 
     fn parse_gen2(&self, cursor: &mut Cursor<&[u8]>) -> Result<VuData> {
@@ -187,14 +189,16 @@ impl VuParser {
             }
         }
 
-        Ok(VuData::VuGen2Blocks(VuGen2Blocks {
-            vu_overview: vu_overview
-                .context("unable to find VuOverviewBlock after parsing file")?,
-            vu_activities,
-            vu_events_and_faults,
-            vu_detailed_speed: vu_speed,
-            vu_company_locks,
-        }))
+        Ok(VuData::VuGen2Blocks {
+            data: VuGen2Blocks {
+                vu_overview: vu_overview
+                    .context("unable to find VuOverviewBlock after parsing file")?,
+                vu_activities,
+                vu_events_and_faults,
+                vu_detailed_speed: vu_speed,
+                vu_company_locks,
+            },
+        })
     }
 
     fn parse_gen2v2(&self, cursor: &mut Cursor<&[u8]>) -> Result<VuData> {
@@ -222,14 +226,16 @@ impl VuParser {
             }
         }
         log::warn!("VuGen2V2 parsing is not yet fully implemented");
-        Ok(VuData::VuGen2V2Blocks(VuGen2V2Blocks {
-            vu_overview: vu_overview
-                .context("unable to find VuOverviewBlock after parsing file")?,
-            // vu_activities: Vec::new(),
-            // vu_events_and_faults: Vec::new(),
-            // vu_detailed_speed: Vec::new(),
-            // vu_company_locks: Vec::new(),
-        }))
+        Ok(VuData::VuGen2V2Blocks {
+            data: VuGen2V2Blocks {
+                vu_overview: vu_overview
+                    .context("unable to find VuOverviewBlock after parsing file")?,
+                // vu_activities: Vec::new(),
+                // vu_events_and_faults: Vec::new(),
+                // vu_detailed_speed: Vec::new(),
+                // vu_company_locks: Vec::new(),
+            },
+        })
     }
 
     pub fn parse_to_json(&self) -> Result<String> {

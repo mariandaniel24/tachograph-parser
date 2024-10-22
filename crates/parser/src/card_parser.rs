@@ -11,7 +11,7 @@ use std::io::{BufRead, Cursor, Read};
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
-pub struct Gen1Blocks {
+pub struct CardGen1Blocks {
     pub card_icc_identification: gen1::CardIccIdentification,
     pub card_chip_identification: dt::CardChipIdentification,
     pub application_identification: gen1::DriverCardApplicationIdentification,
@@ -45,7 +45,7 @@ pub struct Gen1Blocks {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
-pub struct Gen2Blocks {
+pub struct CardGen2Blocks {
     pub card_icc_identification: gen2::CardIccIdentificationGen2,
     pub card_chip_identification: dt::CardChipIdentification,
     pub application_identification: gen2::DriverCardApplicationIdentificationGen2,
@@ -77,30 +77,30 @@ pub struct Gen2Blocks {
     pub specific_conditions_signature: gen2::SignatureGen2,
     pub vehicle_units_used: gen2::CardVehicleUnitsUsedGen2,
     pub vehicle_units_used_signature: gen2::SignatureGen2,
-    pub gnss_accumulated_driving: gen2::GNSSAccumulatedDrivingGen2,
+    pub gnss_accumulated_driving: gen2::GnssAccumulatedDrivingGen2,
     pub gnss_places_signature: gen2::SignatureGen2,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
-pub struct Gen2V2Blocks {}
+pub struct CardGen2V2Blocks {}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi)]
 pub enum CardData {
     Gen1 {
-        gen1_blocks: Gen1Blocks,
+        gen1_blocks: CardGen1Blocks,
     },
     Gen2 {
-        gen1_blocks: Gen1Blocks,
-        gen2_blocks: Gen2Blocks,
+        gen1_blocks: CardGen1Blocks,
+        gen2_blocks: CardGen2Blocks,
     },
     Gen2V2 {
-        gen1_blocks: Gen1Blocks,
-        gen2_blocks: Gen2Blocks,
-        gen2v2_blocks: Gen2V2Blocks,
+        gen1_blocks: CardGen1Blocks,
+        gen2_blocks: CardGen2Blocks,
+        gen2v2_blocks: CardGen2V2Blocks,
     },
 }
 
@@ -188,7 +188,7 @@ impl CardParser {
         let mut specific_conditions_signature_gen2: Option<gen2::SignatureGen2> = None;
         let mut vehicle_units_used_gen2: Option<gen2::CardVehicleUnitsUsedGen2> = None;
         let mut vehicle_units_used_signature_gen2: Option<gen2::SignatureGen2> = None;
-        let mut gnss_places_gen2: Option<gen2::GNSSAccumulatedDrivingGen2> = None;
+        let mut gnss_places_gen2: Option<gen2::GnssAccumulatedDrivingGen2> = None;
         let mut gnss_places_signature_gen2: Option<gen2::SignatureGen2> = None;
 
         // all data blocks for card files follow the structure
@@ -777,7 +777,7 @@ impl CardParser {
                     gnss_places_gen2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
-                            gen2::GNSSAccumulatedDrivingGen2::parse,
+                            gen2::GnssAccumulatedDrivingGen2::parse,
                         )?
                         .into_inner(),
                     );
@@ -805,7 +805,7 @@ impl CardParser {
             }
         }
 
-        let gen1_blocks = Gen1Blocks {
+        let gen1_blocks = CardGen1Blocks {
             card_icc_identification: card_icc_identification
                 .context("unable to find card_icc_identification gen1 after parsing file")?,
             card_chip_identification: card_chip_identification
@@ -859,10 +859,10 @@ impl CardParser {
                 .context("unable to find specific_conditions_signature gen1 after parsing file")?,
         };
 
-        let mut gen2_blocks: Option<Gen2Blocks> = None;
+        let mut gen2_blocks: Option<CardGen2Blocks> = None;
 
         if card_icc_identification_gen2.is_some() {
-            let blocks = Gen2Blocks {
+            let blocks = CardGen2Blocks {
                 card_icc_identification: card_icc_identification_gen2
                     .context("unable to find card_icc_identification gen2 after parsing file")?,
                 card_chip_identification: card_chip_identification_gen2

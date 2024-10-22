@@ -40,18 +40,18 @@ impl BCDString {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
-pub struct IA5String {
+pub struct Ia5String {
     pub value: String,
 }
-impl IA5String {
+impl Ia5String {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut buffer = vec![0u8; size];
         cursor
             .read_exact(&mut buffer)
             .context("Failed to read IA5String")?;
         let value = textcode::utf8::decode_to_string(&buffer);
-        Ok(IA5String {
-            value: value.trim().to_string(),
+        Ok(Ia5String {
+            value: value.trim().trim_start_matches('\u{0001}').to_string(),
         })
     }
     pub fn parse_with_code_page(
@@ -84,7 +84,7 @@ impl IA5String {
             _ => String::from_utf8_lossy(&buffer).to_string(),
         };
 
-        Ok(IA5String {
+        Ok(Ia5String {
             value: value.trim().trim_start_matches('\u{0001}').to_string(),
         })
     }
@@ -95,13 +95,13 @@ impl IA5String {
 /// [EmbedderIcAssemblerId: appendix 2.65.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20005)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct EmbedderIcAssemblerId {
-    pub country_code: IA5String,
+    pub country_code: Ia5String,
     pub module_embedder: u16,
     pub manufacturer_information: u8, // OctetString
 }
 impl EmbedderIcAssemblerId {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let country_code = IA5String::parse_dyn_size(cursor, 2)?;
+        let country_code = Ia5String::parse_dyn_size(cursor, 2)?;
 
         let module_embedder = BCDString::parse_dyn_size(cursor, 2)?;
         let module_embedder = module_embedder
@@ -126,11 +126,11 @@ impl EmbedderIcAssemblerId {
 /// [CardReplacementIndex: appendix 2.31.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17853)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct CardReplacementIndex {
-    pub value: IA5String,
+    pub value: String,
 }
 impl CardReplacementIndex {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(cursor, 1)?;
+        let value = Ia5String::parse_dyn_size(cursor, 1)?.value;
         Ok(CardReplacementIndex { value })
     }
 }
@@ -140,11 +140,11 @@ impl CardReplacementIndex {
 /// [CardConsecutiveIndex: appendix 2.14.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16973)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct CardConsecutiveIndex {
-    pub value: IA5String,
+    pub value: String,
 }
 impl CardConsecutiveIndex {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(cursor, 1)?;
+        let value = Ia5String::parse_dyn_size(cursor, 1)?.value;
         Ok(CardConsecutiveIndex { value })
     }
 }
@@ -154,11 +154,11 @@ impl CardConsecutiveIndex {
 /// [CardRenewalIndex: appendix 2.30.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17812)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct CardRenewalIndex {
-    pub value: IA5String,
+    pub value: String,
 }
 impl CardRenewalIndex {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(cursor, 1)?;
+        let value = Ia5String::parse_dyn_size(cursor, 1)?.value;
         Ok(CardRenewalIndex { value })
     }
 }
@@ -170,14 +170,14 @@ impl CardRenewalIndex {
 pub enum CardNumber {
     #[serde(rename_all(serialize = "camelCase"))]
     Driver {
-        driver_identification: IA5String,
+        driver_identification: String,
         card_replacement_index: CardReplacementIndex,
         card_renewal_index: CardRenewalIndex,
     },
 
     #[serde(rename_all(serialize = "camelCase"))]
     Owner {
-        owner_identification: IA5String,
+        owner_identification: String,
         card_consecutive_index: CardConsecutiveIndex,
         card_replacement_index: CardReplacementIndex,
         card_renewal_index: CardRenewalIndex,
@@ -194,7 +194,7 @@ impl CardNumber {
     }
 
     pub fn parse_driver(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let driver_identification = IA5String::parse_dyn_size(cursor, 14)?;
+        let driver_identification = Ia5String::parse_dyn_size(cursor, 14)?.value;
         let card_replacement_index = CardReplacementIndex::parse(cursor)?;
         let card_renewal_index = CardRenewalIndex::parse(cursor)?;
 
@@ -205,7 +205,7 @@ impl CardNumber {
         })
     }
     pub fn parse_owner(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let owner_identification = IA5String::parse_dyn_size(cursor, 13)?;
+        let owner_identification = Ia5String::parse_dyn_size(cursor, 13)?.value;
         let card_consecutive_index = CardConsecutiveIndex::parse(cursor)?;
         let card_replacement_index = CardReplacementIndex::parse(cursor)?;
         let card_renewal_index = CardRenewalIndex::parse(cursor)?;
@@ -254,12 +254,12 @@ impl TimeReal {
 /// [CurrentDateTime: appendix 2.54.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19437)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct CurrentDateTime {
-    pub value: TimeReal,
+    pub value: DateTime<Utc>,
 }
 impl CurrentDateTime {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(CurrentDateTime {
-            value: TimeReal::parse(cursor)?,
+            value: TimeReal::parse(cursor)?.value,
         })
     }
 }
@@ -269,11 +269,11 @@ impl CurrentDateTime {
 /// [CardApprovalNumber: appendix 2.11.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16800)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct CardApprovalNumber {
-    pub value: IA5String,
+    pub value: String,
 }
 impl CardApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(cursor, 8)?;
+        let value = Ia5String::parse_dyn_size(cursor, 8)?.value;
         Ok(CardApprovalNumber { value })
     }
 }
@@ -364,11 +364,11 @@ impl LTyreCircumference {
 /// [TyreSize: appendix 2.163.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25026)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct TyreSize {
-    pub value: IA5String,
+    pub value: String,
 }
 impl TyreSize {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(cursor, 15)?;
+        let value = Ia5String::parse_dyn_size(cursor, 15)?.value;
         Ok(TyreSize { value })
     }
 }
@@ -404,12 +404,12 @@ pub type OverspeedNumber = Speed;
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct Name {
     pub code_page: u8,
-    pub name: IA5String,
+    pub name: String,
 }
 impl Name {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let code_page = cursor.read_u8().context("Failed to read code page")?;
-        let name = IA5String::parse_with_code_page(cursor, 35, code_page)?;
+        let name = Ia5String::parse_with_code_page(cursor, 35, code_page)?.value;
         Ok(Name { code_page, name })
     }
 }
@@ -420,12 +420,12 @@ impl Name {
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct Address {
     pub code_page: u8,
-    pub address: IA5String,
+    pub address: String,
 }
 impl Address {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let code_page = cursor.read_u8().context("Failed to read code page")?;
-        let address = IA5String::parse_with_code_page(cursor, 35, code_page)?;
+        let address = Ia5String::parse_with_code_page(cursor, 35, code_page)?.value;
         Ok(Address { code_page, address })
     }
 }
@@ -441,12 +441,12 @@ pub type VuManufacturerAddress = Address;
 /// [VuSoftwareVersion: appendix 2.226.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28569)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct VuSoftwareVersion {
-    pub value: IA5String,
+    pub value: String,
 }
 impl VuSoftwareVersion {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuSoftwareVersion {
-            value: IA5String::parse_dyn_size(cursor, 4)?,
+            value: Ia5String::parse_dyn_size(cursor, 4)?.value,
         })
     }
 }
@@ -533,11 +533,11 @@ impl EventFaultRecordPurpose {
 /// [VehicleIdentificationNumber: appendix 2.165.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25052)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct VehicleIdentificationNumber {
-    pub value: IA5String,
+    pub value: String,
 }
 impl VehicleIdentificationNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let vin = IA5String::parse_dyn_size(cursor, 17)?;
+        let vin = Ia5String::parse_dyn_size(cursor, 17)?.value;
         Ok(VehicleIdentificationNumber { value: vin })
     }
 }
@@ -548,12 +548,12 @@ impl VehicleIdentificationNumber {
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct VehicleRegistrationNumber {
     pub code_page: u8,
-    pub vehicle_reg_number: IA5String,
+    pub vehicle_reg_number: String,
 }
 impl VehicleRegistrationNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let code_page = cursor.read_u8().context("Failed to read code page")?;
-        let vehicle_reg_number = IA5String::parse_with_code_page(cursor, 13, code_page)?;
+        let vehicle_reg_number = Ia5String::parse_with_code_page(cursor, 13, code_page)?.value;
         Ok(VehicleRegistrationNumber {
             code_page,
             vehicle_reg_number,
@@ -867,12 +867,12 @@ impl Datef {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct Language {
-    pub value: IA5String,
+    pub value: String,
 }
 impl Language {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Language {
-            value: IA5String::parse_dyn_size(cursor, 2)?,
+            value: Ia5String::parse_dyn_size(cursor, 2)?.value,
         })
     }
 }
@@ -977,13 +977,13 @@ impl CardDownload {
 pub struct CardDrivingLicenceInformation {
     pub driving_licence_issuing_authority: Name,
     pub driving_licence_issuing_nation: external::NationNumeric,
-    pub driving_licence_number: IA5String,
+    pub driving_licence_number: String,
 }
 impl CardDrivingLicenceInformation {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let driving_licence_issuing_authority = Name::parse(cursor)?;
         let driving_licence_issuing_nation = external::NationNumeric::parse(cursor)?;
-        let driving_licence_number = IA5String::parse_dyn_size(cursor, 16)?;
+        let driving_licence_number = Ia5String::parse_dyn_size(cursor, 16)?.value;
         Ok(CardDrivingLicenceInformation {
             driving_licence_issuing_authority,
             driving_licence_issuing_nation,
@@ -1336,12 +1336,12 @@ impl VuDetailedSpeedBlock {
 /// [VuPartNumber: appendix 2.217.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28257)
 #[cfg_attr(feature = "napi", napi(object))]
 pub struct VuPartNumber {
-    pub value: IA5String,
+    pub value: String,
 }
 impl VuPartNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuPartNumber {
-            value: IA5String::parse_dyn_size(cursor, 16)?,
+            value: Ia5String::parse_dyn_size(cursor, 16)?.value,
         })
     }
 }

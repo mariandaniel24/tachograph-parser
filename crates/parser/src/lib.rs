@@ -67,8 +67,8 @@ pub fn parse_card_from_bytes_to_json(bytes: &[u8]) -> Result<String> {
 #[derive(Debug)]
 #[cfg_attr(feature = "napi", napi)]
 pub enum TachoData {
-    Card(card_parser::CardData),
-    Vu(vu_parser::VuData),
+    Card { card_data: card_parser::CardData },
+    Vu { vu_data: vu_parser::VuData },
 }
 
 pub fn parse_from_bytes(bytes: &[u8]) -> Result<TachoData> {
@@ -81,7 +81,7 @@ pub fn parse_from_bytes(bytes: &[u8]) -> Result<TachoData> {
             let card_data = CardParser::new_from_bytes(bytes)
                 .context("Failed to create CardParser")?
                 .parse()?;
-            TachoData::Card(card_data)
+            TachoData::Card { card_data }
         }
         TachoFileType::VehicleUnitGen1
         | TachoFileType::VehicleUnitGen2
@@ -89,7 +89,7 @@ pub fn parse_from_bytes(bytes: &[u8]) -> Result<TachoData> {
             let vu_data = VuParser::new_from_bytes(bytes)
                 .context("Failed to create VuParser")?
                 .parse()?;
-            TachoData::Vu(vu_data)
+            TachoData::Vu { vu_data }
         }
     };
     Ok(output)

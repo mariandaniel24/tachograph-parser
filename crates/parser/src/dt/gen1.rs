@@ -135,11 +135,11 @@ pub type SensorSerialNumber = ExtendedSerialNumber;
 #[cfg_attr(feature = "napi", napi(object))]
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
 pub struct SensorApprovalNumber {
-    pub value: IA5String,
+    pub value: String,
 }
 impl SensorApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(cursor, 8)?;
+        let value = Ia5String::parse_dyn_size(cursor, 8)?.value;
         Ok(SensorApprovalNumber { value })
     }
 }
@@ -149,11 +149,11 @@ impl SensorApprovalNumber {
 #[cfg_attr(feature = "napi", napi(object))]
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
 pub struct VuApprovalNumber {
-    pub value: IA5String,
+    pub value: String,
 }
 impl VuApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(cursor, 8)?;
+        let value = Ia5String::parse_dyn_size(cursor, 8)?.value;
         Ok(VuApprovalNumber { value })
     }
 }
@@ -608,7 +608,7 @@ impl CardEventRecord {
 #[cfg_attr(feature = "napi", napi(object))]
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
 pub struct CardEventData {
-    pub value: Vec<Vec<CardEventRecord>>,
+    pub records: Vec<Vec<CardEventRecord>>,
 }
 impl CardEventData {
     const OUTER_RECORDS_AMOUNT: usize = 6;
@@ -631,7 +631,7 @@ impl CardEventData {
             }
         }
         Ok(CardEventData {
-            value: card_event_records,
+            records: card_event_records,
         })
     }
 }
@@ -671,7 +671,7 @@ impl CardFaultRecord {
 #[cfg_attr(feature = "napi", napi(object))]
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
 pub struct CardFaultData {
-    pub value: Vec<Vec<CardFaultRecord>>,
+    pub records: Vec<Vec<CardFaultRecord>>,
 }
 impl CardFaultData {
     const OUTER_RECORDS_AMOUNT: usize = 2;
@@ -695,7 +695,7 @@ impl CardFaultData {
             }
         }
         Ok(CardFaultData {
-            value: card_fault_records,
+            records: card_fault_records,
         })
     }
 }
@@ -763,7 +763,7 @@ impl CardVehiclesUsed {
 }
 
 /// [NoOfCardPlaceRecords: appendix 2.104.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22566)
-type NoOfCardPlaceRecords = u8;
+pub type NoOfCardPlaceRecords = u8;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
@@ -1023,19 +1023,19 @@ impl VuOverviewBlock {
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuCardIWData {
     pub no_of_iw_records: u16,
-    pub vu_card_iw_records: Vec<VuCardIWRecord>,
+    pub vu_card_iw_records: Vec<VuCardIwRecord>,
 }
 
 impl VuCardIWData {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let no_of_iw_records = cursor
             .read_u16::<BigEndian>()
-            .context("Failed to read number of VuCardIWRecords")?;
+            .context("Failed to read number of VuCardIwRecords")?;
 
         let mut vu_card_iw_records = Vec::with_capacity(no_of_iw_records as usize);
         for _ in 0..no_of_iw_records {
             vu_card_iw_records
-                .push(VuCardIWRecord::parse(cursor).context("Failed to parse VuCardIWRecord")?);
+                .push(VuCardIwRecord::parse(cursor).context("Failed to parse VuCardIwRecord")?);
         }
 
         Ok(Self {
@@ -1048,8 +1048,8 @@ impl VuCardIWData {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
-/// [VuCardIWRecord: appendix 2.177.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25809)
-pub struct VuCardIWRecord {
+/// [VuCardIwRecord: appendix 2.177.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25809)
+pub struct VuCardIwRecord {
     pub card_holder_name: HolderName,
     pub full_card_number: FullCardNumber,
     pub card_expiry_date: TimeReal,
@@ -1062,7 +1062,7 @@ pub struct VuCardIWRecord {
     pub manual_entry_flag: ManualInputFlag,
 }
 
-impl VuCardIWRecord {
+impl VuCardIwRecord {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
             card_holder_name: HolderName::parse(cursor)
@@ -1224,6 +1224,7 @@ impl VuSpecificConditionData {
 /// Page 344 TREP 02
 pub struct VuActivitiesBlock {
     pub time_real: TimeReal,
+
     pub odometer_value_midnight: OdometerValueMidnight,
     pub vu_card_iw_data: VuCardIWData,
     pub vu_activity_daily_data: VuActivityDailyData,
@@ -1390,6 +1391,7 @@ impl VuEventData {
 pub struct VuOverSpeedingControlData {
     pub last_overspeed_control_time: Option<TimeReal>,
     pub first_overspeed_since: Option<TimeReal>,
+
     pub number_of_overspeed_since: OverspeedNumber,
 }
 impl VuOverSpeedingControlData {
@@ -1414,7 +1416,9 @@ pub struct VuOverSpeedingEventRecord {
     pub event_record_purpose: EventFaultRecordPurpose,
     pub event_begin_time: TimeReal,
     pub event_end_time: TimeReal,
+
     pub max_speed_value: SpeedMax,
+
     pub average_speed_value: SpeedAverage,
     pub card_number_driver_slot: FullCardNumber,
     pub similar_events_number: SimilarEventsNumber,
@@ -1473,8 +1477,8 @@ impl VuOverSpeedingEventData {
 #[cfg_attr(feature = "napi", napi(object))]
 /// [VuTimeAdjustmentRecord: appendix 2.232.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28728)
 pub struct VuTimeAdjustmentRecord {
-    pub old_time_value: TimeReal,
-    pub new_time_value: TimeReal,
+    pub old_time_value: DateTime<Utc>,
+    pub new_time_value: DateTime<Utc>,
     pub workshop_name: Name,
     pub workshop_address: Address,
     pub workshop_card_number: FullCardNumber,
@@ -1482,8 +1486,12 @@ pub struct VuTimeAdjustmentRecord {
 impl VuTimeAdjustmentRecord {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Self {
-            old_time_value: TimeReal::parse(cursor).context("Failed to parse old_time_value")?,
-            new_time_value: TimeReal::parse(cursor).context("Failed to parse new_time_value")?,
+            old_time_value: TimeReal::parse(cursor)
+                .context("Failed to parse old_time_value")?
+                .value,
+            new_time_value: TimeReal::parse(cursor)
+                .context("Failed to parse new_time_value")?
+                .value,
             workshop_name: Name::parse(cursor).context("Failed to parse workshop_name")?,
             workshop_address: Address::parse(cursor).context("Failed to parse workshop_address")?,
             workshop_card_number: FullCardNumber::parse(cursor)
@@ -1576,14 +1584,17 @@ impl VuDetailedSpeedData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct VuIdentification {
     pub vu_manufacturer_name: VuManufacturerName,
+
     pub vu_manufacturer_address: VuManufacturerAddress,
     pub vu_part_number: VuPartNumber,
+
     pub vu_serial_number: VuSerialNumber,
     pub vu_software_identification: VuSoftwareIdentification,
+
     pub vu_manufacturing_date: VuManufacturingDate,
     pub vu_approval_number: VuApprovalNumber,
 }
@@ -1618,6 +1629,7 @@ pub type VuSerialNumber = ExtendedSerialNumber;
 pub struct SensorPaired {
     pub sensor_serial_number: SensorSerialNumber,
     pub sensor_approval_number: SensorApprovalNumber,
+
     pub sensor_pairing_date_first: SensorPairingDate,
 }
 impl SensorPaired {
@@ -1649,6 +1661,7 @@ pub struct VuCalibrationRecord {
     pub k_constant_of_recording_equipment: KConstantOfRecordingEquipment,
     pub l_tyre_circumference: LTyreCircumference,
     pub tyre_size: TyreSize,
+
     pub authorised_speed: SpeedAuthorised,
     pub old_odometer_value: OdometerShort,
     pub new_odometer_value: OdometerShort,

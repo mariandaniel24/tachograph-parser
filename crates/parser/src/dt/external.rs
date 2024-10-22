@@ -1,13 +1,13 @@
 use anyhow::{Context, Result};
 use byteorder::ReadBytesExt;
-// #[cfg(feature = "napi")]
+#[cfg(feature = "napi")]
 use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
-#[napi(object)]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [ManufacturerCode: appendix 2.94.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22253)
 pub struct ManufacturerCode {
     pub value: String,
@@ -93,7 +93,7 @@ impl ManufacturerCode {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 /// [NationNumeric: appendix 2.101.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22450)
-#[napi(object)]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct NationNumeric {
     pub value: String,
 }
@@ -171,7 +171,7 @@ impl NationNumeric {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
-#[napi(object)]
+#[cfg_attr(feature = "napi", napi(object))]
 /// [RegionNumeric: appendix 2.122.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23612)
 pub struct RegionNumeric {
     pub value: String,

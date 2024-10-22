@@ -27,6 +27,7 @@ base64 = "0.22.1"
 
 
 
+
 [build-dependencies]
-napi-build = "2.0.1"
+napi-build = "2.1.1"
 

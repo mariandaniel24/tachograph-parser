@@ -24,7 +24,7 @@ pub enum RecordTypeGen2 {
     VehicleIdentificationNumber,
     VehicleRegistrationNumber,
     VuCalibrationRecord,
-    VuCardIWRecord,
+    VuCardIwRecord,
     VuCardRecord,
     VuCertificate,
     VuCompanyLocksRecord,
@@ -68,7 +68,7 @@ impl RecordTypeGen2 {
             0x0A => Ok(RecordTypeGen2::VehicleIdentificationNumber),
             0x0B => Ok(RecordTypeGen2::VehicleRegistrationNumber),
             0x0C => Ok(RecordTypeGen2::VuCalibrationRecord),
-            0x0D => Ok(RecordTypeGen2::VuCardIWRecord),
+            0x0D => Ok(RecordTypeGen2::VuCardIwRecord),
             0x0E => Ok(RecordTypeGen2::VuCardRecord),
             0x0F => Ok(RecordTypeGen2::VuCertificate),
             0x10 => Ok(RecordTypeGen2::VuCompanyLocksRecord),
@@ -241,10 +241,10 @@ impl CertificateGen2 {
 }
 
 /// [MemberStateCertificate: appendix 2.96.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22309)
-pub type MemberStateCertificate = CertificateGen2;
+pub type MemberStateCertificateGen2 = CertificateGen2;
 
 /// [VuCertificate: appendix 2.181.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26086)
-pub type VuCertificate = CertificateGen2;
+pub type VuCertificateGen2 = CertificateGen2;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "napi", napi(string_enum = "PascalCase"))]
@@ -458,14 +458,14 @@ impl PreviousVehicleInfoGen2 {
 /// [GNSSPlaceRecord: appendix 2.80.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21772)
 pub struct GNSSPlaceRecordGen2 {
     pub time_stamp: TimeReal,
-    pub gnss_accuracy: GNSSAccuracyGen2,
+    pub gnss_accuracy: GnssAccuracyGen2,
     pub geo_coordinates: GeoCoordinatesGen2,
 }
 impl GNSSPlaceRecordGen2 {
     const SIZE: usize = 7;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let time_stamp = TimeReal::parse(cursor)?;
-        let gnss_accuracy = GNSSAccuracyGen2::parse(cursor)?;
+        let gnss_accuracy = GnssAccuracyGen2::parse(cursor)?;
         let geo_coordinates = GeoCoordinatesGen2::parse(cursor)?;
 
         Ok(GNSSPlaceRecordGen2 {
@@ -480,16 +480,16 @@ impl GNSSPlaceRecordGen2 {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 /// [GNSSAccuracy: appendix 2.77.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21573)
-pub struct GNSSAccuracyGen2 {
+pub struct GnssAccuracyGen2 {
     pub value: u8,
 }
-impl GNSSAccuracyGen2 {
+impl GnssAccuracyGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read GNSSAccuracy")?;
         if value > 100 {
             anyhow::bail!("Invalid GNSSAccuracy");
         }
-        Ok(GNSSAccuracyGen2 { value })
+        Ok(GnssAccuracyGen2 { value })
     }
 }
 
@@ -877,12 +877,13 @@ pub type VuSerialNumberGen2 = ExtendedSerialNumberGen2;
 #[cfg_attr(feature = "napi", napi(object))]
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
 pub struct VuApprovalNumberGen2 {
-    pub value: IA5String,
+    pub value: String,
 }
 impl VuApprovalNumberGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value =
-            IA5String::parse_dyn_size(cursor, 16).context("Failed to parse VuApprovalNumber")?;
+        let value = Ia5String::parse_dyn_size(cursor, 16)
+            .context("Failed to parse VuApprovalNumber")?
+            .value;
         Ok(VuApprovalNumberGen2 { value })
     }
 }
@@ -916,35 +917,37 @@ pub type SensorSerialNumberGen2 = ExtendedSerialNumberGen2;
 #[cfg_attr(feature = "napi", napi(object))]
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
 pub struct SensorApprovalNumberGen2 {
-    pub value: IA5String,
+    pub value: String,
 }
 impl SensorApprovalNumberGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(cursor, 16)
-            .context("Failed to parse SensorApprovalNumber")?;
+        let value = Ia5String::parse_dyn_size(cursor, 16)
+            .context("Failed to parse SensorApprovalNumber")?
+            .value;
         Ok(SensorApprovalNumberGen2 { value })
     }
 }
 
 /// [SensorGNSSSerialNumber: appendix 2.139.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24175)
-pub type SensorGNSSSerialNumber = ExtendedSerialNumberGen2;
+pub type SensorGnssSerialNumberGen2 = ExtendedSerialNumberGen2;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 /// [SensorExternalGNSSApprovalNumber: appendix 2.132.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23931)
-pub struct SensorExternalGNSSApprovalNumberGen2 {
-    pub value: IA5String,
+pub struct SensorExternalGnssApprovalNumberGen2 {
+    pub value: String,
 }
-impl SensorExternalGNSSApprovalNumberGen2 {
+impl SensorExternalGnssApprovalNumberGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = IA5String::parse_dyn_size(cursor, 16)
-            .context("Failed to parse SensorExternalGNSSApprovalNumber")?;
-        Ok(SensorExternalGNSSApprovalNumberGen2 { value })
+        let value = Ia5String::parse_dyn_size(cursor, 16)
+            .context("Failed to parse SensorExternalGNSSApprovalNumber")?
+            .value;
+        Ok(SensorExternalGnssApprovalNumberGen2 { value })
     }
 }
 
-pub type SensorGNSSCouplingDate = TimeReal;
+pub type SensorGnssCouplingDateGen2 = TimeReal;
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "napi", napi(string_enum))]
 /// [CalibrationPurpose: appendix 2.8.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16597)
@@ -1070,13 +1073,21 @@ pub type NoOfCardVehicleUnitRecordsGen2 = u16;
 pub struct DriverCardApplicationIdentificationGen2 {
     pub type_of_tachograph_card_id: EquipmentTypeGen2,
     pub card_structure_version: CardStructureVersion,
+
     pub no_of_events_per_type: NoOfEventsPerTypeGen2,
+
     pub no_of_faults_per_type: NoOfFaultsPerTypeGen2,
+
     pub activity_structure_length: CardActivityLengthRange,
+
     pub no_of_card_vehicle_records: NoOfCardVehicleRecordsGen2,
+
     pub no_of_card_place_records: NoOfCardPlaceRecordsGen2,
+
     pub no_of_gnss_ad_records: NoOfGnssAdRecordsGen2,
+
     pub no_of_specific_condition_records: NoOfSpecificConditionRecordsGen2,
+
     pub no_of_card_vehicle_unit_records: NoOfCardVehicleUnitRecordsGen2,
 }
 
@@ -1221,7 +1232,7 @@ impl CardEventRecordGen2 {
 #[cfg_attr(feature = "napi", napi(object))]
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
 pub struct CardEventDataGen2 {
-    pub value: Vec<Vec<CardEventRecordGen2>>,
+    pub records: Vec<Vec<CardEventRecordGen2>>,
 }
 impl CardEventDataGen2 {
     const OUTER_RECORDS_AMOUNT: usize = 11;
@@ -1244,7 +1255,7 @@ impl CardEventDataGen2 {
             }
         }
         Ok(CardEventDataGen2 {
-            value: card_event_records,
+            records: card_event_records,
         })
     }
 }
@@ -1284,7 +1295,7 @@ impl CardFaultRecordGen2 {
 #[cfg_attr(feature = "napi", napi(object))]
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
 pub struct CardFaultDataGen2 {
-    pub value: Vec<Vec<CardFaultRecordGen2>>,
+    pub records: Vec<Vec<CardFaultRecordGen2>>,
 }
 impl CardFaultDataGen2 {
     const MAX_BLOCK_SIZE: usize = 1152;
@@ -1319,7 +1330,7 @@ impl CardFaultDataGen2 {
             }
         }
         Ok(CardFaultDataGen2 {
-            value: card_fault_records,
+            records: card_fault_records,
         })
     }
 }
@@ -1556,9 +1567,6 @@ impl CardVehicleUnitsUsedGen2 {
     }
 }
 
-/// [NoOfGNSSADRecords: appendix 2.111.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22756)
-pub type NoOfGNSSADRecords = u16;
-
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
@@ -1593,11 +1601,11 @@ impl GNSSAccumulatedDrivingRecordGen2 {
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 /// [GNSSAccumulatedDriving: appendix 2.79.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21595)
-pub struct GNSSAccumulatedDrivingGen2 {
-    pub gnss_ad_pointer_newest_record: NoOfGNSSADRecords,
+pub struct GnssAccumulatedDrivingGen2 {
+    pub gnss_ad_pointer_newest_record: NoOfGnssAdRecordsGen2,
     pub gnss_accumulated_driving_records: Vec<GNSSAccumulatedDrivingRecordGen2>,
 }
-impl GNSSAccumulatedDrivingGen2 {
+impl GnssAccumulatedDrivingGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let inner_cursor = &mut cursor.take_exact(size);
         let gnss_ad_pointer_newest_record = inner_cursor
@@ -1620,7 +1628,7 @@ impl GNSSAccumulatedDrivingGen2 {
                 .timestamp()
                 .cmp(&b.time_stamp.value.timestamp())
         });
-        Ok(GNSSAccumulatedDrivingGen2 {
+        Ok(GnssAccumulatedDrivingGen2 {
             gnss_ad_pointer_newest_record,
             gnss_accumulated_driving_records,
         })
@@ -1631,21 +1639,23 @@ impl GNSSAccumulatedDrivingGen2 {
 #[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct DateOfDayDownloadedGen2 {
-    pub value: TimeReal,
+    pub value: DateTime<Utc>,
 }
 
 impl DateOfDayDownloadedGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let time_real =
             TimeReal::parse(cursor).context("Failed to parse TimeReal for DateOfDayDownloaded")?;
-        Ok(DateOfDayDownloadedGen2 { value: time_real })
+        Ok(DateOfDayDownloadedGen2 {
+            value: time_real.value,
+        })
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
-pub struct VuCardIWRecordGen2 {
+pub struct VuCardIwRecordGen2 {
     pub card_holder_name: HolderName,
     pub full_card_number_and_generation: FullCardNumberAndGenerationGen2,
     pub card_expiry_date: TimeReal,
@@ -1658,9 +1668,9 @@ pub struct VuCardIWRecordGen2 {
     pub manual_input_flag: ManualInputFlag,
 }
 
-impl VuCardIWRecordGen2 {
+impl VuCardIwRecordGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(VuCardIWRecordGen2 {
+        Ok(VuCardIwRecordGen2 {
             card_holder_name: HolderName::parse(cursor)
                 .context("Failed to parse card_holder_name")?,
             full_card_number_and_generation: FullCardNumberAndGenerationGen2::parse(cursor)
@@ -1701,27 +1711,19 @@ impl VuPlaceDailyWorkPeriodGen2 {
     }
 }
 
-pub type DateOfDayDownloadedRecordArrayGen2 = Vec<DateOfDayDownloadedGen2>;
-pub type OdometerValueMidnightRecordArrayGen2 = Vec<OdometerValueMidnight>;
-pub type VuCardIWRecordRecordArrayGen2 = Vec<VuCardIWRecordGen2>;
-pub type VuActivityDailyRecordArrayGen2 = Vec<ActivityChangeInfo>;
-pub type VuPlaceDailyWorkPeriodRecordArrayGen2 = Vec<VuPlaceDailyWorkPeriodGen2>;
-pub type VuGNSSADRecordArrayGen2 = Vec<VuGNSSADRecordGen2>;
-pub type VuSpecificConditionRecordArrayGen2 = Vec<SpecificConditionRecordGen2>;
-pub type SignatureRecordArrayGen2 = Vec<SignatureGen2>;
-
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuActivitiesBlockGen2 {
-    pub date_of_day_downloaded_record_array: DateOfDayDownloadedRecordArrayGen2,
-    pub odometer_value_midnight_record_array: OdometerValueMidnightRecordArrayGen2,
-    pub vu_card_iw_record_array: VuCardIWRecordRecordArrayGen2,
-    pub vu_activity_daily_record_array: VuActivityDailyRecordArrayGen2,
-    pub vu_place_daily_work_period_record_array: VuPlaceDailyWorkPeriodRecordArrayGen2,
-    pub vu_gnss_ad_record_array: VuGNSSADRecordArrayGen2,
-    pub vu_specific_condition_record_array: VuSpecificConditionRecordArrayGen2,
-    pub signature_record_array: SignatureRecordArrayGen2,
+    pub date_of_day_downloaded_record_array: Vec<DateOfDayDownloadedGen2>,
+
+    pub odometer_value_midnight_record_array: Vec<OdometerValueMidnight>,
+    pub vu_card_iw_record_array: Vec<VuCardIwRecordGen2>,
+    pub vu_activity_daily_record_array: Vec<ActivityChangeInfo>,
+    pub vu_place_daily_work_period_record_array: Vec<VuPlaceDailyWorkPeriodGen2>,
+    pub vu_gnss_ad_record_array: Vec<VuGNSSADRecordGen2>,
+    pub vu_specific_condition_record_array: Vec<SpecificConditionRecordGen2>,
+    pub signature_record_array: Vec<SignatureGen2>,
 }
 
 impl VuActivitiesBlockGen2 {
@@ -1741,7 +1743,7 @@ impl VuActivitiesBlockGen2 {
             .context("Failed to parse odometer_value_midnight_record_array")?
             .into_inner(),
 
-            vu_card_iw_record_array: RecordArray::parse(cursor, VuCardIWRecordGen2::parse)
+            vu_card_iw_record_array: RecordArray::parse(cursor, VuCardIwRecordGen2::parse)
                 .context("Failed to parse vu_card_iw_record_array")?
                 .into_inner(),
 
@@ -1845,19 +1847,20 @@ impl SensorPairedRecordGen2 {
 #[cfg_attr(feature = "napi", napi(object))]
 
 pub struct SensorExternalGNSSCoupledRecordGen2 {
-    pub sensor_serial_number: SensorGNSSSerialNumber,
-    pub sensor_approval_number: SensorExternalGNSSApprovalNumberGen2,
-    pub sensor_coupling_date: SensorGNSSCouplingDate,
+    pub sensor_serial_number: SensorGnssSerialNumberGen2,
+    pub sensor_approval_number: SensorExternalGnssApprovalNumberGen2,
+
+    pub sensor_coupling_date: SensorGnssCouplingDateGen2,
 }
 
 impl SensorExternalGNSSCoupledRecordGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(SensorExternalGNSSCoupledRecordGen2 {
-            sensor_serial_number: SensorGNSSSerialNumber::parse(cursor)
+            sensor_serial_number: SensorGnssSerialNumberGen2::parse(cursor)
                 .context("Failed to parse sensor_serial_number")?,
-            sensor_approval_number: SensorExternalGNSSApprovalNumberGen2::parse(cursor)
+            sensor_approval_number: SensorExternalGnssApprovalNumberGen2::parse(cursor)
                 .context("Failed to parse sensor_approval_number")?,
-            sensor_coupling_date: SensorGNSSCouplingDate::parse(cursor)
+            sensor_coupling_date: SensorGnssCouplingDateGen2::parse(cursor)
                 .context("Failed to parse sensor_coupling_date")?,
         })
     }
@@ -1879,6 +1882,7 @@ pub struct VuCalibrationRecordGen2 {
     pub k_constant_of_recording_equipment: KConstantOfRecordingEquipment,
     pub l_tyre_circumference: LTyreCircumference,
     pub tyre_size: TyreSize,
+
     pub authorised_speed: SpeedAuthorised,
     pub old_odometer_value: OdometerShort,
     pub new_odometer_value: OdometerShort,
@@ -2037,27 +2041,19 @@ impl VuPowerSupplyInterruptionRecordGen2 {
     }
 }
 
-pub type VuIdentificationRecordArrayGen2 = Vec<VuIdentificationGen2>;
-pub type VuSensorPairedRecordArrayGen2 = Vec<SensorPairedRecordGen2>;
-pub type VuSensorExternalGNSSCoupledRecordArrayGen2 = Vec<SensorExternalGNSSCoupledRecordGen2>;
-pub type VuCalibrationRecordArrayGen2 = Vec<VuCalibrationRecordGen2>;
-pub type VuCardRecordArrayGen2 = Vec<VuCardRecordGen2>;
-pub type VuITSConsentRecordArrayGen2 = Vec<VuITSConsentRecordGen2>;
-pub type VuPowerSupplyInterruptionRecordArrayGen2 = Vec<VuPowerSupplyInterruptionRecordGen2>;
-
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 #[cfg_attr(feature = "napi", napi(object))]
 
 pub struct VuCompanyLocksBlockGen2 {
-    pub vu_identification_record_array: VuIdentificationRecordArrayGen2,
-    pub vu_sensor_paired_record_array: VuSensorPairedRecordArrayGen2,
-    pub vu_sensor_external_gnss_coupled_record_array: VuSensorExternalGNSSCoupledRecordArrayGen2,
-    pub vu_calibration_record_array: VuCalibrationRecordArrayGen2,
-    pub vu_card_record_array: VuCardRecordArrayGen2,
-    pub vu_its_consent_record_array: VuITSConsentRecordArrayGen2,
-    pub vu_power_supply_interruption_record_array: VuPowerSupplyInterruptionRecordArrayGen2,
-    pub signature_record_array: SignatureRecordArrayGen2,
+    pub vu_identification_record_array: Vec<VuIdentificationGen2>,
+    pub vu_sensor_paired_record_array: Vec<SensorPairedRecordGen2>,
+    pub vu_sensor_external_gnss_coupled_record_array: Vec<SensorExternalGNSSCoupledRecordGen2>,
+    pub vu_calibration_record_array: Vec<VuCalibrationRecordGen2>,
+    pub vu_card_record_array: Vec<VuCardRecordGen2>,
+    pub vu_its_consent_record_array: Vec<VuITSConsentRecordGen2>,
+    pub vu_power_supply_interruption_record_array: Vec<VuPowerSupplyInterruptionRecordGen2>,
+    pub signature_record_array: Vec<SignatureGen2>,
 }
 impl VuCompanyLocksBlockGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -2109,14 +2105,12 @@ impl VuCompanyLocksBlockGen2 {
     }
 }
 
-type VuDetailedSpeedBlockRecordArray = Vec<VuDetailedSpeedBlock>;
-
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuSpeedBlockGen2 {
-    pub vu_detailed_speed_block_record_array: VuDetailedSpeedBlockRecordArray,
-    pub signature_record_array: SignatureRecordArrayGen2,
+    pub vu_detailed_speed_block_record_array: Vec<VuDetailedSpeedBlock>,
+    pub signature_record_array: Vec<SignatureGen2>,
 }
 
 impl VuSpeedBlockGen2 {
@@ -2238,6 +2232,7 @@ impl VuEventRecordGen2 {
 pub struct VuOverSpeedingControlDataGen2 {
     pub last_overspeed_control_time: Option<TimeReal>,
     pub first_overspeed_since: Option<TimeReal>,
+
     pub number_of_overspeed_since: Option<OverspeedNumber>,
 }
 
@@ -2261,7 +2256,9 @@ pub struct VuOverSpeedingEventRecordGen2 {
     pub event_record_purpose: EventFaultRecordPurpose,
     pub event_begin_time: TimeReal,
     pub event_end_time: TimeReal,
+
     pub max_speed_value: SpeedMax,
+
     pub average_speed_value: SpeedAverage,
     pub card_number_and_gen_driver_slot_begin: Option<FullCardNumberAndGenerationGen2>,
     pub similar_events_number: SimilarEventsNumber,
@@ -2293,8 +2290,8 @@ impl VuOverSpeedingEventRecordGen2 {
 #[serde(rename_all(serialize = "camelCase"))]
 /** [VuTimeAdjustmentRecord: appendix 2.232.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28728) */
 pub struct VuTimeAdjustmentRecordGen2 {
-    pub old_time_value: TimeReal,
-    pub new_time_value: TimeReal,
+    pub old_time_value: DateTime<Utc>,
+    pub new_time_value: DateTime<Utc>,
     pub workshop_name: Name,
     pub workshop_address: Address,
     pub workshop_card_number_and_generation: Option<FullCardNumberAndGenerationGen2>,
@@ -2303,8 +2300,12 @@ pub struct VuTimeAdjustmentRecordGen2 {
 impl VuTimeAdjustmentRecordGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(VuTimeAdjustmentRecordGen2 {
-            old_time_value: TimeReal::parse(cursor).context("Failed to parse old_time_value")?,
-            new_time_value: TimeReal::parse(cursor).context("Failed to parse new_time_value")?,
+            old_time_value: TimeReal::parse(cursor)
+                .context("Failed to parse old_time_value")?
+                .value,
+            new_time_value: TimeReal::parse(cursor)
+                .context("Failed to parse new_time_value")?
+                .value,
             workshop_name: Name::parse(cursor).context("Failed to parse workshop_name")?,
             workshop_address: Address::parse(cursor).context("Failed to parse workshop_address")?,
             workshop_card_number_and_generation: FullCardNumberAndGenerationGen2::parse(cursor)
@@ -2314,21 +2315,16 @@ impl VuTimeAdjustmentRecordGen2 {
     }
 }
 
-pub type VuFaultRecordArrayGen2 = Vec<VuFaultRecordGen2>;
-pub type VuEventRecordArrayGen2 = Vec<VuEventRecordGen2>;
-pub type VuOverSpeedingControlDataRecordArrayGen2 = Vec<VuOverSpeedingControlDataGen2>;
-pub type VuOverSpeedingEventRecordArrayGen2 = Vec<VuOverSpeedingEventRecordGen2>;
-pub type VuTimeAdjustmentRecordArrayGen2 = Vec<VuTimeAdjustmentRecordGen2>;
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuEventsAndFaultsBlockGen2 {
-    pub vu_fault_record_array: VuFaultRecordArrayGen2,
-    pub vu_event_record_array: VuEventRecordArrayGen2,
-    pub vu_over_speeding_control_data_record_array: VuOverSpeedingControlDataRecordArrayGen2,
-    pub vu_over_speeding_event_record_array: VuOverSpeedingEventRecordArrayGen2,
-    pub vu_time_adjustment_record_array: VuTimeAdjustmentRecordArrayGen2,
-    pub signature_record_array: SignatureRecordArrayGen2,
+    pub vu_fault_record_array: Vec<VuFaultRecordGen2>,
+    pub vu_event_record_array: Vec<VuEventRecordGen2>,
+    pub vu_over_speeding_control_data_record_array: Vec<VuOverSpeedingControlDataGen2>,
+    pub vu_over_speeding_event_record_array: Vec<VuOverSpeedingEventRecordGen2>,
+    pub vu_time_adjustment_record_array: Vec<VuTimeAdjustmentRecordGen2>,
+    pub signature_record_array: Vec<SignatureGen2>,
 }
 
 impl VuEventsAndFaultsBlockGen2 {
@@ -2441,32 +2437,22 @@ impl VuControlActivityGen2 {
     }
 }
 
-pub type MemberStateCertificateRecordArrayGen2 = Vec<MemberStateCertificate>;
-pub type VuCertificateRecordArrayGen2 = Vec<CertificateGen2>;
-pub type VehicleIdentificationNumberRecordArrayGen2 = Vec<VehicleIdentificationNumber>;
-pub type VehicleRegistrationNumberRecordArrayGen2 = Vec<VehicleRegistrationNumber>;
-pub type CurrentDateTimeRecordArrayGen2 = Vec<CurrentDateTime>;
-pub type VuDownloadablePeriodRecordArrayGen2 = Vec<VuDownloadablePeriod>;
-pub type CardSlotsStatusRecordArrayGen2 = Vec<CardSlotsStatus>;
-pub type VuDownloadActivityDataRecordArrayGen2 = Vec<VuDownloadActivityDataGen2>;
-pub type VuCompanyLocksRecordArrayGen2 = Vec<VuCompanyLocksGen2>;
-pub type VuControlActivityRecordArrayGen2 = Vec<VuControlActivityGen2>;
-
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "napi", napi(object))]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct VuOverviewBlockGen2 {
-    pub member_state_certificate_record_array: MemberStateCertificateRecordArrayGen2,
-    pub vu_certificate_record_array: VuCertificateRecordArrayGen2,
-    pub vehicle_identification_number_record_array: VehicleIdentificationNumberRecordArrayGen2,
-    pub vehicle_registration_number_record_array: VehicleRegistrationNumberRecordArrayGen2,
-    pub current_date_time_record_array: CurrentDateTimeRecordArrayGen2,
-    pub vu_downloadable_period_record_array: VuDownloadablePeriodRecordArrayGen2,
-    pub card_slots_status_record_array: CardSlotsStatusRecordArrayGen2,
-    pub vu_download_activity_data_record_array: VuDownloadActivityDataRecordArrayGen2,
-    pub vu_company_locks_record_array: VuCompanyLocksRecordArrayGen2,
-    pub vu_control_activity_record_array: VuControlActivityRecordArrayGen2,
-    pub signature_record_array: SignatureRecordArrayGen2,
+    pub member_state_certificate_record_array: Vec<MemberStateCertificateGen2>,
+
+    pub vu_certificate_record_array: Vec<VuCertificateGen2>,
+    pub vehicle_identification_number_record_array: Vec<VehicleIdentificationNumber>,
+    pub vehicle_registration_number_record_array: Vec<VehicleRegistrationNumber>,
+    pub current_date_time_record_array: Vec<CurrentDateTime>,
+    pub vu_downloadable_period_record_array: Vec<VuDownloadablePeriod>,
+    pub card_slots_status_record_array: Vec<CardSlotsStatus>,
+    pub vu_download_activity_data_record_array: Vec<VuDownloadActivityDataGen2>,
+    pub vu_company_locks_record_array: Vec<VuCompanyLocksGen2>,
+    pub vu_control_activity_record_array: Vec<VuControlActivityGen2>,
+    pub signature_record_array: Vec<SignatureGen2>,
 }
 
 impl VuOverviewBlockGen2 {
