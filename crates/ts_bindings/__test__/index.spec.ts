@@ -23,7 +23,7 @@ describe("Tacho file parsing functions", () => {
 	});
 
 	it("should have correct types for parseCard", () => {
-		type ParseCardType = (path: string) => CardData;
+		type ParseCardType = (bytes: Buffer) => CardData;
 		const _parseCard: ParseCardType = parseCard;
 	});
 
