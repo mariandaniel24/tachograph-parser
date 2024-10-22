@@ -3,14 +3,14 @@ use crate::dt::gen2;
 use crate::dt::{self};
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
-#[cfg(feature = "napi")]
-use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, Cursor, Read};
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardGen1Blocks {
     pub card_icc_identification: gen1::CardIccIdentification,
     pub card_chip_identification: dt::CardChipIdentification,
@@ -43,8 +43,8 @@ pub struct CardGen1Blocks {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardGen2Blocks {
     pub card_icc_identification: gen2::CardIccIdentificationGen2,
     pub card_chip_identification: dt::CardChipIdentification,
@@ -82,21 +82,25 @@ pub struct CardGen2Blocks {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct CardGen2V2Blocks {}
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct CardGen2V2Blocks {
+    pub card_icc_identification: gen2::CardIccIdentificationGen2,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "generation")]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub enum CardData {
-    Gen1 {
-        gen1_blocks: CardGen1Blocks,
-    },
+    #[serde(rename_all = "camelCase")]
+    Gen1 { gen1_blocks: CardGen1Blocks },
+    #[serde(rename_all = "camelCase")]
     Gen2 {
         gen1_blocks: CardGen1Blocks,
         gen2_blocks: CardGen2Blocks,
     },
+    #[serde(rename_all = "camelCase")]
     Gen2V2 {
         gen1_blocks: CardGen1Blocks,
         gen2_blocks: CardGen2Blocks,
@@ -943,16 +947,15 @@ impl CardParser {
 
     pub fn parse_to_json(&self) -> Result<String> {
         let card_data = self.parse().context("Failed to parse vehicle data")?;
-        let json = serde_json::to_value(&card_data)
-            .context("Failed to convert card data to serde value")?;
-        let pretty_json = serde_json::to_string_pretty(&json)
-            .context("Failed to convert serde value to pretty JSON string")?;
-        Ok(pretty_json)
+        let json = serde_json::to_string(&card_data)
+            .context("Failed to convert serde value to JSON string")?;
+        Ok(json)
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardBlock<T> {
     pub size: u16,
     pub data: T,

@@ -8,6 +8,7 @@ crate-type = ["lib", "cdylib"]
 
 [features]
 napi = []
+ts = []
 
 [dependencies]
 anyhow = "1.0.89"
@@ -24,6 +25,7 @@ napi-derive = "3.0.0-alpha.15"
 
 clap = { version = "4.3", features = ["derive"] }
 base64 = "0.22.1"
+ts-rs = { version = "10.0.0", features = ["serde-compat", "chrono-impl", "serde-json-impl"] }
 
 
 

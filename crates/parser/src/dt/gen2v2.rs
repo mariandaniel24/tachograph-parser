@@ -1,12 +1,12 @@
 use crate::dt::gen2;
 use crate::dt::gen2::RecordArray;
 use crate::dt::*;
-#[cfg(feature = "napi")]
-use napi_derive::napi;
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct VuOverviewBlock {
     pub member_state_certificate_record_array: Vec<gen2::MemberStateCertificateGen2>,
     pub vu_certificate_record_array: Vec<gen2::VuCertificateGen2>,

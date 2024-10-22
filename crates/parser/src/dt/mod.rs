@@ -8,18 +8,15 @@ use crate::bytes::{extract_u16_bits_into_tup, extract_u8_bits_into_tup};
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
 use chrono::{DateTime, Utc};
-#[cfg(feature = "napi")]
-use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use std::io::{Cursor, Read};
 use textcode;
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct BCDString {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct BCDString(pub String);
 /// [BCDString: appendix 2.7.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16562)
 impl BCDString {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
@@ -33,26 +30,23 @@ impl BCDString {
             .map(|&byte| format!("{:02X}", byte))
             .collect::<String>();
 
-        Ok(BCDString { value: bcd_string })
+        Ok(BCDString(bcd_string))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct Ia5String {
-    pub value: String,
-}
-impl Ia5String {
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct IA5String(pub String);
+impl IA5String {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut buffer = vec![0u8; size];
         cursor
             .read_exact(&mut buffer)
             .context("Failed to read IA5String")?;
         let value = textcode::utf8::decode_to_string(&buffer);
-        Ok(Ia5String {
-            value: value.trim().trim_start_matches('\u{0001}').to_string(),
-        })
+        Ok(IA5String(
+            value.trim().trim_start_matches('\u{0001}').to_string(),
+        ))
     }
     pub fn parse_with_code_page(
         cursor: &mut Cursor<&[u8]>,
@@ -84,28 +78,28 @@ impl Ia5String {
             _ => String::from_utf8_lossy(&buffer).to_string(),
         };
 
-        Ok(Ia5String {
-            value: value.trim().trim_start_matches('\u{0001}').to_string(),
-        })
+        Ok(IA5String(
+            value.trim().trim_start_matches('\u{0001}').to_string(),
+        ))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [EmbedderIcAssemblerId: appendix 2.65.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20005)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct EmbedderIcAssemblerId {
-    pub country_code: Ia5String,
+    pub country_code: IA5String,
     pub module_embedder: u16,
     pub manufacturer_information: u8, // OctetString
 }
 impl EmbedderIcAssemblerId {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let country_code = Ia5String::parse_dyn_size(cursor, 2)?;
+        let country_code = IA5String::parse_dyn_size(cursor, 2)?;
 
         let module_embedder = BCDString::parse_dyn_size(cursor, 2)?;
         let module_embedder = module_embedder
-            .value
+            .0
             .parse::<u16>()
             .context("Failed to parse module_embedder to a number")?;
 
@@ -122,62 +116,57 @@ impl EmbedderIcAssemblerId {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [CardReplacementIndex: appendix 2.31.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17853)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct CardReplacementIndex {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct CardReplacementIndex(pub IA5String);
 impl CardReplacementIndex {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = Ia5String::parse_dyn_size(cursor, 1)?.value;
-        Ok(CardReplacementIndex { value })
+        let value =
+            IA5String::parse_dyn_size(cursor, 1).context("Failed to parse CardReplacementIndex")?;
+        Ok(CardReplacementIndex(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [CardConsecutiveIndex: appendix 2.14.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16973)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct CardConsecutiveIndex {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct CardConsecutiveIndex(pub IA5String);
 impl CardConsecutiveIndex {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = Ia5String::parse_dyn_size(cursor, 1)?.value;
-        Ok(CardConsecutiveIndex { value })
+        let value =
+            IA5String::parse_dyn_size(cursor, 1).context("Failed to parse CardConsecutiveIndex")?;
+        Ok(CardConsecutiveIndex(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [CardRenewalIndex: appendix 2.30.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17812)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct CardRenewalIndex {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct CardRenewalIndex(pub IA5String);
 impl CardRenewalIndex {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = Ia5String::parse_dyn_size(cursor, 1)?.value;
-        Ok(CardRenewalIndex { value })
+        let value =
+            IA5String::parse_dyn_size(cursor, 1).context("Failed to parse CardRenewalIndex")?;
+        Ok(CardRenewalIndex(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "type")]
 /// [CardNumber: appendix 2.26.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17629)
 pub enum CardNumber {
-    #[serde(rename_all(serialize = "camelCase"))]
+    #[serde(rename_all = "camelCase")]
     Driver {
-        driver_identification: String,
+        driver_identification: IA5String,
         card_replacement_index: CardReplacementIndex,
         card_renewal_index: CardRenewalIndex,
     },
 
-    #[serde(rename_all(serialize = "camelCase"))]
+    #[serde(rename_all = "camelCase")]
     Owner {
-        owner_identification: String,
+        owner_identification: IA5String,
         card_consecutive_index: CardConsecutiveIndex,
         card_replacement_index: CardReplacementIndex,
         card_renewal_index: CardRenewalIndex,
@@ -194,7 +183,7 @@ impl CardNumber {
     }
 
     pub fn parse_driver(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let driver_identification = Ia5String::parse_dyn_size(cursor, 14)?.value;
+        let driver_identification = IA5String::parse_dyn_size(cursor, 14)?;
         let card_replacement_index = CardReplacementIndex::parse(cursor)?;
         let card_renewal_index = CardRenewalIndex::parse(cursor)?;
 
@@ -205,7 +194,7 @@ impl CardNumber {
         })
     }
     pub fn parse_owner(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let owner_identification = Ia5String::parse_dyn_size(cursor, 13)?.value;
+        let owner_identification = IA5String::parse_dyn_size(cursor, 13)?;
         let card_consecutive_index = CardConsecutiveIndex::parse(cursor)?;
         let card_replacement_index = CardReplacementIndex::parse(cursor)?;
         let card_renewal_index = CardRenewalIndex::parse(cursor)?;
@@ -220,12 +209,9 @@ impl CardNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [TimeReal: appendix 2.162.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24993)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct TimeReal {
-    pub value: DateTime<Utc>,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct TimeReal(pub DateTime<Utc>);
 // TODO: Determine what timezone is used in the DDD files
 // According to @mpi-wl, the timezone is UTC, see https://github.com/jugglingcats/tachograph-cursor/issues/54#issuecomment-603089791
 impl TimeReal {
@@ -245,74 +231,59 @@ impl TimeReal {
         let dt = chrono::DateTime::from_timestamp(unix_timestamp as i64, 0)
             .context("Failed to create DateTime from unix timestamp")?;
 
-        Ok(TimeReal { value: dt })
+        Ok(TimeReal(dt))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [CurrentDateTime: appendix 2.54.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19437)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct CurrentDateTime {
-    pub value: DateTime<Utc>,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct CurrentDateTime(pub TimeReal);
 impl CurrentDateTime {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(CurrentDateTime {
-            value: TimeReal::parse(cursor)?.value,
-        })
+        Ok(CurrentDateTime(TimeReal::parse(cursor)?))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [CardApprovalNumber: appendix 2.11.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16800)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct CardApprovalNumber {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct CardApprovalNumber(pub IA5String);
 impl CardApprovalNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = Ia5String::parse_dyn_size(cursor, 8)?.value;
-        Ok(CardApprovalNumber { value })
+        let value = IA5String::parse_dyn_size(cursor, 8)?;
+        Ok(CardApprovalNumber(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [WVehicleCharacteristicConstant: appendix 2.239.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e29395)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct WVehicleCharacteristicConstant {
-    pub value: u16,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct WVehicleCharacteristicConstant(pub u16);
 impl WVehicleCharacteristicConstant {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read WVehicleCharacteristicConstant")?;
-        Ok(WVehicleCharacteristicConstant { value })
+        Ok(WVehicleCharacteristicConstant(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-
 /// [KConstantOfRecordingEquipment: appendix 2.85.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21927)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct KConstantOfRecordingEquipment {
-    pub value: u16,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct KConstantOfRecordingEquipment(pub u16);
 impl KConstantOfRecordingEquipment {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read KConstantOfRecordingEquipment")?;
-        Ok(KConstantOfRecordingEquipment { value })
+        Ok(KConstantOfRecordingEquipment(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardStructureVersion: appendix 2.36.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18081)
 pub enum CardStructureVersion {
     Gen1,
@@ -343,46 +314,36 @@ impl CardStructureVersion {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-
 /// [LTyreCircumference: appendix 2.91.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22169)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct LTyreCircumference {
-    pub value: u16,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct LTyreCircumference(pub u16);
 impl LTyreCircumference {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read LTyreCircumference")?;
-        Ok(LTyreCircumference { value })
+        Ok(LTyreCircumference(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [TyreSize: appendix 2.163.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25026)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct TyreSize {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct TyreSize(pub IA5String);
 impl TyreSize {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = Ia5String::parse_dyn_size(cursor, 15)?.value;
-        Ok(TyreSize { value })
+        let value = IA5String::parse_dyn_size(cursor, 15)?;
+        Ok(TyreSize(value))
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [Speed: appendix 2.155.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24822)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct Speed {
-    pub value: u8,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct Speed(pub u8);
 impl Speed {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read value for Speed")?;
-        Ok(Speed { value })
+        Ok(Speed(value))
     }
 }
 
@@ -399,33 +360,35 @@ pub type SpeedMax = Speed;
 pub type OverspeedNumber = Speed;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [Name: appendix 2.299.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22398)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct Name {
     pub code_page: u8,
-    pub name: String,
+    pub name: IA5String,
 }
 impl Name {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let code_page = cursor.read_u8().context("Failed to read code page")?;
-        let name = Ia5String::parse_with_code_page(cursor, 35, code_page)?.value;
+        let name = IA5String::parse_with_code_page(cursor, 35, code_page)
+            .context("Failed to parse Name")?;
         Ok(Name { code_page, name })
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [Address: appendix 2.2.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16375)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct Address {
     pub code_page: u8,
-    pub address: String,
+    pub address: IA5String,
 }
 impl Address {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let code_page = cursor.read_u8().context("Failed to read code page")?;
-        let address = Ia5String::parse_with_code_page(cursor, 35, code_page)?.value;
+        let address = IA5String::parse_with_code_page(cursor, 35, code_page)
+            .context("Failed to parse Address")?;
         Ok(Address { code_page, address })
     }
 }
@@ -437,26 +400,23 @@ pub type VuManufacturerName = Name;
 pub type VuManufacturerAddress = Address;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [VuSoftwareVersion: appendix 2.226.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28569)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct VuSoftwareVersion {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct VuSoftwareVersion(pub IA5String);
 impl VuSoftwareVersion {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(VuSoftwareVersion {
-            value: Ia5String::parse_dyn_size(cursor, 4)?.value,
-        })
+        let value =
+            IA5String::parse_dyn_size(cursor, 4).context("Failed to parse VuSoftwareVersion")?;
+        Ok(VuSoftwareVersion(value))
     }
 }
 /// [VuSoftInstallationDate: appendix 2.224.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28515)
 pub type VuSoftInstallationDate = TimeReal;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [VuSoftwareIdentification: appendix 2.225.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28538)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct VuSoftwareIdentification {
     pub vu_software_version: VuSoftwareVersion,
     pub vu_soft_installation_date: VuSoftInstallationDate,
@@ -477,23 +437,20 @@ impl VuSoftwareIdentification {
 pub type VuManufacturingDate = TimeReal;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [SimilarEventsNumber: appendix 2.151.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24591)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct SimilarEventsNumber {
-    pub value: u8,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct SimilarEventsNumber(pub u8);
 impl SimilarEventsNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor
             .read_u8()
             .context("Failed to read value for SimilarEventsNumber")?;
-        Ok(SimilarEventsNumber { value })
+        Ok(SimilarEventsNumber(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [EventFaultRecordPurpose: appendix 2.69.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20262)
 pub enum EventFaultRecordPurpose {
     OneOfTenMostRecentOrLast,
@@ -529,31 +486,30 @@ impl EventFaultRecordPurpose {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [VehicleIdentificationNumber: appendix 2.165.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25052)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct VehicleIdentificationNumber {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct VehicleIdentificationNumber(pub IA5String);
 impl VehicleIdentificationNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let vin = Ia5String::parse_dyn_size(cursor, 17)?.value;
-        Ok(VehicleIdentificationNumber { value: vin })
+        let vin = IA5String::parse_dyn_size(cursor, 17)
+            .context("Failed to parse VehicleIdentificationNumber")?;
+        Ok(VehicleIdentificationNumber(vin))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [VehicleRegistrationNumber: appendix 2.168.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25188)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct VehicleRegistrationNumber {
     pub code_page: u8,
-    pub vehicle_reg_number: String,
+    pub vehicle_reg_number: IA5String,
 }
 impl VehicleRegistrationNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let code_page = cursor.read_u8().context("Failed to read code page")?;
-        let vehicle_reg_number = Ia5String::parse_with_code_page(cursor, 13, code_page)?.value;
+        let vehicle_reg_number = IA5String::parse_with_code_page(cursor, 13, code_page)
+            .context("Failed to parse VehicleRegistrationNumber")?;
         Ok(VehicleRegistrationNumber {
             code_page,
             vehicle_reg_number,
@@ -562,7 +518,7 @@ impl VehicleRegistrationNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub enum CardSlotStatus {
     NoCardInserted,
     DriverCardInserted,
@@ -571,9 +527,9 @@ pub enum CardSlotStatus {
     CompanyCardInserted,
 }
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [CardSlotsStatus: appendix 2.34.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17939)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardSlotsStatus {
     pub codriver: CardSlotStatus,
     pub driver: CardSlotStatus,
@@ -610,9 +566,9 @@ impl CardSlotsStatus {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [HolderName: appendix 2.83.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21860)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct HolderName {
     pub holder_surname: Name,
     pub holder_first_names: Name,
@@ -627,7 +583,7 @@ impl HolderName {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardSlotNumber: appendix 2.33.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17911)
 pub enum CardSlotNumber {
     DriverSlot,
@@ -648,13 +604,10 @@ impl CardSlotNumber {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [OdometerShort: appendix 2.113.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22854)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct OdometerShort {
-    /// Value in km in the operating range 0 to 9 999 999 km.
-    pub km: u32,
-}
+/// Value in km in the operating range 0 to 9 999 999 km.
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct OdometerShort(pub u32);
 impl OdometerShort {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut km_buffer = [0u8; 3];
@@ -663,16 +616,16 @@ impl OdometerShort {
             .context("Failed to read odometer short km value")?;
         // odometer short is 3 bytes, so we must pad the buffer with 1 byte to use a u32
         let km = u32::from_be_bytes([0, km_buffer[0], km_buffer[1], km_buffer[2]]);
-        Ok(OdometerShort { km })
+        Ok(OdometerShort(km))
     }
 }
 /// [OdometerValueMidnight: appendix 2.114.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22880)
 pub type OdometerValueMidnight = OdometerShort;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [VehicleRegistrationIdentification: appendix 2.116.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25120)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct VehicleRegistrationIdentification {
     pub vehicle_registration_nation: external::NationNumeric,
     pub vehicle_registration_number: VehicleRegistrationNumber,
@@ -689,7 +642,7 @@ impl VehicleRegistrationIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [ManualInputFlag: appendix 2.93.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22225)
 pub enum ManualInputFlag {
     NoEntry,
@@ -710,28 +663,28 @@ impl ManualInputFlag {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoSlot {
     Driver,
     CoDriver,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoDrivingStatus {
     Single,
     Crew,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoCardStatusSlot {
     Inserted,
     NotInserted,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoCardActivity {
     BreakRest,
     Availability,
@@ -740,9 +693,9 @@ pub enum ActivityChangeInfoCardActivity {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [ActivityChangeInfo: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct ActivityChangeInfo {
     pub slot: ActivityChangeInfoSlot,
     pub driving_status: ActivityChangeInfoDrivingStatus,
@@ -811,9 +764,9 @@ impl ActivityChangeInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [CardChipIdentification: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardChipIdentification {
     pub card_chip_identification_number: Vec<u8>,
     pub card_chip_identification_signature: Vec<u8>,
@@ -837,9 +790,9 @@ impl CardChipIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [Datef: appendix 2.63.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20100)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct Datef {
     pub year: u16,
     pub month: u8,
@@ -848,15 +801,15 @@ pub struct Datef {
 impl Datef {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let year = BCDString::parse_dyn_size(cursor, 2)?
-            .value
+            .0
             .parse::<u16>()
             .context("Failed to parse year")?;
         let month = BCDString::parse_dyn_size(cursor, 1)?
-            .value
+            .0
             .parse::<u8>()
             .context("Failed to parse month")?;
         let day = BCDString::parse_dyn_size(cursor, 1)?
-            .value
+            .0
             .parse::<u8>()
             .context("Failed to parse day")?;
         Ok(Datef { day, month, year })
@@ -864,23 +817,19 @@ impl Datef {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct Language {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct Language(pub IA5String);
 impl Language {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(Language {
-            value: Ia5String::parse_dyn_size(cursor, 2)?.value,
-        })
+        let value = IA5String::parse_dyn_size(cursor, 2).context("Failed to parse Language")?;
+        Ok(Language(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [CardIdentification: appendix 2.24.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17430)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardIdentification {
     pub card_issuing_member_state: external::NationNumeric,
     pub card_number: CardNumber,
@@ -911,9 +860,9 @@ impl CardIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [DriverCardHolderIdentification: appendix 2.62.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19928)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct DriverCardHolderIdentification {
     pub card_holder_number: HolderName,
     pub card_holder_birth_date: Datef,
@@ -933,9 +882,9 @@ impl DriverCardHolderIdentification {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [Identification: appendix 4.2.2.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e41651)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct Identification {
     pub card_identification: CardIdentification,
     pub driver_card_holder_identification: DriverCardHolderIdentification,
@@ -955,9 +904,9 @@ impl Identification {
 pub type LastCardDownload = TimeReal;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [CardDownload: appendix 4.2.2.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e41651)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardDownload {
     pub last_card_download: Option<LastCardDownload>,
 }
@@ -971,9 +920,9 @@ impl CardDownload {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [CardDrivingLicenceInformation: appendix 2.18.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17139)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardDrivingLicenceInformation {
     pub driving_licence_issuing_authority: Name,
     pub driving_licence_issuing_nation: external::NationNumeric,
@@ -983,7 +932,7 @@ impl CardDrivingLicenceInformation {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let driving_licence_issuing_authority = Name::parse(cursor)?;
         let driving_licence_issuing_nation = external::NationNumeric::parse(cursor)?;
-        let driving_licence_number = Ia5String::parse_dyn_size(cursor, 16)?.value;
+        let driving_licence_number = IA5String::parse_dyn_size(cursor, 16)?.0;
         Ok(CardDrivingLicenceInformation {
             driving_licence_issuing_authority,
             driving_licence_issuing_nation,
@@ -993,9 +942,9 @@ impl CardDrivingLicenceInformation {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// EF Block page 281
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardDrivingLicenceInfo {
     pub card_driving_licence_information: CardDrivingLicenceInformation,
 }
@@ -1009,37 +958,31 @@ impl CardDrivingLicenceInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [DailyPresenceCounter: appendix 2.56.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19510)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct DailyPresenceCounter {
-    pub value: u16,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct DailyPresenceCounter(pub u16);
 impl DailyPresenceCounter {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let data = BCDString::parse_dyn_size(cursor, 2)?;
         let value = data
-            .value
+            .0
             .parse::<u16>()
             .context("Failed to parse daily presence counter")?;
-        Ok(DailyPresenceCounter { value })
+        Ok(DailyPresenceCounter(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [Distance: appendix 2.60.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19665)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct Distance {
-    /// Value in km in the operational range 0 to 9 999 km.
-    pub km: u16,
-}
+/// Value in km in the operational range 0 to 9 999 km.
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct Distance(pub u16);
 impl Distance {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let km = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read distance")?;
-        Ok(Distance { km })
+        Ok(Distance(km))
     }
 }
 
@@ -1047,9 +990,9 @@ impl Distance {
 pub type CardActivityLengthRange = u16;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [CardDriverActivity: appendix 2.9.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16718)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardActivityDailyRecord {
     pub activity_previous_record_length: CardActivityLengthRange,
     pub activity_record_length: CardActivityLengthRange,
@@ -1100,9 +1043,9 @@ impl CardActivityDailyRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [CardDriverActivity: appendix 2.17.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17092)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardDriverActivity {
     pub activity_pointer_oldest_day_record: u16,
     pub activity_pointer_newest_record: u16,
@@ -1191,9 +1134,9 @@ impl CardDriverActivity {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// EF Block page 281
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct DriverActivityData {
     pub card_driver_activity: CardDriverActivity,
 }
@@ -1207,32 +1150,29 @@ impl DriverActivityData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [VuDataBlockCounter: appendix 2.189.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26512)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct VuDataBlockCounter {
-    pub value: u16,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct VuDataBlockCounter(pub u16);
 impl VuDataBlockCounter {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = BCDString::parse_dyn_size(cursor, 2)?;
 
         let num_value = value
-            .value
+            .0
             .parse::<u16>()
             .context("Failed to parse VuDataBlockCounter from BCDString to number")?;
         if num_value > 9999 {
             anyhow::bail!("Invalid VuDataBlockCounter value: {}", num_value);
         }
 
-        Ok(VuDataBlockCounter { value: num_value })
+        Ok(VuDataBlockCounter(num_value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [CardCurrentUse appendix 2.16.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17059)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardCurrentUse {
     pub session_open_time: TimeReal,
     pub session_open_vehicle: VehicleRegistrationIdentification,
@@ -1249,9 +1189,9 @@ impl CardCurrentUse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// EF Block page 281
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct CurrentUsage {
     pub card_current_use: CardCurrentUse,
 }
@@ -1263,8 +1203,8 @@ impl CurrentUsage {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct MonthYear {
     pub month: u8,
     pub year: u8,
@@ -1272,11 +1212,11 @@ pub struct MonthYear {
 impl MonthYear {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let month = BCDString::parse_dyn_size(cursor, 1)?
-            .value
+            .0
             .parse::<u8>()
             .context("Failed to parse month from BCDString to number")?;
         let year = BCDString::parse_dyn_size(cursor, 1)?
-            .value
+            .0
             .parse::<u8>()
             .context("Failed to parse year from BCDString to number")?;
         Ok(MonthYear { month, year })
@@ -1284,9 +1224,9 @@ impl MonthYear {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [VuDownloadablePeriod: appendix 2.193](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26674)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct VuDownloadablePeriod {
     pub min_downloadable_time: TimeReal,
     pub max_downloadable_time: TimeReal,
@@ -1306,9 +1246,9 @@ impl VuDownloadablePeriod {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [VuDetailedSpeedBlock: appendix 2.224.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26534)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub struct VuDetailedSpeedBlock {
     pub speed_block_begin_date: TimeReal,
     pub speeds_per_second: Vec<Speed>,
@@ -1332,17 +1272,14 @@ impl VuDetailedSpeedBlock {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [VuPartNumber: appendix 2.217.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28257)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct VuPartNumber {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct VuPartNumber(pub IA5String);
 impl VuPartNumber {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(VuPartNumber {
-            value: Ia5String::parse_dyn_size(cursor, 16)?.value,
-        })
+        let value =
+            IA5String::parse_dyn_size(cursor, 16).context("Failed to parse VuPartNumber")?;
+        Ok(VuPartNumber(value))
     }
 }
 /// [SensorPairingDate: appendix 2.146.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24438)

@@ -1,12 +1,12 @@
 use anyhow::{Context, Result};
 use byteorder::ReadBytesExt;
-#[cfg(feature = "napi")]
-use napi_derive::napi;
 use std::fmt::Display;
 use std::io::{BufReader, Read};
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub enum TachoFileType {
     VehicleUnitGen1,
     VehicleUnitGen2,
@@ -18,12 +18,12 @@ pub enum TachoFileType {
 impl Display for TachoFileType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TachoFileType::VehicleUnitGen1 => write!(f, "Vehicle Unit Gen1"),
-            TachoFileType::VehicleUnitGen2 => write!(f, "Vehicle Unit Gen2"),
-            TachoFileType::VehicleUnitGen2V2 => write!(f, "Vehicle Unit Gen2V2"),
-            TachoFileType::DriverCardGen1 => write!(f, "Driver Card Gen1"),
-            TachoFileType::DriverCardGen2 => write!(f, "Driver Card Gen2"),
-            TachoFileType::DriverCardGen2V2 => write!(f, "Driver Card Gen2V2"),
+            TachoFileType::VehicleUnitGen1 => write!(f, "VehicleUnitGen1"),
+            TachoFileType::VehicleUnitGen2 => write!(f, "VehicleUnitGen2"),
+            TachoFileType::VehicleUnitGen2V2 => write!(f, "VehicleUnitGen2V2"),
+            TachoFileType::DriverCardGen1 => write!(f, "DriverCardGen1"),
+            TachoFileType::DriverCardGen2 => write!(f, "DriverCardGen2"),
+            TachoFileType::DriverCardGen2V2 => write!(f, "DriverCardGen2V2"),
         }
     }
 }

@@ -1,17 +1,14 @@
 use anyhow::{Context, Result};
 use byteorder::ReadBytesExt;
-#[cfg(feature = "napi")]
-use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use std::io::Cursor;
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [ManufacturerCode: appendix 2.94.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22253)
-pub struct ManufacturerCode {
-    pub value: String,
-}
+pub struct ManufacturerCode(pub String);
 impl ManufacturerCode {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let code = cursor
@@ -84,19 +81,14 @@ impl ManufacturerCode {
             0xE0 => "Turker Roll Paper Trade",
             _ => anyhow::bail!("Unknown ManufacturerCode: {}", code),
         };
-        Ok(ManufacturerCode {
-            value: name.to_string(),
-        })
+        Ok(ManufacturerCode(name.to_string()))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
 /// [NationNumeric: appendix 2.101.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22450)
-#[cfg_attr(feature = "napi", napi(object))]
-pub struct NationNumeric {
-    pub value: String,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct NationNumeric(pub String);
 impl NationNumeric {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read nation numeric")?;
@@ -163,19 +155,14 @@ impl NationNumeric {
             0xFF => "Rest of the World",
             _ => "Reserved for Future Use",
         };
-        Ok(NationNumeric {
-            value: parsed_country.to_string(),
-        })
+        Ok(NationNumeric(parsed_country.to_string()))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [RegionNumeric: appendix 2.122.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23612)
-pub struct RegionNumeric {
-    pub value: String,
-}
+pub struct RegionNumeric(pub String);
 impl RegionNumeric {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read region_numeric")?;
@@ -204,8 +191,6 @@ impl RegionNumeric {
             0x13 => "Melilla",
             _ => anyhow::bail!("Invalid RegionNumeric value: {}", value),
         };
-        Ok(RegionNumeric {
-            value: region.to_string(),
-        })
+        Ok(RegionNumeric(region.to_string()))
     }
 }

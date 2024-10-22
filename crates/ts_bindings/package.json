@@ -14,7 +14,7 @@
   "license": "MIT",
   "devDependencies": {
     "@napi-rs/cli": "^3.0.0-alpha.15",
-    "@types/bun": "^1.1.11",
+    "@types/bun": "^1.1.12",
     "typescript": "^5.6.3"
   },
   "engines": {
@@ -22,8 +22,7 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "napi build --platform --release && bun run src/post-process.ts",
-    "test": "tsc --noEmit && bun test",
+    "build": "cargo test && napi build --platform --release && bun run src/post-process.ts && tsc --noEmit && bun test __test__/typecheck.spec.ts",
     "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm",
     "universal": "napi universal",

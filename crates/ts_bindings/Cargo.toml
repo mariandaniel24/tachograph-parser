@@ -10,7 +10,8 @@ crate-type = ["cdylib"]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
 napi = { version = "3.0.0-alpha.15", default-features = false, features = ["napi9", "chrono_date"] }
 napi-derive = "3.0.0-alpha.15"
-tachograph_parser = { path = "../parser", features = ["napi"] }
+tachograph_parser = { path = "../parser", features = ["ts"] }
+ts-rs = { version = "10.0.0", features = ["serde-compat", "chrono-impl", "serde-json-impl"] }
 
 [build-dependencies]
 napi-build = "2.1.1"

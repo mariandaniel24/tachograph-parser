@@ -3,13 +3,13 @@ use super::*;
 use crate::bytes::{extract_u8_bits_into_tup, TakeExact};
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
-#[cfg(feature = "napi")]
-use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use std::{any::type_name, io::Read};
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [RecordType: appendix 2.120.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23342)
 pub enum RecordTypeGen2 {
     ActivityChangeInfo,
@@ -96,7 +96,7 @@ impl RecordTypeGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 
 /// A generic implementation for an array of records, where the record type is parameterized
 /// This helper is used across various Vu blocks to parse and store their respective records
@@ -224,19 +224,16 @@ impl<T> RecordArray<T> {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [Certificate: appendix 2.41.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18396)
-pub struct CertificateGen2 {
-    pub value: Vec<u8>,
-}
+pub struct CertificateGen2(pub Vec<u8>);
 impl CertificateGen2 {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut value = vec![0u8; size];
         cursor
             .read_exact(&mut value)
             .context("Failed to read value")?;
-        Ok(CertificateGen2 { value })
+        Ok(CertificateGen2(value))
     }
 }
 
@@ -247,7 +244,7 @@ pub type MemberStateCertificateGen2 = CertificateGen2;
 pub type VuCertificateGen2 = CertificateGen2;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(feature = "napi", napi(string_enum = "PascalCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub enum EquipmentTypeGen2 {
     Reserved,
     DriverCard,
@@ -301,8 +298,8 @@ impl EquipmentTypeGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [FullCardNumber: appendix 2.73.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21400)
 pub struct FullCardNumberGen2 {
     pub card_type: EquipmentTypeGen2,
@@ -331,7 +328,7 @@ impl FullCardNumberGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [Generation: appendix 2.75.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23342)
 pub enum GenerationGen2 {
     Generation1,
@@ -353,8 +350,8 @@ impl GenerationGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [FullCardNumberAndGeneration: appendix 2.74.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21438)
 pub struct FullCardNumberAndGenerationGen2 {
     pub full_card_number: FullCardNumberGen2,
@@ -382,8 +379,8 @@ impl FullCardNumberAndGenerationGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [ControlType: appendix 2.53.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19148)
 pub struct ControlTypeGen2 {
     pub card_downloading: bool,
@@ -409,12 +406,9 @@ impl ControlTypeGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [Signature: appendix 2.149.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24501)
-pub struct SignatureGen2 {
-    pub value: Vec<u8>,
-} // Octet string
+pub struct SignatureGen2(pub Vec<u8>);
 impl SignatureGen2 {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         if size < 64 || size > 132 {
@@ -424,15 +418,13 @@ impl SignatureGen2 {
         cursor
             .read_exact(&mut signature_buffer)
             .context("Failed to read signature buffer")?;
-        Ok(SignatureGen2 {
-            value: signature_buffer,
-        })
+        Ok(SignatureGen2(signature_buffer))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [PreviousVehicleInfo: appendix 2.118.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23250)
 pub struct PreviousVehicleInfoGen2 {
     pub vehicle_registration_identification: VehicleRegistrationIdentification,
@@ -453,8 +445,8 @@ impl PreviousVehicleInfoGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [GNSSPlaceRecord: appendix 2.80.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21772)
 pub struct GNSSPlaceRecordGen2 {
     pub time_stamp: TimeReal,
@@ -477,25 +469,22 @@ impl GNSSPlaceRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [GNSSAccuracy: appendix 2.77.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21573)
-pub struct GnssAccuracyGen2 {
-    pub value: u8,
-}
+pub struct GnssAccuracyGen2(pub u8);
 impl GnssAccuracyGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let value = cursor.read_u8().context("Failed to read GNSSAccuracy")?;
         if value > 100 {
             anyhow::bail!("Invalid GNSSAccuracy");
         }
-        Ok(GnssAccuracyGen2 { value })
+        Ok(GnssAccuracyGen2(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [GeoCoordinates: appendix 2.76.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21534)
 pub struct GeoCoordinatesGen2 {
     pub latitude: f64,
@@ -544,8 +533,8 @@ impl GeoCoordinatesGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [VuGNSSADRecord: appendix 2.203.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e27345)
 pub struct VuGNSSADRecordGen2 {
     pub time_stamp: TimeReal,
@@ -576,7 +565,7 @@ impl VuGNSSADRecordGen2 {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [EntryTypeDailyWorkPeriod: appendix 2.66.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20044)
 pub enum EntryTypeDailyWorkPeriodGen2 {
     BeginRelatedTimeCardInsertionTimeOrTimeOfEntry,
@@ -601,8 +590,8 @@ impl EntryTypeDailyWorkPeriodGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [PlaceRecord: appendix 2.117.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23112)
 pub struct PlaceRecordGen2 {
     pub entry_time: TimeReal,
@@ -623,7 +612,7 @@ impl PlaceRecordGen2 {
         let daily_work_period_region = external::RegionNumeric::parse(inner_cursor)?;
         let vehicle_odometer_value = OdometerShort::parse(inner_cursor)?;
         let entry_gnss_place_record = GNSSPlaceRecordGen2::parse(inner_cursor)?;
-        if entry_time.value.timestamp() == 0 {
+        if entry_time.0.timestamp() == 0 {
             anyhow::bail!("Invalid entry_time in PlaceRecord");
         }
         Ok(PlaceRecordGen2 {
@@ -638,7 +627,7 @@ impl PlaceRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [SpecificConditionType: appendix 2.154.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24685)
 pub enum SpecificConditionTypeGen2 {
     RFU,
@@ -665,8 +654,8 @@ impl SpecificConditionTypeGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [SpecificConditionRecord: appendix 2.152.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24614)
 pub struct SpecificConditionRecordGen2 {
     pub entry_time: TimeReal,
@@ -687,7 +676,7 @@ impl SpecificConditionRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [EventFaultType: appendix 2.70.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20338)
 pub enum EventFaultTypeGen2 {
     NoFurtherDetails,
@@ -813,8 +802,8 @@ impl EventFaultTypeGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [ManufacturerSpecificEventFaultData: appendix 2.95.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22276)
 pub struct ManufacturerSpecificEventFaultDataGen2 {
     pub manufacturer_code: external::ManufacturerCode,
@@ -841,8 +830,8 @@ impl ManufacturerSpecificEventFaultDataGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [ExtendedSerialNumber: appendix 2.72.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21307)
 pub struct ExtendedSerialNumberGen2 {
     pub serial_number: u32,
@@ -873,23 +862,19 @@ impl ExtendedSerialNumberGen2 {
 pub type VuSerialNumberGen2 = ExtendedSerialNumberGen2;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [VuApprovalNumber: appendix 2.172.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25427)
-pub struct VuApprovalNumberGen2 {
-    pub value: String,
-}
+pub struct VuApprovalNumberGen2(pub IA5String);
 impl VuApprovalNumberGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = Ia5String::parse_dyn_size(cursor, 16)
-            .context("Failed to parse VuApprovalNumber")?
-            .value;
-        Ok(VuApprovalNumberGen2 { value })
+        let value =
+            IA5String::parse_dyn_size(cursor, 16).context("Failed to parse VuApprovalNumber")?;
+        Ok(VuApprovalNumberGen2(value))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [VuAbility: appendix 2.169.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25277)
 pub enum VuAbilityGen2 {
     SupportsGen1,
@@ -913,18 +898,14 @@ impl VuAbilityGen2 {
 pub type SensorSerialNumberGen2 = ExtendedSerialNumberGen2;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [SensorApprovalNumber: appendix 2.131.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23887)
-pub struct SensorApprovalNumberGen2 {
-    pub value: String,
-}
+pub struct SensorApprovalNumberGen2(pub IA5String);
 impl SensorApprovalNumberGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = Ia5String::parse_dyn_size(cursor, 16)
-            .context("Failed to parse SensorApprovalNumber")?
-            .value;
-        Ok(SensorApprovalNumberGen2 { value })
+        let value = IA5String::parse_dyn_size(cursor, 16)
+            .context("Failed to parse SensorApprovalNumber")?;
+        Ok(SensorApprovalNumberGen2(value))
     }
 }
 
@@ -932,24 +913,20 @@ impl SensorApprovalNumberGen2 {
 pub type SensorGnssSerialNumberGen2 = ExtendedSerialNumberGen2;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [SensorExternalGNSSApprovalNumber: appendix 2.132.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23931)
-pub struct SensorExternalGnssApprovalNumberGen2 {
-    pub value: String,
-}
+pub struct SensorExternalGnssApprovalNumberGen2(pub IA5String);
 impl SensorExternalGnssApprovalNumberGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = Ia5String::parse_dyn_size(cursor, 16)
-            .context("Failed to parse SensorExternalGNSSApprovalNumber")?
-            .value;
-        Ok(SensorExternalGnssApprovalNumberGen2 { value })
+        let value = IA5String::parse_dyn_size(cursor, 16)
+            .context("Failed to parse SensorExternalGNSSApprovalNumber")?;
+        Ok(SensorExternalGnssApprovalNumberGen2(value))
     }
 }
 
 pub type SensorGnssCouplingDateGen2 = TimeReal;
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(string_enum))]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CalibrationPurpose: appendix 2.8.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16597)
 pub enum CalibrationPurposeGen2 {
     Reserved,
@@ -984,8 +961,8 @@ impl CalibrationPurposeGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [ExtendedSealIdentifier: appendix 2.71.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21276)
 pub struct ExtendedSealIdentifierGen2 {
     pub manufacturer_code: Vec<u8>,
@@ -1011,8 +988,8 @@ impl ExtendedSealIdentifierGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [SealRecord: appendix 2.130.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23854)
 pub struct SealRecordGen2 {
     pub equipment_type: EquipmentTypeGen2,
@@ -1029,8 +1006,8 @@ impl SealRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [SealDataVu: appendix 2.129.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e23827)
 pub struct SealDataVuGen2 {
     pub seal_records: Vec<SealRecordGen2>,
@@ -1066,9 +1043,9 @@ pub type NoOfSpecificConditionRecordsGen2 = u16;
 pub type NoOfCardVehicleUnitRecordsGen2 = u16;
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 /// [DriverCardApplicationIdentification: appendix 2.61.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19751)
-#[cfg_attr(feature = "napi", napi(object))]
+#[cfg_attr(feature = "ts", derive(TS))]
 
 pub struct DriverCardApplicationIdentificationGen2 {
     pub type_of_tachograph_card_id: EquipmentTypeGen2,
@@ -1145,8 +1122,8 @@ impl DriverCardApplicationIdentificationGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct ApplicationIdentificationGen2 {
     pub driver_card_application_identification: DriverCardApplicationIdentificationGen2,
 }
@@ -1161,8 +1138,8 @@ impl ApplicationIdentificationGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardIccIdentification: appendix 2.23.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17372)
 pub struct CardIccIdentificationGen2 {
     pub clock_stop: u8,
@@ -1198,8 +1175,8 @@ impl CardIccIdentificationGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardEventRecord: appendix 2.20.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17247)
 pub struct CardEventRecordGen2 {
     pub event_type: EventFaultTypeGen2,
@@ -1228,8 +1205,8 @@ impl CardEventRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardEventData: appendix 2.19.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17180)
 pub struct CardEventDataGen2 {
     pub records: Vec<Vec<CardEventRecordGen2>>,
@@ -1261,8 +1238,8 @@ impl CardEventDataGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardFaultData: appendix 2.21.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17292)
 pub struct CardFaultRecordGen2 {
     pub fault_type: EventFaultTypeGen2,
@@ -1291,8 +1268,8 @@ impl CardFaultRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardFaultData: appendix 2.22.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17340)
 pub struct CardFaultDataGen2 {
     pub records: Vec<Vec<CardFaultRecordGen2>>,
@@ -1336,8 +1313,8 @@ impl CardFaultDataGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardVehicleRecord: appendix 2.37.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18163)
 pub struct CardVehicleRecordGen2 {
     pub vehicle_odometer_begin: OdometerShort,
@@ -1366,8 +1343,8 @@ impl CardVehicleRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardVehiclesUsed: appendix 2.38.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18302)
 pub struct CardVehiclesUsedGen2 {
     pub vehicle_pointer_newest_record: u16,
@@ -1399,8 +1376,8 @@ impl CardVehiclesUsedGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardPlaceDailyWorkPeriod: appendix 2.27.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17729)
 pub struct CardPlaceDailyWorkPeriodGen2 {
     pub place_pointer_newest_record: NoOfCardPlaceRecordsGen2,
@@ -1421,12 +1398,7 @@ impl CardPlaceDailyWorkPeriodGen2 {
             }
         }
         // Sort the records by entry_time in ascending order
-        place_records.sort_by(|a, b| {
-            a.entry_time
-                .value
-                .timestamp()
-                .cmp(&b.entry_time.value.timestamp())
-        });
+        place_records.sort_by(|a, b| a.entry_time.0.timestamp().cmp(&b.entry_time.0.timestamp()));
         Ok(CardPlaceDailyWorkPeriodGen2 {
             place_pointer_newest_record,
             place_records,
@@ -1435,8 +1407,8 @@ impl CardPlaceDailyWorkPeriodGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardControlActivityDataRecord appendix 2.15.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17002)
 pub struct CardControlActivityDataRecordGen2 {
     pub control_type: ControlTypeGen2,
@@ -1463,8 +1435,8 @@ impl CardControlActivityDataRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [SpecificConditions: appendix 2.153.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24644)
 pub struct SpecificConditionsGen2 {
     pub condition_pointer_newest_record: NoOfSpecificConditionRecordsGen2,
@@ -1484,12 +1456,8 @@ impl SpecificConditionsGen2 {
             }
         }
         // Sort the records by time_stamp in desc order
-        specific_condition_records.sort_by(|a, b| {
-            b.entry_time
-                .value
-                .timestamp()
-                .cmp(&a.entry_time.value.timestamp())
-        });
+        specific_condition_records
+            .sort_by(|a, b| b.entry_time.0.timestamp().cmp(&a.entry_time.0.timestamp()));
         Ok(SpecificConditionsGen2 {
             condition_pointer_newest_record,
             specific_condition_records,
@@ -1498,8 +1466,8 @@ impl SpecificConditionsGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardVehicleUnitRecord: appendix 2.39.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18302)
 pub struct CardVehicleUnitRecordGen2 {
     pub time_stamp: TimeReal,
@@ -1517,7 +1485,7 @@ impl CardVehicleUnitRecordGen2 {
         let device_id = inner_cursor.read_u8().context("Failed to read device_id")?;
         let vu_software_version = VuSoftwareVersion::parse(inner_cursor)?;
 
-        if time_stamp.value.timestamp() == 0 {
+        if time_stamp.0.timestamp() == 0 {
             return Err(anyhow::anyhow!(
                 "failed to parse CardVehicleUnitRecord, too many 0 bytes"
             ));
@@ -1533,8 +1501,8 @@ impl CardVehicleUnitRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [CardVehicleUnitsUsed: appendix 2.40.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18350)
 pub struct CardVehicleUnitsUsedGen2 {
     pub no_of_card_vehicle_unit_records: NoOfCardVehicleUnitRecordsGen2,
@@ -1554,12 +1522,7 @@ impl CardVehicleUnitsUsedGen2 {
             }
         }
         // Sort the records by time_stamp in desc order
-        vehicle_units.sort_by(|a, b| {
-            b.time_stamp
-                .value
-                .timestamp()
-                .cmp(&a.time_stamp.value.timestamp())
-        });
+        vehicle_units.sort_by(|a, b| b.time_stamp.0.timestamp().cmp(&a.time_stamp.0.timestamp()));
         Ok(CardVehicleUnitsUsedGen2 {
             no_of_card_vehicle_unit_records,
             card_vehicle_unit_records: vehicle_units,
@@ -1568,8 +1531,8 @@ impl CardVehicleUnitsUsedGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [GNSSAccumulatedDrivingRecord: appendix 2.79.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21640)
 pub struct GNSSAccumulatedDrivingRecordGen2 {
     pub time_stamp: TimeReal,
@@ -1583,7 +1546,7 @@ impl GNSSAccumulatedDrivingRecordGen2 {
         let gnss_place_record = GNSSPlaceRecordGen2::parse(cursor)?;
         let vehicle_odometer_value = OdometerShort::parse(cursor)?;
 
-        if time_stamp.value.timestamp() == 0 {
+        if time_stamp.0.timestamp() == 0 {
             return Err(anyhow::anyhow!(
                 "failed to parse GNSSAccumulatedDrivingRecord, too many 0 bytes"
             ));
@@ -1598,8 +1561,8 @@ impl GNSSAccumulatedDrivingRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 /// [GNSSAccumulatedDriving: appendix 2.79.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21595)
 pub struct GnssAccumulatedDrivingGen2 {
     pub gnss_ad_pointer_newest_record: NoOfGnssAdRecordsGen2,
@@ -1622,12 +1585,8 @@ impl GnssAccumulatedDrivingGen2 {
             }
         }
         // Sort the records by time_stamp in ascending order
-        gnss_accumulated_driving_records.sort_by(|a, b| {
-            a.time_stamp
-                .value
-                .timestamp()
-                .cmp(&b.time_stamp.value.timestamp())
-        });
+        gnss_accumulated_driving_records
+            .sort_by(|a, b| a.time_stamp.0.timestamp().cmp(&b.time_stamp.0.timestamp()));
         Ok(GnssAccumulatedDrivingGen2 {
             gnss_ad_pointer_newest_record,
             gnss_accumulated_driving_records,
@@ -1636,25 +1595,20 @@ impl GnssAccumulatedDrivingGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
-pub struct DateOfDayDownloadedGen2 {
-    pub value: DateTime<Utc>,
-}
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct DateOfDayDownloadedGen2(pub TimeReal);
 
 impl DateOfDayDownloadedGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let time_real =
             TimeReal::parse(cursor).context("Failed to parse TimeReal for DateOfDayDownloaded")?;
-        Ok(DateOfDayDownloadedGen2 {
-            value: time_real.value,
-        })
+        Ok(DateOfDayDownloadedGen2(time_real))
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuCardIwRecordGen2 {
     pub card_holder_name: HolderName,
     pub full_card_number_and_generation: FullCardNumberAndGenerationGen2,
@@ -1695,8 +1649,8 @@ impl VuCardIwRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuPlaceDailyWorkPeriodGen2 {
     pub full_card_number_and_generation: Option<FullCardNumberAndGenerationGen2>,
     pub place_record: PlaceRecordGen2,
@@ -1712,8 +1666,8 @@ impl VuPlaceDailyWorkPeriodGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuActivitiesBlockGen2 {
     pub date_of_day_downloaded_record_array: Vec<DateOfDayDownloadedGen2>,
 
@@ -1780,8 +1734,8 @@ impl VuActivitiesBlockGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 
 pub struct VuIdentificationGen2 {
     pub vu_manufacturer_name: VuManufacturerName,
@@ -1821,8 +1775,8 @@ impl VuIdentificationGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct SensorPairedRecordGen2 {
     pub sensor_serial_number: SensorSerialNumberGen2,
     pub sensor_approval_number: SensorApprovalNumberGen2,
@@ -1843,8 +1797,8 @@ impl SensorPairedRecordGen2 {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 
 pub struct SensorExternalGNSSCoupledRecordGen2 {
     pub sensor_serial_number: SensorGnssSerialNumberGen2,
@@ -1867,8 +1821,8 @@ impl SensorExternalGNSSCoupledRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 
 pub struct VuCalibrationRecordGen2 {
     pub calibration_purpose: CalibrationPurposeGen2,
@@ -1927,8 +1881,8 @@ impl VuCalibrationRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 
 pub struct VuCardRecordGen2 {
     pub card_number_and_generation_information: Option<FullCardNumberAndGenerationGen2>,
@@ -1976,8 +1930,8 @@ impl VuCardRecordGen2 {
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 
 pub struct VuITSConsentRecordGen2 {
     pub card_number_and_gen: Option<FullCardNumberAndGenerationGen2>,
@@ -1999,8 +1953,8 @@ impl VuITSConsentRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 
 pub struct VuPowerSupplyInterruptionRecordGen2 {
     pub event_type: EventFaultTypeGen2,
@@ -2042,8 +1996,8 @@ impl VuPowerSupplyInterruptionRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "camelCase"))]
-#[cfg_attr(feature = "napi", napi(object))]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
 
 pub struct VuCompanyLocksBlockGen2 {
     pub vu_identification_record_array: Vec<VuIdentificationGen2>,
@@ -2106,8 +2060,8 @@ impl VuCompanyLocksBlockGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuSpeedBlockGen2 {
     pub vu_detailed_speed_block_record_array: Vec<VuDetailedSpeedBlock>,
     pub signature_record_array: Vec<SignatureGen2>,
@@ -2134,8 +2088,8 @@ impl VuSpeedBlockGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuFaultRecordGen2 {
     pub fault_type: EventFaultTypeGen2,
     pub fault_record_purpose: EventFaultRecordPurpose,
@@ -2179,8 +2133,8 @@ impl VuFaultRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuEventRecordGen2 {
     pub event_type: EventFaultTypeGen2,
     pub event_record_purpose: EventFaultRecordPurpose,
@@ -2227,8 +2181,8 @@ impl VuEventRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuOverSpeedingControlDataGen2 {
     pub last_overspeed_control_time: Option<TimeReal>,
     pub first_overspeed_since: Option<TimeReal>,
@@ -2249,8 +2203,8 @@ impl VuOverSpeedingControlDataGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuOverSpeedingEventRecordGen2 {
     pub event_type: EventFaultTypeGen2,
     pub event_record_purpose: EventFaultRecordPurpose,
@@ -2286,8 +2240,8 @@ impl VuOverSpeedingEventRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 /** [VuTimeAdjustmentRecord: appendix 2.232.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28728) */
 pub struct VuTimeAdjustmentRecordGen2 {
     pub old_time_value: DateTime<Utc>,
@@ -2302,10 +2256,10 @@ impl VuTimeAdjustmentRecordGen2 {
         Ok(VuTimeAdjustmentRecordGen2 {
             old_time_value: TimeReal::parse(cursor)
                 .context("Failed to parse old_time_value")?
-                .value,
+                .0,
             new_time_value: TimeReal::parse(cursor)
                 .context("Failed to parse new_time_value")?
-                .value,
+                .0,
             workshop_name: Name::parse(cursor).context("Failed to parse workshop_name")?,
             workshop_address: Address::parse(cursor).context("Failed to parse workshop_address")?,
             workshop_card_number_and_generation: FullCardNumberAndGenerationGen2::parse(cursor)
@@ -2316,8 +2270,8 @@ impl VuTimeAdjustmentRecordGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuEventsAndFaultsBlockGen2 {
     pub vu_fault_record_array: Vec<VuFaultRecordGen2>,
     pub vu_event_record_array: Vec<VuEventRecordGen2>,
@@ -2365,8 +2319,8 @@ impl VuEventsAndFaultsBlockGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuDownloadActivityDataGen2 {
     pub downloading_time: Option<TimeReal>,
     pub full_card_number_and_generation: Option<FullCardNumberAndGenerationGen2>,
@@ -2383,8 +2337,8 @@ impl VuDownloadActivityDataGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuCompanyLocksGen2 {
     pub lock_in_time: TimeReal,
     pub lock_out_time: Option<TimeReal>,
@@ -2410,8 +2364,8 @@ impl VuCompanyLocksGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuControlActivityGen2 {
     pub control_type: ControlTypeGen2,
     pub control_time: TimeReal,
@@ -2438,8 +2392,8 @@ impl VuControlActivityGen2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "napi", napi(object))]
-#[serde(rename_all(serialize = "camelCase"))]
+#[cfg_attr(feature = "ts", derive(TS))]
+#[serde(rename_all = "camelCase")]
 pub struct VuOverviewBlockGen2 {
     pub member_state_certificate_record_array: Vec<MemberStateCertificateGen2>,
 

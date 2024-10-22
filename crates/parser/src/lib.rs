@@ -6,8 +6,8 @@ pub mod vu_parser;
 use anyhow::{Context, Result};
 use card_parser::CardParser;
 use detector::TachoFileType;
-#[cfg(feature = "napi")]
-use napi_derive::napi;
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 use vu_parser::VuParser;
 
 // Vehicle Unit
@@ -65,7 +65,7 @@ pub fn parse_card_from_bytes_to_json(bytes: &[u8]) -> Result<String> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "napi", napi)]
+#[cfg_attr(feature = "ts", derive(TS))]
 pub enum TachoData {
     Card { card_data: card_parser::CardData },
     Vu { vu_data: vu_parser::VuData },

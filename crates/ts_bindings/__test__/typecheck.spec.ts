@@ -1,22 +1,11 @@
-import { expect, describe, it } from "bun:test";
-import {
-	parseTachoFile,
-	parseVu,
-	parseCard,
-	detectTachoFileType,
-	type TachoFileType,
-	type TachoData,
-	type VuData,
-	type CardData,
-} from "../index.js";
+import { describe, it } from "bun:test";
+import { parseVu, parseCard, detectTachoFileType } from "../index.js";
 import type { Buffer } from "node:buffer";
+import type { VuData } from "../bindings/VuData.js";
+import type { CardData } from "../bindings/CardData.js";
+import type { TachoFileType } from "../bindings/TachoFileType.js";
 
 describe("Tacho file parsing functions", () => {
-	it("should have correct types for parseTachoFile", () => {
-		type ParseTachoFileType = (bytes: Buffer) => TachoData;
-		const _parseTachoFile: ParseTachoFileType = parseTachoFile;
-	});
-
 	it("should have correct types for parseVu", () => {
 		type ParseVuType = (bytes: Buffer) => VuData;
 		const _parseVu: ParseVuType = parseVu;

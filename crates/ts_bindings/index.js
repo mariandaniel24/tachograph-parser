@@ -364,30 +364,6 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-module.exports.ActivityChangeInfoCardActivity = nativeBinding.ActivityChangeInfoCardActivity
-module.exports.ActivityChangeInfoCardStatusSlot = nativeBinding.ActivityChangeInfoCardStatusSlot
-module.exports.ActivityChangeInfoDrivingStatus = nativeBinding.ActivityChangeInfoDrivingStatus
-module.exports.ActivityChangeInfoSlot = nativeBinding.ActivityChangeInfoSlot
-module.exports.CalibrationPurpose = nativeBinding.CalibrationPurpose
-module.exports.CalibrationPurposeGen2 = nativeBinding.CalibrationPurposeGen2
-module.exports.CardSlotNumber = nativeBinding.CardSlotNumber
-module.exports.CardSlotStatus = nativeBinding.CardSlotStatus
-module.exports.CardStructureVersion = nativeBinding.CardStructureVersion
 module.exports.detectTachoFileType = nativeBinding.detectTachoFileType
-module.exports.EntryTypeDailyWorkPeriod = nativeBinding.EntryTypeDailyWorkPeriod
-module.exports.EntryTypeDailyWorkPeriodGen2 = nativeBinding.EntryTypeDailyWorkPeriodGen2
-module.exports.EquipmentType = nativeBinding.EquipmentType
-module.exports.EquipmentTypeGen2 = nativeBinding.EquipmentTypeGen2
-module.exports.EventFaultRecordPurpose = nativeBinding.EventFaultRecordPurpose
-module.exports.EventFaultType = nativeBinding.EventFaultType
-module.exports.EventFaultTypeGen2 = nativeBinding.EventFaultTypeGen2
-module.exports.GenerationGen2 = nativeBinding.GenerationGen2
-module.exports.ManualInputFlag = nativeBinding.ManualInputFlag
-module.exports.parseCard = nativeBinding.parseCard
-module.exports.parseTachoFile = nativeBinding.parseTachoFile
-module.exports.parseVu = nativeBinding.parseVu
-module.exports.RecordTypeGen2 = nativeBinding.RecordTypeGen2
-module.exports.SpecificConditionType = nativeBinding.SpecificConditionType
-module.exports.SpecificConditionTypeGen2 = nativeBinding.SpecificConditionTypeGen2
-module.exports.TachoFileType = nativeBinding.TachoFileType
-module.exports.VuAbilityGen2 = nativeBinding.VuAbilityGen2
+module.exports.parseCard = (...input) => JSON.parse(nativeBinding.parseCard(...input))
+module.exports.parseVu = (...input) => JSON.parse(nativeBinding.parseVu(...input))
