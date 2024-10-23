@@ -211,8 +211,8 @@ jobs:
           then
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
             VERSION=$(git log -1 --pretty=%B | sed 's/npm: release //')
-            npm version $VERSION --no-git-tag-version
-            npm publish --tag next --access public --allow-same-version
+            npm version $VERSION --no-git-tag-version --allow-same-version
+            npm publish --tag next --access public
           else
             echo "Not a release, skipping publish"
           fi
