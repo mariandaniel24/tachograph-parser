@@ -339,22 +339,9 @@ dependencies = [
  "bitflags",
  "chrono",
  "ctor",
- "napi-derive 2.16.12",
+ "napi-derive",
  "napi-sys",
  "once_cell",
-]
-
-[[package]]
-name = "napi"
-version = "3.0.0-alpha.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c0e8f71ce51d9f834c03593253a08fa279634326e2f2b8c2d84daa5fd8903d4"
-dependencies = [
- "bitflags",
- "chrono",
- "ctor",
- "napi-build",
- "napi-sys",
 ]
 
 [[package]]
@@ -371,20 +358,7 @@ checksum = "17435f7a00bfdab20b0c27d9c56f58f6499e418252253081bfff448099da31d1"
 dependencies = [
  "cfg-if",
  "convert_case",
- "napi-derive-backend 1.0.74",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "napi-derive"
-version = "3.0.0-alpha.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a54bf04328270e3ac5f4112c9f865c49d9fb39c1c18a0a4651beda3f930ee8a"
-dependencies = [
- "convert_case",
- "napi-derive-backend 2.0.0-alpha.15",
+ "napi-derive-backend",
  "proc-macro2",
  "quote",
  "syn",
@@ -398,20 +372,6 @@ checksum = "967c485e00f0bf3b1bdbe510a38a4606919cf1d34d9a37ad41f25a81aa077abe"
 dependencies = [
  "convert_case",
  "once_cell",
- "proc-macro2",
- "quote",
- "regex",
- "semver",
- "syn",
-]
-
-[[package]]
-name = "napi-derive-backend"
-version = "2.0.0-alpha.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "773b09ae7be3a66eb8ca8f796aa946bbe2bdfad0655d06e1c393ff0e00bbaef6"
-dependencies = [
- "convert_case",
  "proc-macro2",
  "quote",
  "regex",
@@ -578,9 +538,6 @@ dependencies = [
  "encoding_rs",
  "flexi_logger",
  "log",
- "napi 3.0.0-alpha.16",
- "napi-build",
- "napi-derive 3.0.0-alpha.15",
  "serde",
  "serde_json",
  "textcode",
@@ -651,9 +608,9 @@ dependencies = [
 name = "ts_bindings"
 version = "0.0.0"
 dependencies = [
- "napi 2.16.13",
+ "napi",
  "napi-build",
- "napi-derive 2.16.12",
+ "napi-derive",
  "tachograph_parser",
  "ts-rs",
 ]
