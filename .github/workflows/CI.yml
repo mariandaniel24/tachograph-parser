@@ -28,9 +28,9 @@ jobs:
           - host: macos-latest
             target: x86_64-apple-darwin
             build: cd crates/ts_bindings && yarn run build --target x86_64-apple-darwin
-          - host: windows-latest
-            build: cd crates/ts_bindings && yarn run build --target x86_64-pc-windows-msvc
-            target: x86_64-pc-windows-msvc
+          # - host: windows-latest
+          #   build: cd crates/ts_bindings && yarn run build --target x86_64-pc-windows-msvc
+          #   target: x86_64-pc-windows-msvc
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
@@ -73,20 +73,20 @@ jobs:
         run: ${{ matrix.settings.setup }}
         if: ${{ matrix.settings.setup }}
         shell: bash
-      - name: Setup node x86
-        if: matrix.settings.target == 'i686-pc-windows-msvc'
-        run: yarn config set supportedArchitectures.cpu "ia32"
-        shell: bash
+      # - name: Setup node x86
+      #   if: matrix.settings.target == 'i686-pc-windows-msvc'
+      #   run: yarn config set supportedArchitectures.cpu "ia32"
+      #   shell: bash
       - name: Install dependencies
         run: cd crates/ts_bindings && yarn install
-      - name: Setup node x86
-        uses: actions/setup-node@v4
-        if: matrix.settings.target == 'i686-pc-windows-msvc'
-        with:
-          node-version: 20
-          cache: yarn
-          cache-dependency-path: crates/ts_bindings/yarn.lock
-          architecture: x86
+      # - name: Setup node x86
+      #   uses: actions/setup-node@v4
+      #   if: matrix.settings.target == 'i686-pc-windows-msvc'
+      #   with:
+      #     node-version: 20
+      #     cache: yarn
+      #     cache-dependency-path: crates/ts_bindings/yarn.lock
+      #     architecture: x86
       - name: Build in docker
         uses: addnab/docker-run-action@v3
         if: ${{ matrix.settings.docker }}
@@ -114,8 +114,8 @@ jobs:
         settings:
           - host: macos-latest
             target: x86_64-apple-darwin
-          - host: windows-latest
-            target: x86_64-pc-windows-msvc
+          # - host: windows-latest
+          #   target: x86_64-pc-windows-msvc
         node:
           - '18'
           - '20'
