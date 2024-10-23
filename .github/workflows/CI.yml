@@ -84,7 +84,8 @@ jobs:
         if: matrix.settings.target == 'i686-pc-windows-msvc'
         with:
           node-version: 20
-          cache: npm
+          cache: yarn
+          cache-dependency-path: crates/ts_bindings/yarn.lock
           architecture: x86
       - name: Build in docker
         uses: addnab/docker-run-action@v3
@@ -125,8 +126,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: npm
           architecture: x64
+          cache: yarn
+          cache-dependency-path: crates/ts_bindings/yarn.lock
       - name: Install dependencies
         run: cd crates/ts_bindings && yarn install
       - name: Download artifacts
@@ -156,7 +158,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: npm
+          cache: yarn
+          cache-dependency-path: crates/ts_bindings/yarn.lock
       - name: Install dependencies
         run: cd crates/ts_bindings && yarn install
       - name: Download artifacts
@@ -181,7 +184,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: yarn
+          cache-dependency-path: crates/ts_bindings/yarn.lock
       - name: Install dependencies
         run: yarn install
       - name: Download all artifacts
