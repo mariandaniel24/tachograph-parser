@@ -187,18 +187,19 @@ jobs:
           cache: yarn
           cache-dependency-path: crates/ts_bindings/yarn.lock
       - name: Install dependencies
-        run: yarn install
+        run: cd crates/ts_bindings && yarn install
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
       - name: Move artifacts
-        run: yarn artifacts
+        run: cd crates/ts_bindings && yarn artifacts
       - name: List packages
-        run: ls -R ./npm
+        run: ls -R ./crates/ts_bindings/npm
         shell: bash
       - name: Publish
         run: |
+          cd crates/ts_bindings
           yarn config set provenance true
           if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
           then
