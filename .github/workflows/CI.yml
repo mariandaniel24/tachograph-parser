@@ -201,13 +201,17 @@ jobs:
         run: |
           cd crates/ts_bindings
           yarn config set provenance true
-          if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
+          if git log -1 --pretty=%B | grep "^npm: release [0-9]\+\.[0-9]\+\.[0-9]\+$";
           then
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+            VERSION=$(git log -1 --pretty=%B | sed 's/npm: release //')
+            npm version $VERSION --no-git-tag-version
             npm publish --access public
-          elif git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+";
+          elif git log -1 --pretty=%B | grep "^npm: release [0-9]\+\.[0-9]\+\.[0-9]\+";
           then
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+            VERSION=$(git log -1 --pretty=%B | sed 's/npm: release //')
+            npm version $VERSION --no-git-tag-version
             npm publish --tag next --access public
           else
             echo "Not a release, skipping publish"
