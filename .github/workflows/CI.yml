@@ -104,43 +104,43 @@ jobs:
           name: bindings-${{ matrix.settings.target }}
           path: crates/ts_bindings/${{ env.APP_NAME }}.*.node
           if-no-files-found: error
-  test-macOS-windows-binding:
-    name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
-    needs:
-      - build
-    strategy:
-      fail-fast: false
-      matrix:
-        settings:
-          # - host: macos-latest
-          #   target: x86_64-apple-darwin
-          # - host: windows-latest
-          #   target: x86_64-pc-windows-msvc
-        node:
-          - '18'
-          - '20'
-    runs-on: ${{ matrix.settings.host }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          architecture: x64
-          cache: yarn
-          cache-dependency-path: crates/ts_bindings/yarn.lock
-      - name: Install dependencies
-        run: cd crates/ts_bindings && yarn install
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: bindings-${{ matrix.settings.target }}
-          path: crates/ts_bindings
-      - name: List packages
-        run: ls -R .
-        shell: bash
-      - name: Test bindings
-        run: cd crates/ts_bindings && yarn test
+  # test-macOS-windows-binding:
+  #   name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
+  #   needs:
+  #     - build
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       settings:
+  #         # - host: macos-latest
+  #         #   target: x86_64-apple-darwin
+  #         # - host: windows-latest
+  #         #   target: x86_64-pc-windows-msvc
+  #       node:
+  #         - '18'
+  #         - '20'
+  #   runs-on: ${{ matrix.settings.host }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ matrix.node }}
+  #         architecture: x64
+  #         cache: yarn
+  #         cache-dependency-path: crates/ts_bindings/yarn.lock
+  #     - name: Install dependencies
+  #       run: cd crates/ts_bindings && yarn install
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: bindings-${{ matrix.settings.target }}
+  #         path: crates/ts_bindings
+  #     - name: List packages
+  #       run: ls -R .
+  #       shell: bash
+  #     - name: Test bindings
+  #       run: cd crates/ts_bindings && yarn test
   test-linux-x64-gnu-binding:
     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
     needs:
