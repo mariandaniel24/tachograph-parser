@@ -312,6 +312,6 @@ if (!nativeBinding) {
 
 const { parseVu, parseCard, detectTachoFileType } = nativeBinding
 
-module.exports.parseVu = parseVu
-module.exports.parseCard = parseCard
+module.exports.parseVu = (...input) => JSON.parse(parseVu(...input))
+module.exports.parseCard = (...input) => JSON.parse(parseCard(...input))
 module.exports.detectTachoFileType = detectTachoFileType

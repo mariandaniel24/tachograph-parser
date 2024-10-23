@@ -25,12 +25,12 @@ let jsContent = fs.readFileSync(indexJsPath, "utf8");
 
 // Define the new export statements
 jsContent = jsContent.replace(
-	"module.exports.parseCard = nativeBinding.parseCard",
-	"module.exports.parseCard = (...input) => JSON.parse(nativeBinding.parseCard(...input))",
+	"module.exports.parseCard = parseCard",
+	"module.exports.parseCard = (...input) => JSON.parse(parseCard(...input))",
 );
 jsContent = jsContent.replace(
-	"module.exports.parseVu = nativeBinding.parseVu",
-	"module.exports.parseVu = (...input) => JSON.parse(nativeBinding.parseVu(...input))",
+	"module.exports.parseVu = parseVu",
+	"module.exports.parseVu = (...input) => JSON.parse(parseVu(...input))",
 );
 
 // Write the updated content back to index.js
