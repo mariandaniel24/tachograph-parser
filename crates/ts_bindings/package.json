@@ -4,7 +4,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
-    "binaryName": "tachograph-parser-ts",
+    "name": "tachograph-parser-ts",
     "triples": {
       "additional": [
         "aarch64-apple-darwin"
@@ -13,7 +13,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@napi-rs/cli": "^3.0.0-alpha.15",
+    "@napi-rs/cli": "^2.18.4",
     "@types/node": "^22.7.9",
     "typescript": "^5.6.3"
   },
@@ -22,7 +22,7 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "cargo test && napi build --platform --release && tsx src/post-process.ts && tsc --noEmit && tsx __test__/typecheck.spec.ts",
+    "build": "cargo test && napi build --platform --release && tsx src/post-process.ts && tsc --noEmit __test__/typecheck.spec.ts && tsx __test__/typecheck.spec.ts",
     "test": "tsc --noEmit ./__test__/typecheck.spec.ts && node --import tsx --test ./__test__/typecheck.spec.ts",
     "test:perf": "tsc --noEmit ./__test__/perf.spec.ts && node --import tsx --test ./__test__/perf.spec.ts",
     "build:debug": "napi build --platform",
