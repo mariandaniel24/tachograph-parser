@@ -22,7 +22,9 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "cargo test && napi build --platform --release && tsx src/post-process.ts && tsc --noEmit __test__/typecheck.spec.ts && tsx __test__/typecheck.spec.ts",
+    "dev:build": "cargo test && napi build --platform --release && tsx src/post-process.ts && tsc --noEmit __test__/typecheck.spec.ts && tsx __test__/typecheck.spec.ts",
+    "build": "cargo test && napi build --platform --release",
+    "postbuild": "tsx src/post-process.ts && tsc --noEmit __test__/typecheck.spec.ts && tsx __test__/typecheck.spec.ts",
     "test": "tsc --noEmit ./__test__/typecheck.spec.ts && node --import tsx --test ./__test__/typecheck.spec.ts",
     "test:perf": "tsc --noEmit ./__test__/perf.spec.ts && node --import tsx --test ./__test__/perf.spec.ts",
     "build:debug": "napi build --platform",

@@ -25,9 +25,9 @@ jobs:
       fail-fast: false
       matrix:
         settings:
-          # - host: macos-latest
-          #   target: x86_64-apple-darwin
-          #   build: cd crates/ts_bindings && yarn run build --target x86_64-apple-darwin
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            build: cd crates/ts_bindings && yarn run build --target x86_64-apple-darwin
           # - host: windows-latest
           #   build: cd crates/ts_bindings && yarn run build --target x86_64-pc-windows-msvc
           #   target: x86_64-pc-windows-msvc
@@ -113,7 +113,7 @@ jobs:
       matrix:
         settings:
           - host: macos-latest
-            target: aarch64-apple-darwin
+            target: x86_64-apple-darwin
           # - host: windows-latest
           #   target: x86_64-pc-windows-msvc
         node:
