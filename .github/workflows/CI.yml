@@ -206,13 +206,13 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
             VERSION=$(git log -1 --pretty=%B | sed 's/npm: release //')
             npm version $VERSION --no-git-tag-version
-            npm publish --access public
+            npm publish --access public --allow-same-version
           elif git log -1 --pretty=%B | grep "^npm: release [0-9]\+\.[0-9]\+\.[0-9]\+";
           then
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
             VERSION=$(git log -1 --pretty=%B | sed 's/npm: release //')
             npm version $VERSION --no-git-tag-version
-            npm publish --tag next --access public
+            npm publish --tag next --access public --allow-same-version
           else
             echo "Not a release, skipping publish"
           fi
