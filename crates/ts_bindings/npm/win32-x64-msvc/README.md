@@ -1,3 +1,3 @@
-# `ts_bindings-win32-x64-msvc`
+# `tachograph-parser-ts-win32-x64-msvc`
 
-This is the **x86_64-pc-windows-msvc** binary for `ts_bindings`
+This is the **x86_64-pc-windows-msvc** binary for `tachograph-parser-ts`

@@ -1,10 +1,12 @@
-import { it, expect } from "bun:test";
+import { it } from "node:test";
+import assert from "node:assert";
 import { parseVu, parseCard, detectTachoFileType } from "../index.js";
 import { Buffer } from "node:buffer";
+import fs from "node:fs";
 
 it("should parse a tacho file with parseCard in under 100ms", async () => {
 	const tachoFileBuffer = Buffer.from(
-		await Bun.file("../../data/card_gen2.ddd").arrayBuffer(),
+		fs.readFileSync("../../data/card_gen2.ddd"),
 	);
 	const start = performance.now();
 	const parsed = parseCard(tachoFileBuffer);
@@ -14,11 +16,11 @@ it("should parse a tacho file with parseCard in under 100ms", async () => {
 		`Parsing with parseCard took ${duration.toFixed(2)} milliseconds`,
 	);
 
-	expect(duration).toBeLessThan(100_000_000);
+	assert(duration < 100_000_000);
 });
 it("should parse a tacho file with parseVu in under 100ms", async () => {
 	const tachoFileBuffer = Buffer.from(
-		await Bun.file("../../data/vu_gen2.ddd").arrayBuffer(),
+		fs.readFileSync("../../data/vu_gen2.ddd"),
 	);
 	const start = performance.now();
 	const parsed = parseVu(tachoFileBuffer);
@@ -26,11 +28,11 @@ it("should parse a tacho file with parseVu in under 100ms", async () => {
 	const duration = end - start;
 	console.log(`Parsing with parseVu took ${duration.toFixed(2)} milliseconds`);
 
-	expect(duration).toBeLessThan(100_000_000);
+	assert(duration < 100_000_000);
 });
 it("should detect a tacho file type in under 100ms", async () => {
 	const tachoFileBuffer = Buffer.from(
-		await Bun.file("../../data/card_gen2.ddd").arrayBuffer(),
+		fs.readFileSync("../../data/card_gen2.ddd"),
 	);
 	const start = performance.now();
 	const parsed = detectTachoFileType(tachoFileBuffer);
@@ -40,5 +42,5 @@ it("should detect a tacho file type in under 100ms", async () => {
 	console.log(
 		`Detecting tacho file type took ${duration.toFixed(2)} milliseconds`,
 	);
-	expect(duration).toBeLessThan(100_000_000);
+	assert(duration < 100_000_000);
 });

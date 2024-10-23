@@ -1,5 +1,5 @@
 {
-  "name": "ts_bindings-darwin-x64",
+  "name": "tachograph-parser-ts-darwin-x64",
   "version": "0.0.0",
   "os": [
     "darwin"
@@ -7,9 +7,9 @@
   "cpu": [
     "x64"
   ],
-  "main": "ts_bindings.darwin-x64.node",
+  "main": "tachograph-parser-ts.darwin-x64.node",
   "files": [
-    "ts_bindings.darwin-x64.node"
+    "tachograph-parser-ts.darwin-x64.node"
   ],
   "license": "MIT",
   "engines": {

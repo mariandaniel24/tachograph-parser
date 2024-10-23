@@ -1,5 +1,5 @@
 {
-  "name": "ts_bindings-win32-x64-msvc",
+  "name": "tachograph-parser-ts-win32-x64-msvc",
   "version": "0.0.0",
   "os": [
     "win32"
@@ -7,9 +7,9 @@
   "cpu": [
     "x64"
   ],
-  "main": "ts_bindings.win32-x64-msvc.node",
+  "main": "tachograph-parser-ts.win32-x64-msvc.node",
   "files": [
-    "ts_bindings.win32-x64-msvc.node"
+    "tachograph-parser-ts.win32-x64-msvc.node"
   ],
   "license": "MIT",
   "engines": {
