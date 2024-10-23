@@ -191,7 +191,7 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: crates/ts_bindings/artifacts
       - name: Move artifacts
         run: cd crates/ts_bindings && yarn artifacts
       - name: List packages
