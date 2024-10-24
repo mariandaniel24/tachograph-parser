@@ -671,25 +671,27 @@ pub enum ActivityChangeInfoSlot {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
-pub enum ActivityChangeInfoDrivingStatus {
-    Single,
-    Crew,
+pub enum ActivityChangeInfoStatus {
+    Single,  // When p=0, c=0
+    Crew,    // When p=0, c=1
+    Unknown, // When p=1, c=0
+    Known,   // When p=1, c=1
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ts", derive(TS))]
-pub enum ActivityChangeInfoCardStatusSlot {
-    Inserted,
-    NotInserted,
+pub enum ActivityChangeInfoCardStatus {
+    Inserted,    // p=0
+    NotInserted, // p=1
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoCardActivity {
-    BreakRest,
-    Availability,
-    Work,
-    Driving,
+    BreakRest,    // aa=00
+    Availability, // aa=01
+    Work,         // aa=10
+    Driving,      // aa=11
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -698,49 +700,28 @@ pub enum ActivityChangeInfoCardActivity {
 #[cfg_attr(feature = "ts", derive(TS))]
 pub struct ActivityChangeInfo {
     pub slot: ActivityChangeInfoSlot,
-    pub driving_status: ActivityChangeInfoDrivingStatus,
-    pub slot_status: ActivityChangeInfoCardStatusSlot,
+    pub driving_or_following_activity_status: ActivityChangeInfoStatus,
+    pub card_status: ActivityChangeInfoCardStatus,
     pub activity: ActivityChangeInfoCardActivity,
     pub minutes: u16,
 }
+
 impl ActivityChangeInfo {
     pub const SIZE: usize = 2;
 
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let inner_cursor = &mut cursor.take_exact(Self::SIZE);
-
         let value_buffer = inner_cursor
             .read_u16::<BigEndian>()
             .context("Failed to read activity change info")?;
         let bits = extract_u16_bits_into_tup(value_buffer);
 
-        let slot = match bits.0 {
-            0 => ActivityChangeInfoSlot::Driver,
-            1 => ActivityChangeInfoSlot::CoDriver,
-            _ => anyhow::bail!("Invalid slot"),
-        };
+        let s = bits.0;
+        let c = bits.1;
+        let p = bits.2;
+        let a = (bits.3, bits.4);
 
-        let driving_status = match bits.1 {
-            0 => ActivityChangeInfoDrivingStatus::Single,
-            1 => ActivityChangeInfoDrivingStatus::Crew,
-            _ => anyhow::bail!("Invalid driving status"),
-        };
-
-        let slot_status = match bits.2 {
-            0 => ActivityChangeInfoCardStatusSlot::Inserted,
-            1 => ActivityChangeInfoCardStatusSlot::NotInserted,
-            _ => anyhow::bail!("Invalid card status slot"),
-        };
-
-        let activity = match (bits.3, bits.4) {
-            (0, 0) => ActivityChangeInfoCardActivity::BreakRest,
-            (0, 1) => ActivityChangeInfoCardActivity::Availability,
-            (1, 0) => ActivityChangeInfoCardActivity::Work,
-            (1, 1) => ActivityChangeInfoCardActivity::Driving,
-            _ => anyhow::bail!("Invalid card activity"),
-        };
-
-        // Take the last 11 bits and convert them to a u16
+        // 'ttttttttttt'B Time of the change: Number of minutes since 00h00 on the given day.
         let minutes = (bits.5 as u16) << 10
             | (bits.6 as u16) << 9
             | (bits.7 as u16) << 8
@@ -753,16 +734,70 @@ impl ActivityChangeInfo {
             | (bits.14 as u16) << 1
             | (bits.15 as u16);
 
+        // Determine slot
+        // 's'B Slot:
+        // '0'B: DRIVER,
+        // '1'B: CO-DRIVER,
+        let slot = match s {
+            0 => ActivityChangeInfoSlot::Driver,
+            1 => ActivityChangeInfoSlot::CoDriver,
+            _ => anyhow::bail!("Invalid slot bit: {}", s),
+        };
+
+        // Determine card status
+        // 'p'B Card status:
+        // '0'B: INSERTED, the card is inserted in a recording equipment,
+        // '1'B: NOT INSERTED, the card is not inserted (or the card is withdrawn),
+        let card_status = match p {
+            0 => ActivityChangeInfoCardStatus::Inserted,
+            1 => ActivityChangeInfoCardStatus::NotInserted,
+            _ => anyhow::bail!("Invalid card status bit: {}", p),
+        };
+
+        // Determine activity (always coded, even during card withdrawal)
+        // 'aa'B Activity (not relevant when 'p'=1 and 'c'=0 except note below):
+        // '00'B: BREAK/REST,
+        // '01'B: AVAILABILITY,
+        // '10'B: WORK,
+        // '11'B: DRIVING,
+        let activity = match a {
+            (0, 0) => ActivityChangeInfoCardActivity::BreakRest,
+            (0, 1) => ActivityChangeInfoCardActivity::Availability,
+            (1, 0) => ActivityChangeInfoCardActivity::Work,
+            (1, 1) => ActivityChangeInfoCardActivity::Driving,
+            _ => anyhow::bail!("Invalid activity bits: {:?}", a),
+        };
+
+        // Determine driving or activity status
+        // 'c'B Driving status (case 'p'=0) or Following activity status (case 'p'=1):
+        // '0'B: SINGLE, '0'B: UNKNOWN
+        // '1'B: CREW,   '1'B: KNOWN (=manually entered)
+        let driving_or_following_activity_status = match (c, p) {
+            (0, 0) => ActivityChangeInfoStatus::Single,
+            (1, 0) => ActivityChangeInfoStatus::Crew,
+            (0, 1) => ActivityChangeInfoStatus::Unknown,
+            (1, 1) => ActivityChangeInfoStatus::Known, // Manually entered
+            _ => anyhow::bail!("Invalid driving/activity status bits: ({}, {})", c, p),
+        };
+
+        // Note for the case 'card withdrawal':
+        // When the card is withdrawn:
+        // — 's' is relevant and indicates the slot from which the card is withdrawn,
+        // — 'c' must be set to 0,
+        // — 'p' must be set to 1,
+        // — 'aa' must code the current activity selected at that time,
+        // As a result of a manual entry, the bits 'c' and 'aa' of the word (stored in
+        // a card) may be overwritten later to reflect the entry.
+
         Ok(ActivityChangeInfo {
             slot,
-            driving_status,
-            slot_status,
+            driving_or_following_activity_status,
+            card_status,
             activity,
             minutes,
         })
     }
 }
-
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// [CardChipIdentification: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)

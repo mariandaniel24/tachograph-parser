@@ -951,6 +951,12 @@ impl CardParser {
             .context("Failed to convert serde value to JSON string")?;
         Ok(json)
     }
+    pub fn parse_to_json_pretty(&self) -> Result<String> {
+        let card_data = self.parse().context("Failed to parse vehicle data")?;
+        let pretty_json = serde_json::to_string_pretty(&card_data)
+            .context("Failed to convert serde value to pretty JSON string")?;
+        Ok(pretty_json)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

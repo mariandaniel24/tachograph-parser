@@ -235,9 +235,13 @@ impl VuParser {
 
     pub fn parse_to_json(&self) -> Result<String> {
         let vu_data = self.parse().context("Failed to parse vehicle data")?;
-        let json = serde_json::to_value(&vu_data)
-            .context("Failed to convert vehicle data to serde value")?;
-        let pretty_json = serde_json::to_string_pretty(&json)
+        let pretty_json = serde_json::to_string_pretty(&vu_data)
+            .context("Failed to convert serde value to pretty JSON string")?;
+        Ok(pretty_json)
+    }
+    pub fn parse_to_json_pretty(&self) -> Result<String> {
+        let vu_data = self.parse().context("Failed to parse vehicle data")?;
+        let pretty_json = serde_json::to_string_pretty(&vu_data)
             .context("Failed to convert serde value to pretty JSON string")?;
         Ok(pretty_json)
     }
