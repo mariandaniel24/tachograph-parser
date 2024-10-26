@@ -1,5 +1,6 @@
 use crate::dt::gen1;
 use crate::dt::gen2;
+use crate::dt::gen2v2;
 use crate::dt::{self};
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ReadBytesExt};
@@ -85,7 +86,10 @@ pub struct CardGen2Blocks {
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(TS))]
 pub struct CardGen2V2Blocks {
-    pub card_icc_identification: gen2::CardIccIdentificationGen2,
+    pub application_identification: gen2v2::DriverCardApplicationIdentificationGen2V2,
+    pub application_identification_signature: gen2::SignatureGen2,
+    pub places_authentication: gen2v2::CardPlacesAuthDailyWorkPeriod,
+    pub places_authentication_signature: gen2::SignatureGen2,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -194,6 +198,14 @@ impl CardParser {
         let mut vehicle_units_used_signature_gen2: Option<gen2::SignatureGen2> = None;
         let mut gnss_places_gen2: Option<gen2::GnssAccumulatedDrivingGen2> = None;
         let mut gnss_places_signature_gen2: Option<gen2::SignatureGen2> = None;
+
+        // GEN2V2
+        let mut application_identification_gen2v2: Option<
+            gen2v2::DriverCardApplicationIdentificationGen2V2,
+        > = None;
+        let mut application_identification_signature_gen2v2: Option<gen2::SignatureGen2> = None;
+        let mut places_authentication_gen2v2: Option<gen2v2::CardPlacesAuthDailyWorkPeriod> = None;
+        let mut places_authentication_signature_gen2v2: Option<gen2::SignatureGen2> = None;
 
         // all data blocks for card files follow the structure
         // file_id (2 bytes), sfid (1 byte), size (2 bytes)
@@ -562,6 +574,7 @@ impl CardParser {
                             .into_inner(),
                     );
                 }
+                // DrivingLicenseInfo Signature Gen2
                 (0x0521, 3) => {
                     if driver_licence_info_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("driver_licence_info_signature_gen2");
@@ -574,6 +587,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // EventsData Gen2
                 (0x0502, 2) => {
                     if events_data_gen2.is_some() {
                         panic_on_duplicate_block_type("events_data_gen2");
@@ -586,6 +600,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // EventsData Signature Gen2
                 (0x0502, 3) => {
                     if events_data_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("events_data_signature_gen2");
@@ -598,6 +613,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // FaultsData Gen2
                 (0x0503, 2) => {
                     if faults_data_gen2.is_some() {
                         panic_on_duplicate_block_type("faults_data_gen2");
@@ -606,6 +622,7 @@ impl CardParser {
                         CardBlock::parse(&mut cursor, gen2::CardFaultDataGen2::parse)?.into_inner(),
                     );
                 }
+                // FaultsData Signature Gen2
                 (0x0503, 3) => {
                     if faults_data_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("faults_data_signature_gen2");
@@ -618,6 +635,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // DriverActivityData Gen2
                 (0x0504, 2) => {
                     if driver_activity_data_gen2.is_some() {
                         panic_on_duplicate_block_type("driver_activity_data_gen2");
@@ -626,6 +644,7 @@ impl CardParser {
                         CardBlock::parse(&mut cursor, dt::DriverActivityData::parse)?.into_inner(),
                     );
                 }
+                // DriverActivityData Signature Gen2
                 (0x0504, 3) => {
                     if driver_activity_data_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("driver_activity_data_signature_gen2");
@@ -638,6 +657,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // VehiclesUsed Gen2
                 (0x0505, 2) => {
                     if vehicles_used_gen2.is_some() {
                         panic_on_duplicate_block_type("vehicles_used_gen2");
@@ -650,6 +670,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // VehiclesUsed Signature Gen2
                 (0x0505, 3) => {
                     if vehicles_used_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("vehicles_used_signature_gen2");
@@ -662,6 +683,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // Places Gen2
                 (0x0506, 2) => {
                     if places_gen2.is_some() {
                         panic_on_duplicate_block_type("places_gen2");
@@ -674,6 +696,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // Places Signature Gen2
                 (0x0506, 3) => {
                     if places_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("places_signature_gen2");
@@ -686,10 +709,12 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // CurrentUsage Gen2
                 (0x0507, 2) => {
                     current_usage_gen2 =
                         Some(CardBlock::parse(&mut cursor, dt::CurrentUsage::parse)?.into_inner());
                 }
+                // CurrentUsage Signature Gen2
                 (0x0507, 3) => {
                     if current_usage_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("current_usage_signature_gen2");
@@ -702,6 +727,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // ControlActivityData Gen2
                 (0x0508, 2) => {
                     if control_activity_data_gen2.is_some() {
                         panic_on_duplicate_block_type("control_activity_data_gen2");
@@ -714,6 +740,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // ControlActivityData Signature Gen2
                 (0x0508, 3) => {
                     if control_activity_data_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("control_activity_data_signature_gen2");
@@ -726,6 +753,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // SpecificConditions Gen2
                 (0x0522, 2) => {
                     if specific_conditions_gen2.is_some() {
                         panic_on_duplicate_block_type("specific_conditions_gen2");
@@ -738,6 +766,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // SpecificConditions Signature Gen2
                 (0x0522, 3) => {
                     if specific_conditions_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("specific_conditions_signature_gen2");
@@ -750,6 +779,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // VehicleUnitsUsed Gen2
                 (0x0523, 2) => {
                     if vehicle_units_used_gen2.is_some() {
                         panic_on_duplicate_block_type("vehicle_units_used_gen2");
@@ -762,6 +792,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // VehicleUnitsUsed Signature Gen2
                 (0x0523, 3) => {
                     if vehicle_units_used_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("vehicle_units_used_signature_gen2");
@@ -774,6 +805,7 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // GnssAccumulatedDriving Gen2
                 (0x0524, 2) => {
                     if gnss_places_gen2.is_some() {
                         panic_on_duplicate_block_type("gnss_places_gen2");
@@ -786,11 +818,66 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // GnssAccumulatedDriving Signature Gen2
                 (0x0524, 3) => {
                     if gnss_places_signature_gen2.is_some() {
                         panic_on_duplicate_block_type("gnss_places_signature_gen2");
                     }
                     gnss_places_signature_gen2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // ApplicationIdentification Gen2v2
+                (0x0525, 2) => {
+                    if application_identification_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("application_identification_gen2v2");
+                    }
+                    application_identification_gen2v2 = Some(
+                        CardBlock::parse(
+                            &mut cursor,
+                            gen2v2::DriverCardApplicationIdentificationGen2V2::parse,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // ApplicationIdentification Signature Gen2v2
+                (0x0525, 3) => {
+                    if application_identification_signature_gen2v2.is_some() {
+                        panic_on_duplicate_block_type(
+                            "application_identification_signature_gen2v2",
+                        );
+                    }
+                    application_identification_signature_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // PlacesAuthentication Gen2v2
+                (0x0526, 2) => {
+                    if places_authentication_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("places_authentication_gen2v2");
+                    }
+                    places_authentication_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2v2::CardPlacesAuthDailyWorkPeriod::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // PlacesAuthentication Signature Gen2v2
+                (0x0526, 3) => {
+                    if places_authentication_signature_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("places_authentication_signature_gen2v2");
+                    }
+                    places_authentication_signature_gen2v2 = Some(
                         CardBlock::parse_dyn_size(
                             &mut cursor,
                             gen2::SignatureGen2::parse_dyn_size,
@@ -935,13 +1022,37 @@ impl CardParser {
             };
             gen2_blocks = Some(blocks);
         }
+        let mut gen2v2_blocks: Option<CardGen2V2Blocks> = None;
+        if application_identification_gen2v2.is_some() {
+            let blocks = CardGen2V2Blocks {
+                application_identification: application_identification_gen2v2.context(
+                    "unable to find application_identification gen2v2 after parsing file",
+                )?,
+                application_identification_signature: application_identification_signature_gen2v2
+                    .context(
+                    "unable to find application_identification_signature gen2v2 after parsing file",
+                )?,
+                places_authentication: places_authentication_gen2v2
+                    .context("unable to find places_authentication gen2v2 after parsing file")?,
+                places_authentication_signature: places_authentication_signature_gen2v2.context(
+                    "unable to find places_authentication_signature gen2v2 after parsing file",
+                )?,
+            };
+            gen2v2_blocks = Some(blocks);
+        }
 
-        Ok(match (gen1_blocks, gen2_blocks) {
-            (gen1, None) => CardData::Gen1 { gen1_blocks: gen1 },
-            (gen1, Some(gen2)) => CardData::Gen2 {
+        Ok(match (gen1_blocks, gen2_blocks, gen2v2_blocks) {
+            (gen1, None, None) => CardData::Gen1 { gen1_blocks: gen1 },
+            (gen1, Some(gen2), None) => CardData::Gen2 {
                 gen1_blocks: gen1,
                 gen2_blocks: gen2,
             },
+            (gen1, Some(gen2), Some(gen2v2)) => CardData::Gen2V2 {
+                gen1_blocks: gen1,
+                gen2_blocks: gen2,
+                gen2v2_blocks: gen2v2,
+            },
+            _ => anyhow::bail!("Invalid combination of card blocks"),
         })
     }
 

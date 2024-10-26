@@ -726,7 +726,7 @@ impl CardVehiclesUsed {
             .context("Failed to read vehicle_pointer_newest_record")?;
 
         let mut card_vehicle_records = Vec::new();
-        let amount_of_records = size as usize / CardVehicleRecord::SIZE as usize;
+        let amount_of_records = size / CardVehicleRecord::SIZE;
         for i in 0..amount_of_records {
             if let Ok(card_vehicle_record) = CardVehicleRecord::parse(cursor) {
                 card_vehicle_records.push(card_vehicle_record);
