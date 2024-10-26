@@ -222,7 +222,10 @@ impl TimeReal {
             .context("Failed to read TimeReal")?;
 
         // Ensure we're not past max u32 timestamp and is not 0 or less
-        if unix_timestamp > 2_147_483_647 || unix_timestamp < 1 {
+        if unix_timestamp < 1 {
+            return Err(anyhow::anyhow!("TimeReal value is less than 1"));
+        }
+        if unix_timestamp > 2_147_483_647 {
             return Err(anyhow::anyhow!(
                 "TimeReal value exceeds maximum for 32-bit timestamp (2038-01-19)"
             ));
@@ -1043,7 +1046,7 @@ impl CardActivityDailyRecord {
     //      activity_record_date +
     //      activity_daily_presence_counter +
     //      activity_day_distance
-    const SIZE_OF_METADATA: u16 = 12;
+    const SIZE_OF_METADATA: usize = 12;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let activity_previous_record_length: CardActivityLengthRange = cursor
             .read_u16::<BigEndian>()
@@ -1056,8 +1059,8 @@ impl CardActivityDailyRecord {
         let activity_daily_presence_counter = DailyPresenceCounter::parse(cursor)?;
         let activity_day_distance = Distance::parse(cursor)?;
 
-        let records_amount = (activity_record_length as usize - Self::SIZE_OF_METADATA as usize)
-            / ActivityChangeInfo::SIZE;
+        let records_amount =
+            (activity_record_length as usize - Self::SIZE_OF_METADATA) / ActivityChangeInfo::SIZE;
 
         let mut activity_change_info = Vec::with_capacity(records_amount);
         for _ in 0..records_amount {
@@ -1087,8 +1090,7 @@ pub struct CardDriverActivity {
     pub activity_daily_records: Vec<CardActivityDailyRecord>,
 }
 impl CardDriverActivity {
-    const SIZE: usize = 13776;
-    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let activity_pointer_oldest_day_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read activity_pointer_oldest_day_record")?;
@@ -1096,8 +1098,10 @@ impl CardDriverActivity {
             .read_u16::<BigEndian>()
             .context("Failed to read activity_pointer_newest_record")?;
 
+        let size = size - cursor.position() as usize;
+
         // Read the entire cyclic data block
-        let mut cyclic_data = vec![0u8; Self::SIZE as usize];
+        let mut cyclic_data = vec![0u8; size];
         cursor
             .read_exact(&mut cyclic_data)
             .context("Failed to read cyclic data")?;
@@ -1106,6 +1110,7 @@ impl CardDriverActivity {
             &cyclic_data,
             activity_pointer_oldest_day_record as usize,
             activity_pointer_newest_record as usize,
+            size,
         )?;
 
         let activity_daily_records = Self::parse_daily_records(&uncycled_data)?;
@@ -1121,6 +1126,7 @@ impl CardDriverActivity {
         cyclic_data: &[u8],
         oldest_record: usize,
         newest_record: usize,
+        size: usize,
     ) -> Result<Vec<u8>> {
         // Get the length of the newest record
         let newest_record_length = u16::from_be_bytes([
@@ -1129,7 +1135,7 @@ impl CardDriverActivity {
         ]) as usize;
 
         // Calculate the end position of the newest record
-        let end_of_newest_record = (newest_record + newest_record_length) % Self::SIZE;
+        let end_of_newest_record = (newest_record + newest_record_length) % size;
 
         // Check if the data wraps around the end of the buffer
         let is_wrapped = end_of_newest_record < oldest_record;
@@ -1176,8 +1182,8 @@ pub struct DriverActivityData {
     pub card_driver_activity: CardDriverActivity,
 }
 impl DriverActivityData {
-    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let card_driver_activity = CardDriverActivity::parse(cursor)?;
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let card_driver_activity = CardDriverActivity::parse_dyn_size(cursor, size)?;
         Ok(DriverActivityData {
             card_driver_activity,
         })

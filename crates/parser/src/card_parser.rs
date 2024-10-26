@@ -351,7 +351,11 @@ impl CardParser {
                         panic_on_duplicate_block_type("driver_activity_data");
                     }
                     driver_activity_data = Some(
-                        CardBlock::parse(&mut cursor, dt::DriverActivityData::parse)?.into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            dt::DriverActivityData::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 // DriverActivityData Signature Gen1
@@ -641,7 +645,11 @@ impl CardParser {
                         panic_on_duplicate_block_type("driver_activity_data_gen2");
                     }
                     driver_activity_data_gen2 = Some(
-                        CardBlock::parse(&mut cursor, dt::DriverActivityData::parse)?.into_inner(),
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            dt::DriverActivityData::parse_dyn_size,
+                        )?
+                        .into_inner(),
                     );
                 }
                 // DriverActivityData Signature Gen2

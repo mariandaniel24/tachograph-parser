@@ -727,12 +727,10 @@ impl CardVehiclesUsed {
 
         let mut card_vehicle_records = Vec::new();
         let amount_of_records = size / CardVehicleRecord::SIZE;
-        for i in 0..amount_of_records {
+        for _ in 0..amount_of_records {
             if let Ok(card_vehicle_record) = CardVehicleRecord::parse(cursor) {
                 card_vehicle_records.push(card_vehicle_record);
-            }
-            // If we've reached the newest record, break
-            if i + 1 == vehicle_pointer_newest_record as usize {
+            } else {
                 break;
             }
         }
@@ -756,17 +754,20 @@ pub struct CardPlaceDailyWorkPeriod {
 }
 impl CardPlaceDailyWorkPeriod {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(size);
+
         let place_pointer_newest_record = cursor
             .read_u8()
             .context("Failed to read place_pointer_newest_record")?;
 
+        let amount_of_records = size / PlaceRecord::SIZE;
         let mut place_records = Vec::new();
-
-        let amount_of_records = size as usize / PlaceRecord::SIZE as usize;
 
         for _ in 0..amount_of_records {
             if let Ok(place_record) = PlaceRecord::parse(cursor) {
                 place_records.push(place_record);
+            } else {
+                break;
             }
         }
         // Sort the records by entry_time in ascending order

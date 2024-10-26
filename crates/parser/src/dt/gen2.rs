@@ -1357,13 +1357,12 @@ impl CardVehiclesUsedGen2 {
             .read_u16::<BigEndian>()
             .context("Failed to read vehicle_pointer_newest_record")?;
         let mut card_vehicle_records = Vec::new();
-        let amount_of_records = size as usize / CardVehicleRecordGen2::SIZE as usize;
-        for i in 0..amount_of_records {
+
+        let amount_of_records = size / CardVehicleRecordGen2::SIZE;
+        for _ in 0..amount_of_records {
             if let Ok(card_vehicle_record) = CardVehicleRecordGen2::parse(cursor) {
                 card_vehicle_records.push(card_vehicle_record);
-            }
-            // If we've reached the newest record, break
-            if i + 1 == vehicle_pointer_newest_record as usize {
+            } else {
                 break;
             }
         }
@@ -1385,16 +1384,19 @@ pub struct CardPlaceDailyWorkPeriodGen2 {
 }
 impl CardPlaceDailyWorkPeriodGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(size);
         let place_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read place_pointer_newest_record")?;
 
         let mut place_records = Vec::new();
-        let amount_of_records = size as usize / PlaceRecordGen2::SIZE as usize;
+        let amount_of_records = size / PlaceRecordGen2::SIZE;
 
         for _ in 0..amount_of_records {
             if let Ok(place_record) = PlaceRecordGen2::parse(cursor) {
                 place_records.push(place_record);
+            } else {
+                break;
             }
         }
         // Sort the records by entry_time in ascending order
@@ -1444,6 +1446,7 @@ pub struct SpecificConditionsGen2 {
 }
 impl SpecificConditionsGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(size);
         let condition_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read condition_pointer_newest_record")?;
@@ -1453,6 +1456,8 @@ impl SpecificConditionsGen2 {
         for _ in 0..no_of_records {
             if let Ok(specific_condition_record) = SpecificConditionRecordGen2::parse(cursor) {
                 specific_condition_records.push(specific_condition_record);
+            } else {
+                break;
             }
         }
         // Sort the records by time_stamp in desc order
@@ -1582,6 +1587,8 @@ impl GnssAccumulatedDrivingGen2 {
                 GNSSAccumulatedDrivingRecordGen2::parse(inner_cursor)
             {
                 gnss_accumulated_driving_records.push(gnss_accumulated_driving_record);
+            } else {
+                break;
             }
         }
         // Sort the records by time_stamp in ascending order
