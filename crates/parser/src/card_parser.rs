@@ -90,6 +90,7 @@ pub struct CardGen2V2Blocks {
     pub application_identification_signature: gen2::SignatureGen2,
     pub places_authentication: gen2v2::CardPlacesAuthDailyWorkPeriod,
     pub places_authentication_signature: gen2::SignatureGen2,
+    pub gnss_places_authentication: gen2v2::GNSSAuthAccumulatedDriving,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -206,6 +207,8 @@ impl CardParser {
         let mut application_identification_signature_gen2v2: Option<gen2::SignatureGen2> = None;
         let mut places_authentication_gen2v2: Option<gen2v2::CardPlacesAuthDailyWorkPeriod> = None;
         let mut places_authentication_signature_gen2v2: Option<gen2::SignatureGen2> = None;
+        let mut gnss_places_authentication_gen2v2: Option<gen2v2::GNSSAuthAccumulatedDriving> =
+            None;
 
         // all data blocks for card files follow the structure
         // file_id (2 bytes), sfid (1 byte), size (2 bytes)
@@ -893,6 +896,18 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                (0x527, 2) => {
+                    if gnss_places_authentication_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("gnss_places_authentication_gen2v2");
+                    }
+                    gnss_places_authentication_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2v2::GNSSAuthAccumulatedDriving::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
                 _ => {
                     log::debug!(
                         "Found unknown block with sfid: {:#04x}, file_id: {:#04x}",
@@ -1044,6 +1059,9 @@ impl CardParser {
                     .context("unable to find places_authentication gen2v2 after parsing file")?,
                 places_authentication_signature: places_authentication_signature_gen2v2.context(
                     "unable to find places_authentication_signature gen2v2 after parsing file",
+                )?,
+                gnss_places_authentication: gnss_places_authentication_gen2v2.context(
+                    "unable to find gnss_places_authentication gen2v2 after parsing file",
                 )?,
             };
             gen2v2_blocks = Some(blocks);

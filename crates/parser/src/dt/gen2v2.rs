@@ -7,6 +7,7 @@ use ts_rs::TS;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(TS))]
+/// [VuOverviewBlock: appendix 2.183.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e28866)
 pub struct VuOverviewBlock {
     pub member_state_certificate_record_array: Vec<gen2::MemberStateCertificateGen2>,
     pub vu_certificate_record_array: Vec<gen2::VuCertificateGen2>,
@@ -173,6 +174,69 @@ impl CardPlacesAuthDailyWorkPeriod {
         Ok(CardPlacesAuthDailyWorkPeriod {
             place_auth_pointer_newest_record,
             place_auth_status_records,
+        })
+    }
+}
+
+/// [NoOfGNSSAdRecords: appendix 2.111.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22756)
+pub type NoOfGNSSAdRecords = u16;
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [GNSSAuthStatusADRecord: appendix 2.79a.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21683)
+pub struct GNSSAuthStatusADRecord {
+    pub time_stamp: TimeReal,
+    pub authentication_status: PositionAuthenticationStatus,
+}
+impl GNSSAuthStatusADRecord {
+    pub const SIZE: usize = 5;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+
+        let time_stamp = TimeReal::parse(inner_cursor).context("Failed to parse time_stamp")?;
+        let authentication_status = PositionAuthenticationStatus::parse(inner_cursor)
+            .context("Failed to parse authentication_status")?;
+
+        Ok(GNSSAuthStatusADRecord {
+            time_stamp,
+            authentication_status,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [GNSSAuthAccumulatedDriving: appendix 2.79a.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21683)
+pub struct GNSSAuthAccumulatedDriving {
+    pub gnss_auth_ad_pointer_newest_record: NoOfGNSSAdRecords,
+    pub gnss_auth_status_ad_records: Vec<GNSSAuthStatusADRecord>,
+}
+
+impl GNSSAuthAccumulatedDriving {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(size);
+
+        let gnss_auth_ad_pointer_newest_record = cursor
+            .read_u16::<BigEndian>()
+            .context("Failed to parse gnss_auth_ad_pointer_newest_record")?;
+
+        // 2 bytes for the pointer size
+        let no_of_records = (size - 2) / GNSSAuthStatusADRecord::SIZE;
+
+        let mut gnss_auth_status_ad_records = Vec::new();
+        for _ in 0..no_of_records {
+            if let Ok(gnss_auth_status_ad_record) = GNSSAuthStatusADRecord::parse(cursor) {
+                gnss_auth_status_ad_records.push(gnss_auth_status_ad_record);
+            } else {
+                break;
+            }
+        }
+
+        Ok(GNSSAuthAccumulatedDriving {
+            gnss_auth_ad_pointer_newest_record,
+            gnss_auth_status_ad_records,
         })
     }
 }

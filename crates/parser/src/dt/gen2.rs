@@ -2328,6 +2328,7 @@ impl VuEventsAndFaultsBlockGen2 {
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
 #[serde(rename_all = "camelCase")]
+/// [VuDownloadActivityData: appendix 2.195.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26758)
 pub struct VuDownloadActivityDataGen2 {
     pub downloading_time: Option<TimeReal>,
     pub full_card_number_and_generation: Option<FullCardNumberAndGenerationGen2>,
@@ -2346,16 +2347,17 @@ impl VuDownloadActivityDataGen2 {
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
 #[serde(rename_all = "camelCase")]
-pub struct VuCompanyLocksGen2 {
+/// [VuCompanyLocksRecord: appendix 2.184.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26187)
+pub struct VuCompanyLocksRecordGen2 {
     pub lock_in_time: TimeReal,
     pub lock_out_time: Option<TimeReal>,
     pub company_name: Name,
     pub company_address: Address,
     pub company_card_number_and_generation: FullCardNumberAndGenerationGen2,
 }
-impl VuCompanyLocksGen2 {
+impl VuCompanyLocksRecordGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(VuCompanyLocksGen2 {
+        Ok(VuCompanyLocksRecordGen2 {
             lock_in_time: TimeReal::parse(cursor).context("Failed to parse lock_in_time")?,
             lock_out_time: TimeReal::parse(cursor)
                 .context("Failed to parse lock_out_time")
@@ -2373,7 +2375,8 @@ impl VuCompanyLocksGen2 {
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
 #[serde(rename_all = "camelCase")]
-pub struct VuControlActivityGen2 {
+/// [VuControlActivityRecord: appendix 2.187.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e26376)
+pub struct VuControlActivityRecordGen2 {
     pub control_type: ControlTypeGen2,
     pub control_time: TimeReal,
     pub control_card_number_and_generation: FullCardNumberAndGenerationGen2,
@@ -2381,9 +2384,9 @@ pub struct VuControlActivityGen2 {
     pub download_period_end_time: TimeReal,
 }
 
-impl VuControlActivityGen2 {
+impl VuControlActivityRecordGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(VuControlActivityGen2 {
+        Ok(VuControlActivityRecordGen2 {
             control_type: ControlTypeGen2::parse(cursor).context("Failed to parse control_type")?,
             control_time: TimeReal::parse(cursor).context("Failed to parse control_time")?,
             control_card_number_and_generation: FullCardNumberAndGenerationGen2::parse(cursor)
@@ -2401,18 +2404,30 @@ impl VuControlActivityGen2 {
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
 #[serde(rename_all = "camelCase")]
-pub struct VuOverviewBlockGen2 {
-    pub member_state_certificate_record_array: Vec<MemberStateCertificateGen2>,
 
+/// Generation 2, version 1 (TREP 0x21); page 342
+pub struct VuOverviewBlockGen2 {
+    /// Member state certificate
+    pub member_state_certificate_record_array: Vec<MemberStateCertificateGen2>,
+    /// VU certificate
     pub vu_certificate_record_array: Vec<VuCertificateGen2>,
+    /// Vehicle identification
     pub vehicle_identification_number_record_array: Vec<VehicleIdentificationNumber>,
+    /// Vehicle registration number
     pub vehicle_registration_number_record_array: Vec<VehicleRegistrationNumber>,
+    /// VU current date and time
     pub current_date_time_record_array: Vec<CurrentDateTime>,
+    /// Downloadable period
     pub vu_downloadable_period_record_array: Vec<VuDownloadablePeriod>,
+    /// Type of cards inserted in the VU
     pub card_slots_status_record_array: Vec<CardSlotsStatus>,
+    /// Previous VU download
     pub vu_download_activity_data_record_array: Vec<VuDownloadActivityDataGen2>,
-    pub vu_company_locks_record_array: Vec<VuCompanyLocksGen2>,
-    pub vu_control_activity_record_array: Vec<VuControlActivityGen2>,
+    /// All company locks stored.
+    pub vu_company_locks_record_array: Vec<VuCompanyLocksRecordGen2>,
+    /// All control records stored in the VU.
+    pub vu_control_activity_record_array: Vec<VuControlActivityRecordGen2>,
+    /// ECC signature of all preceding data except the certificates
     pub signature_record_array: Vec<SignatureGen2>,
 }
 
@@ -2461,12 +2476,15 @@ impl VuOverviewBlockGen2 {
             )
             .context("Failed to parse vu_download_activity_data_record_array")?
             .into_inner(),
-            vu_company_locks_record_array: RecordArray::parse(cursor, VuCompanyLocksGen2::parse)
-                .context("Failed to parse vu_company_locks_record_array")?
-                .into_inner(),
+            vu_company_locks_record_array: RecordArray::parse(
+                cursor,
+                VuCompanyLocksRecordGen2::parse,
+            )
+            .context("Failed to parse vu_company_locks_record_array")?
+            .into_inner(),
             vu_control_activity_record_array: RecordArray::parse(
                 cursor,
-                VuControlActivityGen2::parse,
+                VuControlActivityRecordGen2::parse,
             )
             .context("Failed to parse vu_control_activity_record_array")?
             .into_inner(),
