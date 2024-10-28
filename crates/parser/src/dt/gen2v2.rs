@@ -162,7 +162,7 @@ impl CardPlacesAuthDailyWorkPeriod {
             .context("Failed to parse place_auth_pointer_newest_record")?;
 
         let mut place_auth_status_records = Vec::new();
-        let amount_of_records = size / PlaceAuthStatusRecord::SIZE;
+        let amount_of_records = (size - 2) / PlaceAuthStatusRecord::SIZE;
         for _ in 0..amount_of_records {
             if let Ok(place_auth_status_record) = PlaceAuthStatusRecord::parse(cursor) {
                 place_auth_status_records.push(place_auth_status_record);

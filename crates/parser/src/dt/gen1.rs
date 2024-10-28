@@ -726,8 +726,9 @@ impl CardVehiclesUsed {
             .context("Failed to read vehicle_pointer_newest_record")?;
 
         let mut card_vehicle_records = Vec::new();
-        let amount_of_records = size / CardVehicleRecord::SIZE;
-        for _ in 0..amount_of_records {
+        // 2 bytes for the pointer size
+        let no_of_records = (size - 2) / CardVehicleRecord::SIZE;
+        for _ in 0..no_of_records {
             if let Ok(card_vehicle_record) = CardVehicleRecord::parse(cursor) {
                 card_vehicle_records.push(card_vehicle_record);
             } else {
@@ -760,10 +761,11 @@ impl CardPlaceDailyWorkPeriod {
             .read_u8()
             .context("Failed to read place_pointer_newest_record")?;
 
-        let amount_of_records = size / PlaceRecord::SIZE;
+        // 1 byte for the pointer size
+        let no_of_records = (size - 1) / PlaceRecord::SIZE;
         let mut place_records = Vec::new();
 
-        for _ in 0..amount_of_records {
+        for _ in 0..no_of_records {
             if let Ok(place_record) = PlaceRecord::parse(cursor) {
                 place_records.push(place_record);
             } else {

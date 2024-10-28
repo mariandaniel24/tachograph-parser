@@ -1014,9 +1014,10 @@ pub struct SealDataVuGen2 {
 }
 
 impl SealDataVuGen2 {
+    const NO_OF_RECORDS: usize = 5;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let mut seal_records = Vec::new();
-        for _ in 0..5 {
+        for _ in 0..Self::NO_OF_RECORDS {
             let seal = SealRecordGen2::parse(cursor)?;
             // if equipment type is not unused, then it is a valid seal, see page 50
             if seal.equipment_type != EquipmentTypeGen2::Unused {
@@ -1358,7 +1359,7 @@ impl CardVehiclesUsedGen2 {
             .context("Failed to read vehicle_pointer_newest_record")?;
         let mut card_vehicle_records = Vec::new();
 
-        let amount_of_records = size / CardVehicleRecordGen2::SIZE;
+        let amount_of_records = (size - 2) / CardVehicleRecordGen2::SIZE;
         for _ in 0..amount_of_records {
             if let Ok(card_vehicle_record) = CardVehicleRecordGen2::parse(cursor) {
                 card_vehicle_records.push(card_vehicle_record);
@@ -1390,7 +1391,7 @@ impl CardPlaceDailyWorkPeriodGen2 {
             .context("Failed to read place_pointer_newest_record")?;
 
         let mut place_records = Vec::new();
-        let amount_of_records = size / PlaceRecordGen2::SIZE;
+        let amount_of_records = (size - 2) / PlaceRecordGen2::SIZE;
 
         for _ in 0..amount_of_records {
             if let Ok(place_record) = PlaceRecordGen2::parse(cursor) {
@@ -1452,7 +1453,7 @@ impl SpecificConditionsGen2 {
             .context("Failed to read condition_pointer_newest_record")?;
 
         let mut specific_condition_records = Vec::new();
-        let no_of_records = size / SpecificConditionRecordGen2::SIZE;
+        let no_of_records = (size - 2) / SpecificConditionRecordGen2::SIZE;
         for _ in 0..no_of_records {
             if let Ok(specific_condition_record) = SpecificConditionRecordGen2::parse(cursor) {
                 specific_condition_records.push(specific_condition_record);
@@ -1520,7 +1521,7 @@ impl CardVehicleUnitsUsedGen2 {
             .context("Failed to read no_of_card_vehicle_unit_records")?;
         let mut vehicle_units = Vec::new();
 
-        let no_of_records = size / CardVehicleUnitRecordGen2::SIZE;
+        let no_of_records = (size - 2) / CardVehicleUnitRecordGen2::SIZE;
         for _ in 0..no_of_records {
             if let Ok(vehicle_unit) = CardVehicleUnitRecordGen2::parse(cursor) {
                 vehicle_units.push(vehicle_unit);
@@ -1581,7 +1582,7 @@ impl GnssAccumulatedDrivingGen2 {
             .context("Failed to read gnss_ad_pointer_newest_record")?;
 
         let mut gnss_accumulated_driving_records = Vec::new();
-        let no_of_records = size as usize / GNSSAccumulatedDrivingRecordGen2::SIZE as usize;
+        let no_of_records = (size - 2) / GNSSAccumulatedDrivingRecordGen2::SIZE;
         for _ in 0..no_of_records {
             if let Ok(gnss_accumulated_driving_record) =
                 GNSSAccumulatedDrivingRecordGen2::parse(inner_cursor)
