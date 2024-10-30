@@ -75,7 +75,17 @@ impl IA5String {
             85 => encoding_rs::KOI8_R.decode(&buffer).0.to_string(),
             // TODO: Might want to error out instead?
             // _ => anyhow::bail!("Unsupported code page: {}", code_page),
-            _ => String::from_utf8_lossy(&buffer).to_string(),
+            _ => {
+                log::warn!(
+                    "Unsupported code page with value`{}` while parsing IA5String",
+                    code_page
+                );
+                let value = String::from_utf8_lossy(&buffer).trim().to_string();
+                if value.is_empty() {
+                    return Err(anyhow::anyhow!("Empty IA5String"));
+                }
+                value
+            }
         };
 
         Ok(IA5String(

@@ -788,8 +788,8 @@ impl CardPlaceDailyWorkPeriod {
 pub struct CardControlActivityDataRecord {
     pub control_type: ControlType,
     pub control_time: Option<TimeReal>,
-    pub control_card_number: FullCardNumber,
-    pub control_vehicle_registration: VehicleRegistrationIdentification,
+    pub control_card_number: Option<FullCardNumber>,
+    pub control_vehicle_registration: Option<VehicleRegistrationIdentification>,
     pub control_download_period_begin: Option<TimeReal>,
     pub control_download_period_end: Option<TimeReal>,
 }
@@ -798,13 +798,21 @@ impl CardControlActivityDataRecord {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let inner_cursor = &mut cursor.take_exact(Self::SIZE);
 
+        let control_type = ControlType::parse(inner_cursor)?;
+        let control_time = TimeReal::parse(inner_cursor).ok();
+        let control_card_number = FullCardNumber::parse(inner_cursor).ok();
+        let control_vehicle_registration =
+            VehicleRegistrationIdentification::parse(inner_cursor).ok();
+        let control_download_period_begin = TimeReal::parse(inner_cursor).ok();
+        let control_download_period_end = TimeReal::parse(inner_cursor).ok();
+
         Ok(Self {
-            control_type: ControlType::parse(inner_cursor)?,
-            control_time: TimeReal::parse(inner_cursor).ok(),
-            control_card_number: FullCardNumber::parse(inner_cursor)?,
-            control_vehicle_registration: VehicleRegistrationIdentification::parse(inner_cursor)?,
-            control_download_period_begin: TimeReal::parse(inner_cursor).ok(),
-            control_download_period_end: TimeReal::parse(inner_cursor).ok(),
+            control_type,
+            control_time,
+            control_card_number,
+            control_vehicle_registration,
+            control_download_period_begin,
+            control_download_period_end,
         })
     }
 }

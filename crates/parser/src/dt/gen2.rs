@@ -1416,8 +1416,8 @@ impl CardPlaceDailyWorkPeriodGen2 {
 pub struct CardControlActivityDataRecordGen2 {
     pub control_type: ControlTypeGen2,
     pub control_time: Option<TimeReal>,
-    pub control_card_number: FullCardNumberGen2,
-    pub control_vehicle_registration: VehicleRegistrationIdentification,
+    pub control_card_number: Option<FullCardNumberGen2>,
+    pub control_vehicle_registration: Option<VehicleRegistrationIdentification>,
     pub control_download_period_begin: Option<TimeReal>,
     pub control_download_period_end: Option<TimeReal>,
 }
@@ -1429,8 +1429,9 @@ impl CardControlActivityDataRecordGen2 {
         Ok(Self {
             control_type: ControlTypeGen2::parse(inner_cursor)?,
             control_time: TimeReal::parse(inner_cursor).ok(),
-            control_card_number: FullCardNumberGen2::parse(inner_cursor)?,
-            control_vehicle_registration: VehicleRegistrationIdentification::parse(inner_cursor)?,
+            control_card_number: FullCardNumberGen2::parse(inner_cursor).ok(),
+            control_vehicle_registration: VehicleRegistrationIdentification::parse(inner_cursor)
+                .ok(),
             control_download_period_begin: TimeReal::parse(inner_cursor).ok(),
             control_download_period_end: TimeReal::parse(inner_cursor).ok(),
         })

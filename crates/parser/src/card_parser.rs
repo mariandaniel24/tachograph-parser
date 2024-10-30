@@ -91,6 +91,9 @@ pub struct CardGen2V2Blocks {
     pub places_authentication: gen2v2::CardPlacesAuthDailyWorkPeriod,
     pub places_authentication_signature: gen2::SignatureGen2,
     pub gnss_places_authentication: gen2v2::GNSSAuthAccumulatedDriving,
+    pub gnss_places_authentication_signature: gen2::SignatureGen2,
+    pub border_crossings: gen2v2::CardBorderCrossings,
+    pub border_crossings_signature: gen2::SignatureGen2,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -209,7 +212,9 @@ impl CardParser {
         let mut places_authentication_signature_gen2v2: Option<gen2::SignatureGen2> = None;
         let mut gnss_places_authentication_gen2v2: Option<gen2v2::GNSSAuthAccumulatedDriving> =
             None;
-
+        let mut gnss_places_authentication_signature_gen2v2: Option<gen2::SignatureGen2> = None;
+        let mut border_crossings_gen2v2: Option<gen2v2::CardBorderCrossings> = None;
+        let mut border_crossings_signature_gen2v2: Option<gen2::SignatureGen2> = None;
         // all data blocks for card files follow the structure
         // file_id (2 bytes), sfid (1 byte), size (2 bytes)
         while !cursor.fill_buf()?.is_empty() {
@@ -445,7 +450,6 @@ impl CardParser {
                     specific_conditions_signature =
                         Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
                 }
-                // IMPL GEN2
                 // CardIccIdentification Gen2
                 (0x0002, 2) => {
                     if card_icc_identification_gen2.is_some() {
@@ -896,7 +900,8 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
-                (0x527, 2) => {
+                // GnssPlacesAuthentication Gen2v2
+                (0x0527, 2) => {
                     if gnss_places_authentication_gen2v2.is_some() {
                         panic_on_duplicate_block_type("gnss_places_authentication_gen2v2");
                     }
@@ -904,6 +909,47 @@ impl CardParser {
                         CardBlock::parse_dyn_size(
                             &mut cursor,
                             gen2v2::GNSSAuthAccumulatedDriving::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // GnssPlacesAuthentication Signature Gen2v2
+                (0x0527, 3) => {
+                    if gnss_places_authentication_signature_gen2v2.is_some() {
+                        panic_on_duplicate_block_type(
+                            "gnss_places_authentication_signature_gen2v2",
+                        );
+                    }
+                    gnss_places_authentication_signature_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // BorderCrossings Gen2v2
+                (0x0528, 2) => {
+                    if border_crossings_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("border_crossings_gen2v2");
+                    }
+                    border_crossings_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2v2::CardBorderCrossings::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // BorderCrossings Signature Gen2v2
+                (0x0528, 3) => {
+                    if border_crossings_signature_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("border_crossings_signature_gen2v2");
+                    }
+                    border_crossings_signature_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
                         )?
                         .into_inner(),
                     );
@@ -1062,6 +1108,15 @@ impl CardParser {
                 )?,
                 gnss_places_authentication: gnss_places_authentication_gen2v2.context(
                     "unable to find gnss_places_authentication gen2v2 after parsing file",
+                )?,
+                gnss_places_authentication_signature: gnss_places_authentication_signature_gen2v2
+                    .context(
+                    "unable to find gnss_places_authentication_signature gen2v2 after parsing file",
+                )?,
+                border_crossings: border_crossings_gen2v2
+                    .context("unable to find border_crossings gen2v2 after parsing file")?,
+                border_crossings_signature: border_crossings_signature_gen2v2.context(
+                    "unable to find border_crossings_signature gen2v2 after parsing file",
                 )?,
             };
             gen2v2_blocks = Some(blocks);

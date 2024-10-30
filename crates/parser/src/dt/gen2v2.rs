@@ -240,3 +240,104 @@ impl GNSSAuthAccumulatedDriving {
         })
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [GNSSPlaceAuthRecord: appendix 2.79c.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21739)
+pub struct GNSSPlaceAuthRecord {
+    pub time_stamp: TimeReal,
+    pub gnss_accuracy: gen2::GnssAccuracyGen2,
+    pub gnss_coordinates: gen2::GeoCoordinatesGen2,
+    pub authentication_status: PositionAuthenticationStatus,
+}
+impl GNSSPlaceAuthRecord {
+    pub const SIZE: usize = 12;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let time_stamp = TimeReal::parse(cursor).context("Failed to parse time_stamp")?;
+        let gnss_accuracy =
+            gen2::GnssAccuracyGen2::parse(cursor).context("Failed to parse gnss_accuracy")?;
+        let gnss_coordinates =
+            gen2::GeoCoordinatesGen2::parse(cursor).context("Failed to parse gnss_coordinates")?;
+        let authentication_status = PositionAuthenticationStatus::parse(cursor)
+            .context("Failed to parse authentication_status")?;
+
+        Ok(GNSSPlaceAuthRecord {
+            time_stamp,
+            gnss_accuracy,
+            gnss_coordinates,
+            authentication_status,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [CardBorderCrossingRecord: appendix 2.11b.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16857)
+pub struct CardBorderCrossingRecord {
+    /// `countryLeft` is the country which was left by the vehicle, or `'no information available'` according to Annex IC requirement 147b.
+    /// `'Rest of the World'` (`NationNumeric` code `'FF'H`) shall be used when the vehicle unit is not able to determine the country where
+    /// the vehicle is located (e.g. the current country is not part of the stored digital maps).
+    pub country_left: external::NationNumeric,
+    /// `countryEntered` is the country into which the vehicle has entered, or the country in which the vehicle is located at card insertion time.
+    /// `'Rest of the World'` (`NationNumeric` code `'FF'H`) shall be used when the vehicle unit is not able to determine the country where
+    /// the vehicle is located (e.g. the current country is not part of the stored digital maps).
+    pub country_entered: external::NationNumeric,
+    pub gnss_place_auth_record: GNSSPlaceAuthRecord,
+    pub vehicle_odometer_value: OdometerShort,
+}
+impl CardBorderCrossingRecord {
+    pub const SIZE: usize = 17;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(Self::SIZE);
+
+        let country_left =
+            external::NationNumeric::parse(cursor).context("Failed to parse country_left")?;
+        let country_entered =
+            external::NationNumeric::parse(cursor).context("Failed to parse country_entered")?;
+        let gnss_place_auth_record =
+            GNSSPlaceAuthRecord::parse(cursor).context("Failed to parse gnss_place_auth_record")?;
+        let vehicle_odometer_value =
+            OdometerShort::parse(cursor).context("Failed to parse vehicle_odometer_value")?;
+
+        Ok(CardBorderCrossingRecord {
+            country_left,
+            country_entered,
+            gnss_place_auth_record,
+            vehicle_odometer_value,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [CardBorderCrossings: appendix 2.11a.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16826)
+pub struct CardBorderCrossings {
+    pub border_crossing_pointer_newest_record: NoOfBorderCrossingRecords,
+    pub card_border_crossing_records: Vec<CardBorderCrossingRecord>,
+}
+impl CardBorderCrossings {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(size);
+        let border_crossing_pointer_newest_record = cursor
+            .read_u16::<BigEndian>()
+            .context("Failed to parse border_crossing_pointer_newest_record")?;
+
+        let no_of_records = (size - 2) / CardBorderCrossingRecord::SIZE;
+        let mut card_border_crossing_records = Vec::new();
+        for _ in 0..no_of_records {
+            if let Ok(card_border_crossing_record) = CardBorderCrossingRecord::parse(cursor) {
+                card_border_crossing_records.push(card_border_crossing_record);
+            } else {
+                break;
+            }
+        }
+
+        Ok(CardBorderCrossings {
+            border_crossing_pointer_newest_record,
+            card_border_crossing_records,
+        })
+    }
+}
