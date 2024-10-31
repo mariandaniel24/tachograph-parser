@@ -22,4 +22,5 @@ textcode = "0.2.2"
 clap = { version = "4.3", features = ["derive"] }
 base64 = "0.22.1"
 ts-rs = { version = "10.0.0", features = ["serde-compat", "chrono-impl", "serde-json-impl"] }
+rayon = "1.10.0"
 

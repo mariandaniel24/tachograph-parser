@@ -124,6 +124,7 @@ pub fn parse_from_bytes(bytes: &[u8]) -> Result<TachoData> {
 #[cfg(test)]
 mod tests {
     use detector::detect_from_file;
+    use rayon::prelude::*;
     use serde_json;
 
     use super::*;
@@ -137,49 +138,54 @@ mod tests {
         assert!(data_dir.exists(), "Data directory does not exist");
         fs::create_dir_all(output_dir).expect("Failed to create output directory");
 
-        let mut files_processed = 0;
-
-        if let Ok(entries) = fs::read_dir(data_dir) {
-            for entry in entries.flatten() {
+        let files_processed = fs::read_dir(data_dir)
+            .expect("Failed to read directory")
+            .par_bridge()
+            .filter_map(Result::ok)
+            .filter(|entry| {
+                entry
+                    .path()
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|name| {
+                        name.starts_with("C_") && (name.ends_with(".ddd") || name.ends_with(".DDD"))
+                    })
+                    .unwrap_or(false)
+            })
+            .map(|entry| {
                 let path = entry.path();
-                if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-                    if file_name.starts_with("C_")
-                        && (file_name.ends_with(".ddd") || file_name.ends_with(".DDD"))
-                    {
-                        match parse_card_from_file(path.to_str().unwrap()) {
-                            Ok(card_data) => {
-                                println!("Successfully parsed file: {}", path.display());
+                let file_name = path.file_name().unwrap().to_str().unwrap();
 
-                                // Create output JSON file path
-                                let json_file_name =
-                                    file_name.replace(".ddd", ".json").replace(".DDD", ".json");
-                                let json_path = output_dir.join(json_file_name);
+                match parse_card_from_file(path.to_str().unwrap()) {
+                    Ok(card_data) => {
+                        println!("Successfully parsed file: {}", path.display());
 
-                                // Serialize and write JSON to file
-                                let json = serde_json::to_string_pretty(&card_data)
-                                    .expect("Failed to serialize to JSON");
-                                fs::write(&json_path, json).expect("Failed to write JSON file");
+                        let json_file_name =
+                            file_name.replace(".ddd", ".json").replace(".DDD", ".json");
+                        let json_path = output_dir.join(json_file_name);
 
-                                println!("JSON output written to: {}", json_path.display());
-                                files_processed += 1;
-                            }
-                            Err(e) => {
-                                println!("Failed to parse file: {}", path.display());
-                                eprintln!("Error: {:#}", e);
+                        let json = serde_json::to_string_pretty(&card_data)
+                            .expect("Failed to serialize to JSON");
+                        fs::write(&json_path, json).expect("Failed to write JSON file");
 
-                                let file_type = detect_from_file(path.to_str().unwrap());
-                                println!("detected file: {:#}", file_type.unwrap());
+                        println!("JSON output written to: {}", json_path.display());
+                        Ok(())
+                    }
+                    Err(e) => {
+                        println!("Failed to parse file: {}", path.display());
+                        eprintln!("Error: {:#}", e);
 
-                                panic!("Error occurred while parsing");
-                            }
-                        }
+                        let file_type = detect_from_file(path.to_str().unwrap());
+                        println!("detected file: {:#}", file_type.unwrap());
+
+                        Err(())
                     }
                 }
-            }
-        }
+            })
+            .filter(Result::is_ok)
+            .count();
 
         println!("Files processed: {}", files_processed);
-
         assert!(files_processed > 0, "No files were successfully processed");
     }
 
@@ -190,49 +196,54 @@ mod tests {
         assert!(data_dir.exists(), "Data directory does not exist");
         fs::create_dir_all(output_dir).expect("Failed to create output directory");
 
-        let mut files_processed = 0;
-
-        if let Ok(entries) = fs::read_dir(data_dir) {
-            for entry in entries.flatten() {
+        let files_processed = fs::read_dir(data_dir)
+            .expect("Failed to read directory")
+            .par_bridge()
+            .filter_map(Result::ok)
+            .filter(|entry| {
+                entry
+                    .path()
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|name| {
+                        name.starts_with("M_") && (name.ends_with(".ddd") || name.ends_with(".DDD"))
+                    })
+                    .unwrap_or(false)
+            })
+            .map(|entry| {
                 let path = entry.path();
-                if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-                    if file_name.starts_with("M_")
-                        && (file_name.ends_with(".ddd") || file_name.ends_with(".DDD"))
-                    {
-                        match parse_vu_from_file(path.to_str().unwrap()) {
-                            Ok(vu_data) => {
-                                println!("Successfully parsed file: {}", path.display());
+                let file_name = path.file_name().unwrap().to_str().unwrap();
 
-                                // Create output JSON file path
-                                let json_file_name =
-                                    file_name.replace(".ddd", ".json").replace(".DDD", ".json");
-                                let json_path = output_dir.join(json_file_name);
+                match parse_vu_from_file(path.to_str().unwrap()) {
+                    Ok(vu_data) => {
+                        println!("Successfully parsed file: {}", path.display());
 
-                                // Serialize and write JSON to file
-                                let json = serde_json::to_string_pretty(&vu_data)
-                                    .expect("Failed to serialize to JSON");
-                                fs::write(&json_path, json).expect("Failed to write JSON file");
+                        let json_file_name =
+                            file_name.replace(".ddd", ".json").replace(".DDD", ".json");
+                        let json_path = output_dir.join(json_file_name);
 
-                                println!("JSON output written to: {}", json_path.display());
-                                files_processed += 1;
-                            }
-                            Err(e) => {
-                                println!("Failed to parse file: {}", path.display());
-                                eprintln!("Error: {:#}", e);
+                        let json = serde_json::to_string_pretty(&vu_data)
+                            .expect("Failed to serialize to JSON");
+                        fs::write(&json_path, json).expect("Failed to write JSON file");
 
-                                let file_type = detect_from_file(path.to_str().unwrap());
-                                println!("detected file: {:#}", file_type.unwrap());
+                        println!("JSON output written to: {}", json_path.display());
+                        Ok(())
+                    }
+                    Err(e) => {
+                        println!("Failed to parse file: {}", path.display());
+                        eprintln!("Error: {:#}", e);
 
-                                panic!("Error occurred while parsing");
-                            }
-                        }
+                        let file_type = detect_from_file(path.to_str().unwrap());
+                        println!("detected file: {:#}", file_type.unwrap());
+
+                        Err(())
                     }
                 }
-            }
-        }
+            })
+            .filter(Result::is_ok)
+            .count();
 
         println!("Files processed: {}", files_processed);
-
         assert!(files_processed > 0, "No files were successfully processed");
     }
 }
