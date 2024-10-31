@@ -32,7 +32,7 @@
     "version": "napi version"
   },
   "dependencies": {
-    "rimraf": "^6.0.1",
+    "rimraf": "5",
     "tsx": "^4.19.1"
   }
 }
