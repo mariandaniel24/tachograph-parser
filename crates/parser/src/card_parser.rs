@@ -94,6 +94,12 @@ pub struct CardGen2V2Blocks {
     pub gnss_places_authentication_signature: gen2::SignatureGen2,
     pub border_crossings: gen2v2::CardBorderCrossings,
     pub border_crossings_signature: gen2::SignatureGen2,
+    pub load_unload_operations: gen2v2::CardLoadUnloadOperations,
+    pub load_unload_operations_signature: gen2::SignatureGen2,
+    pub load_type_entries: gen2v2::CardLoadTypeEntries,
+    pub load_type_entries_signature: gen2::SignatureGen2,
+    pub vu_configurations: Option<gen2v2::VuConfigurations>,
+    pub vu_configurations_signature: Option<gen2::SignatureGen2>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -215,6 +221,13 @@ impl CardParser {
         let mut gnss_places_authentication_signature_gen2v2: Option<gen2::SignatureGen2> = None;
         let mut border_crossings_gen2v2: Option<gen2v2::CardBorderCrossings> = None;
         let mut border_crossings_signature_gen2v2: Option<gen2::SignatureGen2> = None;
+        let mut load_unload_operations_gen2v2: Option<gen2v2::CardLoadUnloadOperations> = None;
+        let mut load_unload_operations_signature_gen2v2: Option<gen2::SignatureGen2> = None;
+        let mut load_type_entries_gen2v2: Option<gen2v2::CardLoadTypeEntries> = None;
+        let mut load_type_entries_signature_gen2v2: Option<gen2::SignatureGen2> = None;
+        let mut vu_configurations_gen2v2: Option<gen2v2::VuConfigurations> = None;
+        let mut vu_configurations_signature_gen2v2: Option<gen2::SignatureGen2> = None;
+
         // all data blocks for card files follow the structure
         // file_id (2 bytes), sfid (1 byte), size (2 bytes)
         while !cursor.fill_buf()?.is_empty() {
@@ -954,6 +967,79 @@ impl CardParser {
                         .into_inner(),
                     );
                 }
+                // LoadUnloadOperations Gen2v2
+                (0x0529, 2) => {
+                    if load_unload_operations_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("load_unload_operations_gen2v2");
+                    }
+                    load_unload_operations_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2v2::CardLoadUnloadOperations::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // LoadUnloadOperations Signature Gen2v2
+                (0x0529, 3) => {
+                    if load_unload_operations_signature_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("load_unload_operations_signature_gen2v2");
+                    }
+                    load_unload_operations_signature_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                (0x0530, 2) => {
+                    if load_type_entries_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("load_type_entries_gen2v2");
+                    }
+                    load_type_entries_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2v2::CardLoadTypeEntries::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // LoadTypeEntries Signature Gen2v2
+                (0x0530, 3) => {
+                    if load_type_entries_signature_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("load_type_entries_signature_gen2v2");
+                    }
+                    load_type_entries_signature_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                (0x0531, 2) => {
+                    if vu_configurations_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("vu_configurations_gen2v2");
+                    }
+                    vu_configurations_gen2v2 = Some(
+                        CardBlock::parse(&mut cursor, gen2v2::VuConfigurations::parse)?
+                            .into_inner(),
+                    );
+                }
+                // VuConfigurations Signature Gen2v2
+                (0x0531, 3) => {
+                    if vu_configurations_signature_gen2v2.is_some() {
+                        panic_on_duplicate_block_type("vu_configurations_signature_gen2v2");
+                    }
+                    vu_configurations_signature_gen2v2 = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen2::SignatureGen2::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
                 _ => {
                     log::debug!(
                         "Found unknown block with sfid: {:#04x}, file_id: {:#04x}",
@@ -1118,6 +1204,18 @@ impl CardParser {
                 border_crossings_signature: border_crossings_signature_gen2v2.context(
                     "unable to find border_crossings_signature gen2v2 after parsing file",
                 )?,
+                load_unload_operations: load_unload_operations_gen2v2
+                    .context("unable to find load_unload_operations gen2v2 after parsing file")?,
+                load_unload_operations_signature: load_unload_operations_signature_gen2v2.context(
+                    "unable to find load_unload_operations_signature gen2v2 after parsing file",
+                )?,
+                load_type_entries: load_type_entries_gen2v2
+                    .context("unable to find load_type_entries gen2v2 after parsing file")?,
+                load_type_entries_signature: load_type_entries_signature_gen2v2.context(
+                    "unable to find load_type_entries_signature gen2v2 after parsing file",
+                )?,
+                vu_configurations: vu_configurations_gen2v2,
+                vu_configurations_signature: vu_configurations_signature_gen2v2,
             };
             gen2v2_blocks = Some(blocks);
         }

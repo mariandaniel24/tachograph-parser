@@ -341,3 +341,179 @@ impl CardBorderCrossings {
         })
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [OperationType: appendix 2.114a.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22905)
+pub enum OperationType {
+    RFU,
+    LoadOperation,
+    UnloadOperation,
+    SimultaneousLoadUnloadOperation,
+}
+impl OperationType {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor.read_u8().context("Failed to parse operation_type")?;
+        Ok(match value {
+            0x00 => OperationType::RFU,
+            0x01 => OperationType::LoadOperation,
+            0x02 => OperationType::UnloadOperation,
+            0x03 => OperationType::SimultaneousLoadUnloadOperation,
+            0x04..=0xFF => OperationType::RFU,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [CardLoadUnloadRecord: appendix 2.24d.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17576)
+pub struct CardLoadUnloadRecord {
+    pub time_stamp: TimeReal,
+    pub operation_type: OperationType,
+    pub gnss_place_auth_record: GNSSPlaceAuthRecord,
+    pub vehicle_odometer_value: OdometerShort,
+}
+impl CardLoadUnloadRecord {
+    pub const SIZE: usize = 20;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let time_stamp = TimeReal::parse(cursor).context("Failed to parse time_stamp")?;
+        let operation_type =
+            OperationType::parse(cursor).context("Failed to parse operation_type")?;
+        let gnss_place_auth_record =
+            GNSSPlaceAuthRecord::parse(cursor).context("Failed to parse gnss_place_auth_record")?;
+        let vehicle_odometer_value =
+            OdometerShort::parse(cursor).context("Failed to parse vehicle_odometer_value")?;
+
+        Ok(CardLoadUnloadRecord {
+            time_stamp,
+            operation_type,
+            gnss_place_auth_record,
+            vehicle_odometer_value,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [CardLoadUnloadOperations: appendix 2.24c.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17544)
+pub struct CardLoadUnloadOperations {
+    pub load_unload_pointer_newest_record: NoOfLoadUnloadRecords,
+    pub card_load_unload_records: Vec<CardLoadUnloadRecord>,
+}
+impl CardLoadUnloadOperations {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(size);
+
+        let load_unload_pointer_newest_record = cursor
+            .read_u16::<BigEndian>()
+            .context("Failed to parse load_unload_pointer_newest_record")?;
+
+        let no_of_records = (size - 2) / CardLoadUnloadRecord::SIZE;
+        let mut card_load_unload_records = Vec::new();
+        for _ in 0..no_of_records {
+            if let Ok(card_load_unload_record) = CardLoadUnloadRecord::parse(cursor) {
+                card_load_unload_records.push(card_load_unload_record);
+            } else {
+                break;
+            }
+        }
+
+        Ok(CardLoadUnloadOperations {
+            load_unload_pointer_newest_record,
+            card_load_unload_records,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [LoadType: appendix 2.90a.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22110)
+pub enum LoadType {
+    UndefinedLoadType,
+    Goods,
+    Passengers,
+    RFU,
+}
+impl LoadType {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let value = cursor.read_u8().context("Failed to parse load_type")?;
+        Ok(match value {
+            0x00 => LoadType::UndefinedLoadType,
+            0x01 => LoadType::Goods,
+            0x02 => LoadType::Passengers,
+            0x03..=0xFF => LoadType::RFU,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [CardLoadTypeEntryRecord: appendix 2.24b.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17521)
+pub struct CardLoadTypeEntryRecord {
+    pub time_stamp: TimeReal,
+    pub load_type_entered: LoadType,
+}
+impl CardLoadTypeEntryRecord {
+    pub const SIZE: usize = 5;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let time_stamp = TimeReal::parse(cursor).context("Failed to parse time_stamp")?;
+        let load_type_entered =
+            LoadType::parse(cursor).context("Failed to parse load_type_entered")?;
+
+        Ok(CardLoadTypeEntryRecord {
+            time_stamp,
+            load_type_entered,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [CardLoadTypeEntries: appendix 2.24a.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17490)
+pub struct CardLoadTypeEntries {
+    pub load_type_pointer_newest_record: NoOfLoadTypeEntryRecords,
+    pub card_load_type_entry_records: Vec<CardLoadTypeEntryRecord>,
+}
+impl CardLoadTypeEntries {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(size);
+
+        let load_type_pointer_newest_record = cursor
+            .read_u16::<BigEndian>()
+            .context("Failed to parse load_type_pointer_newest_record")?;
+
+        let no_of_records = (size - 2) / CardLoadTypeEntryRecord::SIZE;
+        let mut card_load_type_entry_records = Vec::new();
+        for _ in 0..no_of_records {
+            if let Ok(card_load_type_entry_record) = CardLoadTypeEntryRecord::parse(cursor) {
+                card_load_type_entry_records.push(card_load_type_entry_record);
+            } else {
+                break;
+            }
+        }
+
+        Ok(CardLoadTypeEntries {
+            load_type_pointer_newest_record,
+            card_load_type_entry_records,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// VuConfigurations: there is no documentation for this block in the spec, none at all, so we'll just process the bytes
+pub struct VuConfigurations(pub Vec<u8>);
+impl VuConfigurations {
+    const SIZE: usize = 3072; // fixed size
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let mut buf = [0u8; Self::SIZE];
+        cursor
+            .read_exact(&mut buf)
+            .context("Failed to parse VuConfigurations")?;
+        Ok(VuConfigurations(buf.to_vec()))
+    }
+}
