@@ -13,7 +13,7 @@ pub struct VuGen1Blocks {
     pub vu_overview: gen1::VuOverviewBlock,
     pub vu_activities: Vec<gen1::VuActivitiesBlock>,
     pub vu_events_and_faults: Vec<gen1::VuEventsAndFaultsBlock>,
-    pub vu_detailed_speed: Vec<gen1::VuDetailedSpeedData>,
+    pub vu_detailed_speed: Vec<gen1::VuDetailedSpeedBlock>,
     pub vu_company_locks: Vec<gen1::VuCompanyLocksBlock>,
 }
 
@@ -24,15 +24,18 @@ pub struct VuGen2Blocks {
     pub vu_overview: gen2::VuOverviewBlockGen2,
     pub vu_activities: Vec<gen2::VuActivitiesBlockGen2>,
     pub vu_events_and_faults: Vec<gen2::VuEventsAndFaultsBlockGen2>,
-    pub vu_detailed_speed: Vec<gen2::VuSpeedBlockGen2>,
-    pub vu_company_locks: Vec<gen2::VuCompanyLocksBlockGen2>,
+    pub vu_detailed_speed: Vec<gen2::VuDetailedSpeedBlockGen2>,
+    pub vu_company_locks: Vec<gen2::VuCompanyLocksGen2>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(TS))]
 pub struct VuGen2V2Blocks {
-    pub vu_overview: gen2v2::VuOverviewBlock,
+    pub vu_overview: gen2v2::VuOverviewBlockGen2V2,
+    pub vu_activities: Vec<gen2v2::VuActivitiesBlockGen2V2>,
+    pub vu_events_and_faults: Vec<gen2::VuEventsAndFaultsBlockGen2>,
+    pub vu_company_locks: Vec<gen2v2::VuCompanyLocksGen2V2>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -68,11 +71,11 @@ impl VuParser {
 
         match (trep, sid) {
             // Gen1 (checks for first block being VuOverviewBlock)
-            (0x76, 0x01) => self.parse_gen1(&mut cursor),
+            (0x76, 0x01..=0x05) => self.parse_gen1(&mut cursor),
             // Gen2 (checks for first block being VuOverviewBlock)
-            (0x76, 0x21) => self.parse_gen2(&mut cursor),
+            (0x76, 0x21..=0x25) => self.parse_gen2(&mut cursor),
             // Gen2V2 (checks for first block being VuOverviewBlock)
-            (0x76, 0x31) => self.parse_gen2v2(&mut cursor),
+            (0x76, 0x31..=0x35) => self.parse_gen2v2(&mut cursor),
             _ => Err(anyhow::anyhow!(
                 "Unknown file format: trep {:02x} sid {:02x}",
                 trep,
@@ -84,7 +87,7 @@ impl VuParser {
         let mut vu_overview: Option<gen1::VuOverviewBlock> = None;
         let mut vu_activities: Vec<gen1::VuActivitiesBlock> = Vec::new();
         let mut vu_events_and_faults: Vec<gen1::VuEventsAndFaultsBlock> = Vec::new();
-        let mut vu_detailed_speed: Vec<gen1::VuDetailedSpeedData> = Vec::new();
+        let mut vu_detailed_speed: Vec<gen1::VuDetailedSpeedBlock> = Vec::new();
         let mut vu_company_locks: Vec<gen1::VuCompanyLocksBlock> = Vec::new();
         while !cursor.fill_buf()?.is_empty() {
             let sid = cursor.read_u8().context("Failed to read sid")?;
@@ -115,7 +118,7 @@ impl VuParser {
                 }
                 (0x76, 0x04) => {
                     vu_detailed_speed.push(
-                        gen1::VuDetailedSpeedData::parse(cursor)
+                        gen1::VuDetailedSpeedBlock::parse(cursor)
                             .context("Failed to parse VuDetailedSpeedData")?,
                     );
                 }
@@ -147,8 +150,8 @@ impl VuParser {
         let mut vu_overview: Option<gen2::VuOverviewBlockGen2> = None;
         let mut vu_activities: Vec<gen2::VuActivitiesBlockGen2> = Vec::new();
         let mut vu_events_and_faults: Vec<gen2::VuEventsAndFaultsBlockGen2> = Vec::new();
-        let mut vu_speed: Vec<gen2::VuSpeedBlockGen2> = Vec::new();
-        let mut vu_company_locks: Vec<gen2::VuCompanyLocksBlockGen2> = Vec::new();
+        let mut vu_detailed_speed: Vec<gen2::VuDetailedSpeedBlockGen2> = Vec::new();
+        let mut vu_company_locks: Vec<gen2::VuCompanyLocksGen2> = Vec::new();
 
         while !cursor.fill_buf()?.is_empty() {
             let sid = cursor.read_u8().context("Failed to read sid")?;
@@ -173,12 +176,12 @@ impl VuParser {
                     gen2::VuEventsAndFaultsBlockGen2::parse(cursor)
                         .context("Failed to parse VuEventsAndFaultsGen2")?,
                 ),
-                (0x76, 0x24) => vu_speed.push(
-                    gen2::VuSpeedBlockGen2::parse(cursor)
+                (0x76, 0x24) => vu_detailed_speed.push(
+                    gen2::VuDetailedSpeedBlockGen2::parse(cursor)
                         .context("Failed to parse VuDetailedSpeed")?,
                 ),
                 (0x76, 0x25) => vu_company_locks.push(
-                    gen2::VuCompanyLocksBlockGen2::parse(cursor)
+                    gen2::VuCompanyLocksGen2::parse(cursor)
                         .context("Failed to parse VuCompanyLocksGen2")?,
                 ),
                 _ => {
@@ -193,13 +196,16 @@ impl VuParser {
                 .context("unable to find VuOverviewBlock after parsing file")?,
             vu_activities,
             vu_events_and_faults,
-            vu_detailed_speed: vu_speed,
+            vu_detailed_speed,
             vu_company_locks,
         }))
     }
 
     fn parse_gen2v2(&self, cursor: &mut Cursor<&[u8]>) -> Result<VuData> {
-        let mut vu_overview: Option<gen2v2::VuOverviewBlock> = None;
+        let mut vu_overview: Option<gen2v2::VuOverviewBlockGen2V2> = None;
+        let mut vu_activities: Vec<gen2v2::VuActivitiesBlockGen2V2> = Vec::new();
+        let mut vu_events_and_faults: Vec<gen2::VuEventsAndFaultsBlockGen2> = Vec::new();
+        let mut vu_company_locks: Vec<gen2v2::VuCompanyLocksGen2V2> = Vec::new();
 
         while !cursor.fill_buf()?.is_empty() {
             let sid = cursor.read_u8().context("Failed to read sid")?;
@@ -212,24 +218,34 @@ impl VuParser {
             match (sid, trep) {
                 (0x76, 0x31) => {
                     vu_overview = Some(
-                        gen2v2::VuOverviewBlock::parse(cursor)
+                        gen2v2::VuOverviewBlockGen2V2::parse(cursor)
                             .context("Failed to parse VuOverviewGen2V2")?,
                     )
                 }
+                (0x76, 0x32) => vu_activities.push(
+                    gen2v2::VuActivitiesBlockGen2V2::parse(cursor)
+                        .context("Failed to parse VuActivitiesGen2V2")?,
+                ),
+                (0x76, 0x33) => vu_events_and_faults.push(
+                    gen2::VuEventsAndFaultsBlockGen2::parse(cursor)
+                        .context("Failed to parse VuEventsAndFaultsGen2")?,
+                ),
+                (0x76, 0x35) => vu_company_locks.push(
+                    gen2v2::VuCompanyLocksGen2V2::parse(cursor)
+                        .context("Failed to parse VuCompanyLocksGen2V2")?,
+                ),
                 _ => {
                     log::warn!("Unknown block type: sid: {:02x}, trep: {:02x}", sid, trep);
                     break;
                 }
             }
         }
-        log::warn!("VuGen2V2 parsing is not yet fully implemented");
         Ok(VuData::Gen2V2(VuGen2V2Blocks {
             vu_overview: vu_overview
                 .context("unable to find VuOverviewBlock after parsing file")?,
-            // vu_activities: Vec::new(),
-            // vu_events_and_faults: Vec::new(),
-            // vu_detailed_speed: Vec::new(),
-            // vu_company_locks: Vec::new(),
+            vu_activities,
+            vu_events_and_faults,
+            vu_company_locks,
         }))
     }
 

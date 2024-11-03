@@ -965,24 +965,20 @@ impl CalibrationPurposeGen2 {
 #[cfg_attr(feature = "ts", derive(TS))]
 /// [ExtendedSealIdentifier: appendix 2.71.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e21276)
 pub struct ExtendedSealIdentifierGen2 {
-    pub manufacturer_code: Vec<u8>,
-    pub seal_identifier: Vec<u8>,
+    pub manufacturer_code: Option<external::SealManufacturerCode>,
+    pub seal_identifier: Option<IA5String>,
 }
 impl ExtendedSealIdentifierGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let mut manufacturer_code = [0u8; 2];
-        cursor
-            .read_exact(&mut manufacturer_code)
-            .context("Failed to read manufacturer code")?;
+        let manufacturer_code = external::SealManufacturerCode::parse(cursor).ok();
 
-        let mut seal_identifier = [0u8; 8];
-        cursor
-            .read_exact(&mut seal_identifier)
-            .context("Failed to read seal identifier")?;
+        let seal_identifier = IA5String::parse_dyn_size(cursor, 8)
+            .context("Failed to parse seal identifier")
+            .ok();
 
         Ok(ExtendedSealIdentifierGen2 {
-            manufacturer_code: manufacturer_code.to_vec(),
-            seal_identifier: seal_identifier.to_vec(),
+            manufacturer_code,
+            seal_identifier,
         })
     }
 }
@@ -997,6 +993,7 @@ pub struct SealRecordGen2 {
 }
 
 impl SealRecordGen2 {
+    const SIZE: usize = 11;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(SealRecordGen2 {
             equipment_type: EquipmentTypeGen2::parse(cursor)?,
@@ -1016,12 +1013,15 @@ pub struct SealDataVuGen2 {
 impl SealDataVuGen2 {
     const NO_OF_RECORDS: usize = 5;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let mut seal_records = Vec::new();
+        let inner_cursor = &mut cursor.take_exact(Self::NO_OF_RECORDS * SealRecordGen2::SIZE);
+
+        let mut seal_records = Vec::with_capacity(Self::NO_OF_RECORDS);
         for _ in 0..Self::NO_OF_RECORDS {
-            let seal = SealRecordGen2::parse(cursor)?;
-            // if equipment type is not unused, then it is a valid seal, see page 50
-            if seal.equipment_type != EquipmentTypeGen2::Unused {
-                seal_records.push(seal);
+            let seal = SealRecordGen2::parse(inner_cursor)?;
+            // do not include unused or RFU seals
+            match seal.equipment_type {
+                EquipmentTypeGen2::Unused | EquipmentTypeGen2::RFU => continue,
+                _ => seal_records.push(seal),
             }
         }
         Ok(SealDataVuGen2 { seal_records })
@@ -1660,14 +1660,14 @@ impl VuCardIwRecordGen2 {
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
 #[serde(rename_all = "camelCase")]
-pub struct VuPlaceDailyWorkPeriodGen2 {
+pub struct VuPlaceDailyWorkPeriodRecordGen2 {
     pub full_card_number_and_generation: Option<FullCardNumberAndGenerationGen2>,
     pub place_record: PlaceRecordGen2,
 }
 
-impl VuPlaceDailyWorkPeriodGen2 {
+impl VuPlaceDailyWorkPeriodRecordGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(VuPlaceDailyWorkPeriodGen2 {
+        Ok(VuPlaceDailyWorkPeriodRecordGen2 {
             full_card_number_and_generation: FullCardNumberAndGenerationGen2::parse(cursor),
             place_record: PlaceRecordGen2::parse(cursor).context("Failed to parse place_record")?,
         })
@@ -1682,8 +1682,8 @@ pub struct VuActivitiesBlockGen2 {
 
     pub odometer_value_midnight_record_array: Vec<OdometerValueMidnight>,
     pub vu_card_iw_record_array: Vec<VuCardIwRecordGen2>,
-    pub vu_activity_daily_record_array: Vec<ActivityChangeInfo>,
-    pub vu_place_daily_work_period_record_array: Vec<VuPlaceDailyWorkPeriodGen2>,
+    pub vu_activity_daily_record_array: Vec<CardActivityChangeInfo>,
+    pub vu_place_daily_work_period_record_array: Vec<VuPlaceDailyWorkPeriodRecordGen2>,
     pub vu_gnss_ad_record_array: Vec<VuGNSSADRecordGen2>,
     pub vu_specific_condition_record_array: Vec<SpecificConditionRecordGen2>,
     pub signature_record_array: Vec<SignatureGen2>,
@@ -1710,13 +1710,16 @@ impl VuActivitiesBlockGen2 {
                 .context("Failed to parse vu_card_iw_record_array")?
                 .into_inner(),
 
-            vu_activity_daily_record_array: RecordArray::parse(cursor, ActivityChangeInfo::parse)
-                .context("Failed to parse vu_activity_daily_record_array")?
-                .into_inner(),
+            vu_activity_daily_record_array: RecordArray::parse(
+                cursor,
+                CardActivityChangeInfo::parse,
+            )
+            .context("Failed to parse vu_activity_daily_record_array")?
+            .into_inner(),
 
             vu_place_daily_work_period_record_array: RecordArray::parse(
                 cursor,
-                VuPlaceDailyWorkPeriodGen2::parse,
+                VuPlaceDailyWorkPeriodRecordGen2::parse,
             )
             .context("Failed to parse vu_place_daily_work_period_record_array")?
             .into_inner(),
@@ -1832,8 +1835,8 @@ impl SensorExternalGNSSCoupledRecordGen2 {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(TS))]
-
-pub struct VuCalibrationRecordGen2 {
+/// [VuCalibrationRecord: appendix 2.174.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25506)
+pub struct VuCalibrationRecordGen2V2 {
     pub calibration_purpose: CalibrationPurposeGen2,
     pub workshop_name: Name,
     pub workshop_address: Address,
@@ -1855,9 +1858,9 @@ pub struct VuCalibrationRecordGen2 {
     pub seal_data_vu: SealDataVuGen2,
 }
 
-impl VuCalibrationRecordGen2 {
+impl VuCalibrationRecordGen2V2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(VuCalibrationRecordGen2 {
+        Ok(VuCalibrationRecordGen2V2 {
             calibration_purpose: CalibrationPurposeGen2::parse(cursor)
                 .context("Failed to parse calibration_purpose")?,
             workshop_name: Name::parse(cursor).context("Failed to parse workshop_name")?,
@@ -1965,6 +1968,7 @@ impl VuITSConsentRecordGen2 {
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(TS))]
 
+/// [VuPowerSupplyInterruptionRecord: appendix 2.240.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e29420)
 pub struct VuPowerSupplyInterruptionRecordGen2 {
     pub event_type: EventFaultTypeGen2,
     pub event_record_purpose: EventFaultRecordPurpose,
@@ -2007,20 +2011,20 @@ impl VuPowerSupplyInterruptionRecordGen2 {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(TS))]
-
-pub struct VuCompanyLocksBlockGen2 {
+/// TREP 0x25 page 348
+pub struct VuCompanyLocksGen2 {
     pub vu_identification_record_array: Vec<VuIdentificationGen2>,
     pub vu_sensor_paired_record_array: Vec<SensorPairedRecordGen2>,
     pub vu_sensor_external_gnss_coupled_record_array: Vec<SensorExternalGNSSCoupledRecordGen2>,
-    pub vu_calibration_record_array: Vec<VuCalibrationRecordGen2>,
+    pub vu_calibration_record_array: Vec<VuCalibrationRecordGen2V2>,
     pub vu_card_record_array: Vec<VuCardRecordGen2>,
     pub vu_its_consent_record_array: Vec<VuITSConsentRecordGen2>,
     pub vu_power_supply_interruption_record_array: Vec<VuPowerSupplyInterruptionRecordGen2>,
     pub signature_record_array: Vec<SignatureGen2>,
 }
-impl VuCompanyLocksBlockGen2 {
+impl VuCompanyLocksGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(VuCompanyLocksBlockGen2 {
+        Ok(VuCompanyLocksGen2 {
             vu_identification_record_array: RecordArray::parse(cursor, VuIdentificationGen2::parse)
                 .context("Failed to parse vu_identification_record_array")?
                 .into_inner(),
@@ -2039,9 +2043,12 @@ impl VuCompanyLocksBlockGen2 {
             .context("Failed to parse vu_sensor_external_gnss_coupled_record_array")?
             .into_inner(),
 
-            vu_calibration_record_array: RecordArray::parse(cursor, VuCalibrationRecordGen2::parse)
-                .context("Failed to parse vu_calibration_record_array")?
-                .into_inner(),
+            vu_calibration_record_array: RecordArray::parse(
+                cursor,
+                VuCalibrationRecordGen2V2::parse,
+            )
+            .context("Failed to parse vu_calibration_record_array")?
+            .into_inner(),
 
             vu_card_record_array: RecordArray::parse(cursor, VuCardRecordGen2::parse)
                 .context("Failed to parse vu_card_record_array")?
@@ -2071,14 +2078,14 @@ impl VuCompanyLocksBlockGen2 {
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
 #[serde(rename_all = "camelCase")]
-pub struct VuSpeedBlockGen2 {
+pub struct VuDetailedSpeedBlockGen2 {
     pub vu_detailed_speed_block_record_array: Vec<VuDetailedSpeedBlock>,
     pub signature_record_array: Vec<SignatureGen2>,
 }
 
-impl VuSpeedBlockGen2 {
+impl VuDetailedSpeedBlockGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        Ok(VuSpeedBlockGen2 {
+        Ok(VuDetailedSpeedBlockGen2 {
             vu_detailed_speed_block_record_array: RecordArray::parse(
                 cursor,
                 VuDetailedSpeedBlock::parse,

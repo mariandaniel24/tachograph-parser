@@ -1084,7 +1084,7 @@ impl VuCardIwRecord {
 /// [VuActivityDailyData: appendix 2.170.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25344)
 pub struct VuActivityDailyData {
     pub no_of_activity_changes: u16,
-    pub activity_change_infos: Vec<ActivityChangeInfo>,
+    pub activity_change_infos: Vec<CardActivityChangeInfo>,
 }
 
 impl VuActivityDailyData {
@@ -1096,7 +1096,8 @@ impl VuActivityDailyData {
         let mut activity_change_infos = Vec::with_capacity(no_of_activity_changes as usize);
         for _ in 0..no_of_activity_changes {
             activity_change_infos.push(
-                ActivityChangeInfo::parse(cursor).context("Failed to parse ActivityChangeInfo")?,
+                CardActivityChangeInfo::parse(cursor)
+                    .context("Failed to parse ActivityChangeInfo")?,
             );
         }
 
@@ -1567,6 +1568,23 @@ impl VuDetailedSpeedData {
         Ok(Self {
             no_of_speed_blocks,
             vu_detailed_speed_records,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct VuDetailedSpeedBlock {
+    pub vu_detailed_speed_data: VuDetailedSpeedData,
+    pub signature: Signature,
+}
+impl VuDetailedSpeedBlock {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        Ok(Self {
+            vu_detailed_speed_data: VuDetailedSpeedData::parse(cursor)
+                .context("Failed to parse vu_detailed_speed_data")?,
+            signature: Signature::parse(cursor).context("Failed to parse signature")?,
         })
     }
 }

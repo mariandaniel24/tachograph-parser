@@ -38,16 +38,85 @@ impl BCDString {
 #[cfg_attr(feature = "ts", derive(TS))]
 pub struct IA5String(pub String);
 impl IA5String {
+    // Common invalid/control characters found in binary data:
+    // - Replacement character (�) indicates invalid UTF-8 bytes
+    // - Question marks (?) are often used as replacement for undecodable chars
+    // - \u{0000}-\u{001F} are ASCII control characters
+    // - \t, \n, \r are whitespace characters
+    // - \u{007F} is the DEL character
+    // - \u{FEFF} is the byte order mark
+    // - Various Unicode control/formatting characters
+    // - Zero-width spaces and joiners
+    // - Bidirectional control characters
+    // - Various other Unicode characters that are not valid in XML
+    // - And more...
+    const INVALID_EMPTY_CHARS: [&str; 40] = [
+        "�",             // Unicode replacement character
+        "?",             // Single question mark replacement
+        "?????????",     // Multiple question marks
+        "?????????????", // More question marks
+        "\u{0000}",      // NUL
+        "\u{0001}",      // SOH (Start of Header)
+        "\u{0002}",      // STX (Start of Text)
+        "\u{0003}",      // ETX (End of Text)
+        "\u{0004}",      // EOT (End of Transmission)
+        "\u{0005}",      // ENQ (Enquiry)
+        "\u{0006}",      // ACK (Acknowledge)
+        "\u{0007}",      // BEL (Bell)
+        "\u{0008}",      // BS (Backspace)
+        "\t",            // Tab
+        "\n",            // Line Feed
+        "\r",            // Carriage Return
+        "\u{000B}",      // Vertical Tab
+        "\u{000C}",      // Form Feed
+        "\u{000E}",      // Shift Out
+        "\u{000F}",      // Shift In
+        "\u{007F}",      // DEL
+        "\u{FEFF}",      // Byte Order Mark
+        "\u{200B}",      // Zero Width Space
+        "\u{FFFD}",      // Replacement Character
+        "\u{200C}",      // Zero Width Non-Joiner
+        "\u{200D}",      // Zero Width Joiner
+        "\u{2060}",      // Word Joiner
+        "\u{2061}",      // Function Application
+        "\u{2062}",      // Invisible Times
+        "\u{2063}",      // Invisible Separator
+        "\u{2064}",      // Invisible Plus
+        "\u{202A}",      // Left-to-Right Embedding
+        "\u{202B}",      // Right-to-Left Embedding
+        "\u{202C}",      // Pop Directional Formatting
+        "\u{202D}",      // Left-to-Right Override,
+        "\u{202E}",      // Right-to-Left Override
+        "\u{2028}",      // Line Separator
+        "\u{2029}",      // Paragraph Separator
+        "\u{200E}",      // Left-to-Right Mark
+        "\u{200F}",      // Right-to-Left Mark
+    ];
+    fn clean_string(value: String) -> String {
+        let mut value = value.trim().to_string();
+        for invalid in Self::INVALID_EMPTY_CHARS.iter() {
+            value = value.replace(invalid, "");
+        }
+        value.trim().to_string()
+    }
+
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
         let mut buffer = vec![0u8; size];
         cursor
             .read_exact(&mut buffer)
             .context("Failed to read IA5String")?;
-        let value = textcode::utf8::decode_to_string(&buffer);
-        Ok(IA5String(
-            value.trim().trim_start_matches('\u{0001}').to_string(),
-        ))
+        let mut value = textcode::utf8::decode_to_string(&buffer);
+
+        value = Self::clean_string(value);
+
+        // Error if empty after all processing
+        if value.is_empty() {
+            return Err(anyhow::anyhow!("Empty IA5String"));
+        }
+
+        Ok(IA5String(value))
     }
+
     pub fn parse_with_code_page(
         cursor: &mut Cursor<&[u8]>,
         size: usize,
@@ -57,7 +126,7 @@ impl IA5String {
         cursor
             .read_exact(&mut buffer)
             .context("Failed to read IA5String")?;
-        let value = match code_page {
+        let mut value = match code_page {
             1 => textcode::iso8859_1::decode_to_string(&buffer),
             2 => textcode::iso8859_2::decode_to_string(&buffer),
             3 => textcode::iso8859_3::decode_to_string(&buffer),
@@ -75,25 +144,19 @@ impl IA5String {
             85 => encoding_rs::KOI8_R.decode(&buffer).0.to_string(),
             // TODO: Might want to error out instead?
             // _ => anyhow::bail!("Unsupported code page: {}", code_page),
-            _ => {
-                log::warn!(
-                    "Unsupported code page with value`{}` while parsing IA5String",
-                    code_page
-                );
-                let value = String::from_utf8_lossy(&buffer).trim().to_string();
-                if value.is_empty() {
-                    return Err(anyhow::anyhow!("Empty IA5String"));
-                }
-                value
-            }
+            _ => String::from_utf8_lossy(&buffer).to_string(),
         };
 
-        Ok(IA5String(
-            value.trim().trim_start_matches('\u{0001}').to_string(),
-        ))
+        value = Self::clean_string(value);
+
+        // Error if empty after all processing
+        if value.is_empty() {
+            return Err(anyhow::anyhow!("Empty IA5String"));
+        }
+
+        Ok(IA5String(value))
     }
 }
-
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// [EmbedderIcAssemblerId: appendix 2.65.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20005)
@@ -711,7 +774,7 @@ pub enum ActivityChangeInfoCardActivity {
 #[serde(rename_all = "camelCase")]
 /// [ActivityChangeInfo: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)
 #[cfg_attr(feature = "ts", derive(TS))]
-pub struct ActivityChangeInfo {
+pub struct CardActivityChangeInfo {
     pub slot: ActivityChangeInfoSlot,
     pub driving_or_following_activity_status: ActivityChangeInfoStatus,
     pub card_status: ActivityChangeInfoCardStatus,
@@ -719,7 +782,7 @@ pub struct ActivityChangeInfo {
     pub minutes: u16,
 }
 
-impl ActivityChangeInfo {
+impl CardActivityChangeInfo {
     pub const SIZE: usize = 2;
 
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
@@ -802,7 +865,7 @@ impl ActivityChangeInfo {
         // As a result of a manual entry, the bits 'c' and 'aa' of the word (stored in
         // a card) may be overwritten later to reflect the entry.
 
-        Ok(ActivityChangeInfo {
+        Ok(CardActivityChangeInfo {
             slot,
             driving_or_following_activity_status,
             card_status,
@@ -811,6 +874,7 @@ impl ActivityChangeInfo {
         })
     }
 }
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// [CardChipIdentification: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)
@@ -1047,7 +1111,7 @@ pub struct CardActivityDailyRecord {
     pub activity_record_date: TimeReal,
     pub activity_daily_presence_counter: DailyPresenceCounter,
     pub activity_day_distance: Distance,
-    pub activity_change_info: Vec<ActivityChangeInfo>,
+    pub activity_change_info: Vec<CardActivityChangeInfo>,
 }
 impl CardActivityDailyRecord {
     // 12 bytes of metadata =
@@ -1069,12 +1133,12 @@ impl CardActivityDailyRecord {
         let activity_daily_presence_counter = DailyPresenceCounter::parse(cursor)?;
         let activity_day_distance = Distance::parse(cursor)?;
 
-        let records_amount =
-            (activity_record_length as usize - Self::SIZE_OF_METADATA) / ActivityChangeInfo::SIZE;
+        let records_amount = (activity_record_length as usize - Self::SIZE_OF_METADATA)
+            / CardActivityChangeInfo::SIZE;
 
         let mut activity_change_info = Vec::with_capacity(records_amount);
         for _ in 0..records_amount {
-            if let Ok(record) = ActivityChangeInfo::parse(cursor) {
+            if let Ok(record) = CardActivityChangeInfo::parse(cursor) {
                 activity_change_info.push(record);
             }
         }

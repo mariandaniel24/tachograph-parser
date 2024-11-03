@@ -10,11 +10,11 @@ This project aims to provide a parser for digital tachograph files, which are us
 
 - [x] Driver card Generation 1
 - [x] Driver card Generation 2
+- [x] Driver card Generation 2 Version 2
 - [x] Vehicle unit Generation 1
 - [x] Vehicle unit Generation 2
+- [x] Vehicle unit Generation 2 Version 2
 - [ ] Workshop/Control/Company cards
-- [ ] Driver card Generation 2 Version 2
-- [ ] Vehicle unit Generation 2 Version 2
 - [ ] Signature validation
 
 ## Documentation

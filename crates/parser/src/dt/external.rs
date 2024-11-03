@@ -5,6 +5,8 @@ use std::io::Cursor;
 #[cfg(feature = "ts")]
 use ts_rs::TS;
 
+use super::IA5String;
+
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
 /// [ManufacturerCode: appendix 2.94.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22253)
@@ -82,6 +84,29 @@ impl ManufacturerCode {
             _ => anyhow::bail!("Unknown ManufacturerCode: {}", code),
         };
         Ok(ManufacturerCode(name.to_string()))
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// https://dtc.jrc.ec.europa.eu/dtc_seal_manufacturer_code.php.html
+pub struct SealManufacturerCode(pub String);
+impl SealManufacturerCode {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let code_value = IA5String::parse_dyn_size(cursor, 2)?;
+        let code = match code_value.0.as_str() {
+            "RP" => "Royal Pack",
+            "PR" => "Precintia Seguridad",
+            "UN" => "Unisto AG",
+            "BP" => "Bednorz GmbH",
+            "KE" => "KISSLING ELEKTROTECHNIK GMBH",
+            "DL" => "Dilogics Europa S.L.",
+            "AS" => "Acme Seals Ltd",
+            "MF" => "Mega Fortris Group",
+            _ => anyhow::bail!("Unknown SealManufacturerCode: {}", code_value.0),
+        };
+
+        Ok(SealManufacturerCode(code.to_string()))
     }
 }
 
