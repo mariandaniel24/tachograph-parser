@@ -5,4 +5,7 @@ import type { FullCardNumberAndGenerationGen2 } from "./FullCardNumberAndGenerat
 import type { SimilarEventsNumber } from "./SimilarEventsNumber";
 import type { TimeReal } from "./TimeReal";
 
+/**
+ * [VuPowerSupplyInterruptionRecord: appendix 2.240.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e29420)
+ */
 export type VuPowerSupplyInterruptionRecordGen2 = { eventType: EventFaultTypeGen2, eventRecordPurpose: EventFaultRecordPurpose, eventBeginTime: TimeReal, eventEndTime: TimeReal, cardNumberAndGenDriverSlotBegin: FullCardNumberAndGenerationGen2 | null, cardNumberAndGenDriverSlotEnd: FullCardNumberAndGenerationGen2 | null, cardNumberAndGenCodriverSlotBegin: FullCardNumberAndGenerationGen2 | null, cardNumberAndGenCodriverSlotEnd: FullCardNumberAndGenerationGen2 | null, similarEventsNumber: SimilarEventsNumber, };

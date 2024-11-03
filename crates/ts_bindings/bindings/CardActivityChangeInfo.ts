@@ -7,4 +7,4 @@ import type { ActivityChangeInfoStatus } from "./ActivityChangeInfoStatus";
 /**
  * [ActivityChangeInfo: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)
  */
-export type ActivityChangeInfo = { slot: ActivityChangeInfoSlot, drivingOrFollowingActivityStatus: ActivityChangeInfoStatus, cardStatus: ActivityChangeInfoCardStatus, activity: ActivityChangeInfoCardActivity, minutes: number, };
+export type CardActivityChangeInfo = { slot: ActivityChangeInfoSlot, drivingOrFollowingActivityStatus: ActivityChangeInfoStatus, cardStatus: ActivityChangeInfoCardStatus, activity: ActivityChangeInfoCardActivity, minutes: number, };

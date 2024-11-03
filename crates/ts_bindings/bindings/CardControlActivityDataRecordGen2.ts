@@ -7,4 +7,4 @@ import type { VehicleRegistrationIdentification } from "./VehicleRegistrationIde
 /**
  * [CardControlActivityDataRecord appendix 2.15.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17002)
  */
-export type CardControlActivityDataRecordGen2 = { controlType: ControlTypeGen2, controlTime: TimeReal | null, controlCardNumber: FullCardNumberGen2, controlVehicleRegistration: VehicleRegistrationIdentification, controlDownloadPeriodBegin: TimeReal | null, controlDownloadPeriodEnd: TimeReal | null, };
+export type CardControlActivityDataRecordGen2 = { controlType: ControlTypeGen2, controlTime: TimeReal | null, controlCardNumber: FullCardNumberGen2 | null, controlVehicleRegistration: VehicleRegistrationIdentification | null, controlDownloadPeriodBegin: TimeReal | null, controlDownloadPeriodEnd: TimeReal | null, };

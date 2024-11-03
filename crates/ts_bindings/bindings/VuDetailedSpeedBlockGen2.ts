@@ -2,4 +2,4 @@
 import type { SignatureGen2 } from "./SignatureGen2";
 import type { VuDetailedSpeedBlock } from "./VuDetailedSpeedBlock";
 
-export type VuSpeedBlockGen2 = { vuDetailedSpeedBlockRecordArray: Array<VuDetailedSpeedBlock>, signatureRecordArray: Array<SignatureGen2>, };
+export type VuDetailedSpeedBlockGen2 = { vuDetailedSpeedBlockRecordArray: Array<VuDetailedSpeedBlock>, signatureRecordArray: Array<SignatureGen2>, };

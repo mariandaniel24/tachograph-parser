@@ -2,4 +2,4 @@
 import type { FullCardNumberAndGenerationGen2 } from "./FullCardNumberAndGenerationGen2";
 import type { PlaceRecordGen2 } from "./PlaceRecordGen2";
 
-export type VuPlaceDailyWorkPeriodGen2 = { fullCardNumberAndGeneration: FullCardNumberAndGenerationGen2 | null, placeRecord: PlaceRecordGen2, };
+export type VuPlaceDailyWorkPeriodRecordGen2 = { fullCardNumberAndGeneration: FullCardNumberAndGenerationGen2 | null, placeRecord: PlaceRecordGen2, };
