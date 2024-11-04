@@ -1046,8 +1046,8 @@ pub struct VuCardIwRecord {
     pub card_slot_number: CardSlotNumber,
     pub card_withdrawal_time: Option<TimeReal>,
     pub vehicle_odometer_value_at_withdrawal: OdometerShort,
-    pub previous_vehicle_info: PreviousVehicleInfo,
-    pub manual_entry_flag: ManualInputFlag,
+    pub previous_vehicle_info: Option<PreviousVehicleInfo>,
+    pub manual_entry_flag: Option<ManualInputFlag>,
 }
 
 impl VuCardIwRecord {
@@ -1071,9 +1071,11 @@ impl VuCardIwRecord {
             vehicle_odometer_value_at_withdrawal: OdometerShort::parse(cursor)
                 .context("Failed to parse vehicle_odometer_value_at_withdrawal")?,
             previous_vehicle_info: PreviousVehicleInfo::parse(cursor)
-                .context("Failed to parse previous_vehicle_info")?,
+                .context("Failed to parse previous_vehicle_info")
+                .ok(),
             manual_entry_flag: ManualInputFlag::parse(cursor)
-                .context("Failed to parse manual_entry_flag")?,
+                .context("Failed to parse manual_entry_flag")
+                .ok(),
         })
     }
 }

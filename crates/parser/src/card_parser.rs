@@ -153,7 +153,7 @@ impl CardParser {
         let mut identification_signature: Option<gen1::Signature> = None;
         let mut last_card_download: Option<dt::CardDownload> = None;
         let mut last_card_download_signature: Option<gen1::Signature> = None;
-        let mut driver_licence_information: Option<dt::CardDrivingLicenceInformation> = None;
+        let mut driver_licence_info: Option<dt::CardDrivingLicenceInformation> = None;
         let mut driver_licence_info_signature: Option<gen1::Signature> = None;
         let mut events_data: Option<gen1::CardEventData> = None;
         let mut events_data_signature: Option<gen1::Signature> = None;
@@ -246,7 +246,7 @@ impl CardParser {
                 // CardIccIdentification Gen1
                 (0x0002, 0) => {
                     if card_icc_identification.is_some() {
-                        panic_on_duplicate_block_type("card_icc_identification");
+                        panic_on_duplicate_block_type("card_icc_identification_gen1");
                     }
                     card_icc_identification = Some(
                         CardBlock::parse(&mut cursor, gen1::CardIccIdentification::parse)?
@@ -256,7 +256,7 @@ impl CardParser {
                 // CardChipIdentification Gen1
                 (0x0005, 0) => {
                     if card_chip_identification.is_some() {
-                        panic_on_duplicate_block_type("card_chip_identification");
+                        panic_on_duplicate_block_type("card_chip_identification_gen1");
                     }
                     card_chip_identification = Some(
                         CardBlock::parse(&mut cursor, dt::CardChipIdentification::parse)?
@@ -266,7 +266,7 @@ impl CardParser {
                 // ApplicationIdentification Gen1
                 (0x0501, 0) => {
                     if application_identification.is_some() {
-                        panic_on_duplicate_block_type("application_identification");
+                        panic_on_duplicate_block_type("application_identification_gen1");
                     }
                     application_identification = Some(
                         CardBlock::parse(
@@ -278,23 +278,32 @@ impl CardParser {
                 }
                 // ApplicationIdentification Signature Gen1
                 (0x0501, 1) => {
+                    if application_identification_signature.is_some() {
+                        panic_on_duplicate_block_type("application_identification_signature_gen1");
+                    }
                     application_identification_signature =
                         Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
                 }
                 // CardCertificate Gen1
                 (0xC100, 0) => {
+                    if card_certificate.is_some() {
+                        panic_on_duplicate_block_type("card_certificate_gen1");
+                    }
                     card_certificate =
                         Some(CardBlock::parse(&mut cursor, gen1::Certificate::parse)?.into_inner());
                 }
                 // MemberStateCertificate Gen1
                 (0xC108, 0) => {
+                    if member_state_certificate.is_some() {
+                        panic_on_duplicate_block_type("member_state_certificate_gen1");
+                    }
                     member_state_certificate =
                         Some(CardBlock::parse(&mut cursor, gen1::Certificate::parse)?.into_inner());
                 }
                 // Identification Gen1
                 (0x0520, 0) => {
                     if identification.is_some() {
-                        panic_on_duplicate_block_type("identification");
+                        panic_on_duplicate_block_type("identification_gen1");
                     }
                     identification = Some(
                         CardBlock::parse(&mut cursor, dt::Identification::parse)?.into_inner(),
@@ -302,6 +311,9 @@ impl CardParser {
                 }
                 // Identification Signature Gen1
                 (0x0520, 1) => {
+                    if identification_signature.is_some() {
+                        panic_on_duplicate_block_type("identification_signature_gen1");
+                    }
                     identification_signature =
                         Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
                 }
@@ -317,10 +329,10 @@ impl CardParser {
                 }
                 // DrivingLicenseInfo Gen1
                 (0x0521, 0) => {
-                    if driver_licence_information.is_some() {
-                        panic_on_duplicate_block_type("driver_licence_information");
+                    if driver_licence_info.is_some() {
+                        panic_on_duplicate_block_type("driver_licence_info_gen1");
                     }
-                    driver_licence_information = Some(
+                    driver_licence_info = Some(
                         CardBlock::parse(&mut cursor, dt::CardDrivingLicenceInformation::parse)?
                             .into_inner(),
                     );
@@ -333,7 +345,7 @@ impl CardParser {
                 // EventsData Gen1
                 (0x0502, 0) => {
                     if events_data.is_some() {
-                        panic_on_duplicate_block_type("events_data");
+                        panic_on_duplicate_block_type("events_data_gen1");
                     }
                     events_data = Some(
                         CardBlock::parse_dyn_size(
@@ -351,7 +363,7 @@ impl CardParser {
                 // FaultsData Gen1
                 (0x0503, 0) => {
                     if faults_data.is_some() {
-                        panic_on_duplicate_block_type("faults_data");
+                        panic_on_duplicate_block_type("faults_data_gen1");
                     }
                     faults_data = Some(
                         CardBlock::parse_dyn_size(
@@ -369,7 +381,7 @@ impl CardParser {
                 // DriverActivityData Gen1
                 (0x0504, 0) => {
                     if driver_activity_data.is_some() {
-                        panic_on_duplicate_block_type("driver_activity_data");
+                        panic_on_duplicate_block_type("driver_activity_data_gen1");
                     }
                     driver_activity_data = Some(
                         CardBlock::parse_dyn_size(
@@ -387,7 +399,7 @@ impl CardParser {
                 // VehiclesUsed Gen1
                 (0x0505, 0) => {
                     if vehicles_used.is_some() {
-                        panic_on_duplicate_block_type("vehicles_used");
+                        panic_on_duplicate_block_type("vehicles_used_gen1");
                     }
                     vehicles_used = Some(
                         CardBlock::parse_dyn_size(
@@ -405,7 +417,7 @@ impl CardParser {
                 // Places Gen1
                 (0x0506, 0) => {
                     if places.is_some() {
-                        panic_on_duplicate_block_type("places");
+                        panic_on_duplicate_block_type("places_gen1");
                     }
                     places = Some(
                         CardBlock::parse_dyn_size(
@@ -417,23 +429,32 @@ impl CardParser {
                 }
                 // Places Signature Gen1
                 (0x0506, 1) => {
+                    if places_signature.is_some() {
+                        panic_on_duplicate_block_type("places_signature_gen1");
+                    }
                     places_signature =
                         Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
                 }
                 // CurrentUsage Gen1
                 (0x0507, 0) => {
+                    if current_usage.is_some() {
+                        panic_on_duplicate_block_type("current_usage_gen1");
+                    }
                     current_usage =
                         Some(CardBlock::parse(&mut cursor, dt::CurrentUsage::parse)?.into_inner());
                 }
                 // CurrentUsage Signature Gen1
                 (0x0507, 1) => {
+                    if current_usage_signature.is_some() {
+                        panic_on_duplicate_block_type("current_usage_signature_gen1");
+                    }
                     current_usage_signature =
                         Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
                 }
                 // ControlActivityData Gen1
                 (0x0508, 0) => {
                     if control_activity_data.is_some() {
-                        panic_on_duplicate_block_type("control_activity_data");
+                        panic_on_duplicate_block_type("control_activity_data_gen1");
                     }
                     control_activity_data = Some(
                         CardBlock::parse(&mut cursor, gen1::CardControlActivityDataRecord::parse)?
@@ -442,13 +463,16 @@ impl CardParser {
                 }
                 // ControlActivityData Signature Gen1
                 (0x0508, 1) => {
+                    if control_activity_data_signature.is_some() {
+                        panic_on_duplicate_block_type("control_activity_data_signature_gen1");
+                    }
                     control_activity_data_signature =
                         Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
                 }
                 // SpecificConditions Gen1
                 (0x0522, 0) => {
                     if specific_conditions.is_some() {
-                        panic_on_duplicate_block_type("specific_conditions");
+                        panic_on_duplicate_block_type("specific_conditions_gen1");
                     }
                     specific_conditions = Some(
                         CardBlock::parse_dyn_size(
@@ -460,6 +484,9 @@ impl CardParser {
                 }
                 // SpecificConditions Signature Gen1
                 (0x0522, 1) => {
+                    if specific_conditions_signature.is_some() {
+                        panic_on_duplicate_block_type("specific_conditions_signature_gen1");
+                    }
                     specific_conditions_signature =
                         Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
                 }
@@ -572,6 +599,9 @@ impl CardParser {
                 }
                 // CardDownload Gen2
                 (0x050E, 2) => {
+                    if card_download_gen2.is_some() {
+                        panic_on_duplicate_block_type("card_download_gen2");
+                    }
                     card_download_gen2 =
                         Some(CardBlock::parse(&mut cursor, dt::CardDownload::parse)?.into_inner());
                 }
@@ -739,6 +769,9 @@ impl CardParser {
                 }
                 // CurrentUsage Gen2
                 (0x0507, 2) => {
+                    if current_usage_gen2.is_some() {
+                        panic_on_duplicate_block_type("current_usage_gen2");
+                    }
                     current_usage_gen2 =
                         Some(CardBlock::parse(&mut cursor, dt::CurrentUsage::parse)?.into_inner());
                 }
@@ -1071,7 +1104,7 @@ impl CardParser {
                 .context("unable to find identification_signature gen1 after parsing file")?,
             card_download: last_card_download,
             card_download_signature: last_card_download_signature,
-            driver_licence_info: driver_licence_information,
+            driver_licence_info,
             driver_licence_info_signature: driver_licence_info_signature,
             events_data: events_data
                 .context("unable to find events_data gen1 after parsing file")?,
@@ -1332,5 +1365,78 @@ impl<T> CardBlock<T> {
     }
     pub fn into_inner(self) -> T {
         self.data
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rayon::prelude::*;
+    use serde_json;
+
+    use super::*;
+    use std::fs;
+    use std::path::Path;
+
+    #[test]
+    fn test_process_card_file() {
+        let data_dir = Path::new("../../data/ddd");
+        let output_dir = Path::new("../../data/json");
+        assert!(data_dir.exists(), "Data directory does not exist");
+        fs::create_dir_all(output_dir).expect("Failed to create output directory");
+
+        let results: Vec<(String, Result<(), anyhow::Error>)> = fs::read_dir(data_dir)
+            .expect("Failed to read directory")
+            .par_bridge()
+            .filter_map(Result::ok)
+            .filter(|entry| {
+                entry
+                    .path()
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|name| {
+                        name.starts_with("C_") && (name.ends_with(".ddd") || name.ends_with(".DDD"))
+                    })
+                    .unwrap_or(false)
+            })
+            .map(|entry| {
+                let path = entry.path();
+                let file_name = path.file_name().unwrap().to_str().unwrap().to_string();
+                let result =
+                    CardParser::new_from_file(path.to_str().unwrap()).and_then(|card_data| {
+                        let card_data = card_data.parse()?;
+                        // println!("Successfully parsed file: {}", file_name);
+
+                        let json_file_name =
+                            file_name.replace(".ddd", ".json").replace(".DDD", ".json");
+                        let json_path = output_dir.join(json_file_name);
+
+                        let json = serde_json::to_string_pretty(&card_data)
+                            .expect("Failed to serialize to JSON");
+                        fs::write(&json_path, json).expect("Failed to write JSON file");
+
+                        // println!("JSON output written to: {}", json_path.display());
+                        Ok(())
+                    });
+
+                (file_name, result)
+            })
+            .collect();
+
+        // Process all errors after collection
+        let errors: Vec<_> = results
+            .iter()
+            .filter_map(|(file_name, result)| result.as_ref().err().map(|e| (file_name, e)))
+            .collect();
+
+        if !errors.is_empty() {
+            println!("\n=== Processing Errors ===");
+            println!("Total errors: {}", errors.len());
+            println!("Detailed error list:");
+            for (file, error) in errors {
+                println!("\nFile: {}", file);
+                println!("Error: {:#}", error);
+            }
+            panic!("Some files failed to process");
+        }
     }
 }

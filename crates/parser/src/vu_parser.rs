@@ -262,3 +262,74 @@ impl VuParser {
         Ok(pretty_json)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rayon::prelude::*;
+    use serde_json;
+
+    use super::*;
+    use std::fs;
+    use std::path::Path;
+
+    #[test]
+    fn test_process_vu_file() {
+        let data_dir = Path::new("../../data/ddd");
+        let output_dir = Path::new("../../data/json");
+        assert!(data_dir.exists(), "Data directory does not exist");
+        fs::create_dir_all(output_dir).expect("Failed to create output directory");
+
+        let results: Vec<(String, Result<(), anyhow::Error>)> = fs::read_dir(data_dir)
+            .expect("Failed to read directory")
+            .par_bridge()
+            .filter_map(Result::ok)
+            .filter(|entry| {
+                entry
+                    .path()
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|name| {
+                        name.starts_with("M_") && (name.ends_with(".ddd") || name.ends_with(".DDD"))
+                    })
+                    .unwrap_or(false)
+            })
+            .map(|entry| {
+                let path = entry.path();
+                let file_name = path.file_name().unwrap().to_str().unwrap().to_string();
+
+                let result = VuParser::new_from_file(path.to_str().unwrap()).and_then(|vu_data| {
+                    let vu_data = vu_data.parse()?;
+
+                    let json_file_name =
+                        file_name.replace(".ddd", ".json").replace(".DDD", ".json");
+                    let json_path = output_dir.join(json_file_name);
+
+                    let json = serde_json::to_string_pretty(&vu_data)
+                        .expect("Failed to serialize to JSON");
+                    fs::write(&json_path, json).expect("Failed to write JSON file");
+
+                    Ok(())
+                });
+
+                (file_name, result)
+            })
+            .collect();
+
+        // Process all errors after collection
+        let errors: Vec<_> = results
+            .iter()
+            .filter_map(|(file_name, result)| result.as_ref().err().map(|e| (file_name, e)))
+            .collect();
+
+        if !errors.is_empty() {
+            println!("\n=== Processing Errors ===");
+            println!("Total errors: {}", errors.len());
+            println!("Detailed error list:");
+            for (file, error) in errors {
+                println!("\nFile: {}", file);
+                println!("Error: {:#}", error);
+            }
+            panic!("Some files failed to process");
+        }
+    }
+}

@@ -4,9 +4,7 @@ import type { CalibrationPurposeGen2 } from "./CalibrationPurposeGen2";
 import type { FullCardNumberGen2 } from "./FullCardNumberGen2";
 import type { KConstantOfRecordingEquipment } from "./KConstantOfRecordingEquipment";
 import type { LTyreCircumference } from "./LTyreCircumference";
-import type { LoadType } from "./LoadType";
 import type { Name } from "./Name";
-import type { NationNumeric } from "./NationNumeric";
 import type { OdometerShort } from "./OdometerShort";
 import type { SealDataVuGen2 } from "./SealDataVuGen2";
 import type { Speed } from "./Speed";
@@ -19,4 +17,4 @@ import type { WVehicleCharacteristicConstant } from "./WVehicleCharacteristicCon
 /**
  * [VuCalibrationRecord: appendix 2.174.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25506)
  */
-export type VuCalibrationRecordGen2V2 = { calibrationPurpose: CalibrationPurposeGen2, workshopName: Name, workshopAddress: Address, workshopCardNumber: FullCardNumberGen2, workshopCardExpiryDate: TimeReal | null, vehicleIdentificationNumber: VehicleIdentificationNumber | null, vehicleRegistrationIdentification: VehicleRegistrationIdentification | null, wVehicleCharacteristicConstant: WVehicleCharacteristicConstant, kConstantOfRecordingEquipment: KConstantOfRecordingEquipment, lTyreCircumference: LTyreCircumference, tyreSize: TyreSize, authorisedSpeed: Speed, oldOdometerValue: OdometerShort, newOdometerValue: OdometerShort, oldTimeValue: TimeReal | null, newTimeValue: TimeReal | null, nextCalibrationDate: TimeReal | null, sealDataVu: SealDataVuGen2, byDefaultLoadType: LoadType, calibrationCountry: NationNumeric, calibrationCountryTimestamp: TimeReal, };
+export type VuCalibrationRecordGen2V2 = { calibrationPurpose: CalibrationPurposeGen2, workshopName: Name, workshopAddress: Address, workshopCardNumber: FullCardNumberGen2, workshopCardExpiryDate: TimeReal | null, vehicleIdentificationNumber: VehicleIdentificationNumber | null, vehicleRegistrationIdentification: VehicleRegistrationIdentification | null, wVehicleCharacteristicConstant: WVehicleCharacteristicConstant, kConstantOfRecordingEquipment: KConstantOfRecordingEquipment, lTyreCircumference: LTyreCircumference, tyreSize: TyreSize, authorisedSpeed: Speed, oldOdometerValue: OdometerShort, newOdometerValue: OdometerShort, oldTimeValue: TimeReal | null, newTimeValue: TimeReal | null, nextCalibrationDate: TimeReal | null, sealDataVu: SealDataVuGen2, };

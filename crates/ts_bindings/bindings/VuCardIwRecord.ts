@@ -10,4 +10,4 @@ import type { TimeReal } from "./TimeReal";
 /**
  * [VuCardIwRecord: appendix 2.177.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e25809)
  */
-export type VuCardIwRecord = { cardHolderName: HolderName, fullCardNumber: FullCardNumber, cardExpiryDate: TimeReal, cardInsertionTime: TimeReal, vehicleOdometerValueAtInsertion: OdometerShort, cardSlotNumber: CardSlotNumber, cardWithdrawalTime: TimeReal | null, vehicleOdometerValueAtWithdrawal: OdometerShort, previousVehicleInfo: PreviousVehicleInfo, manualEntryFlag: ManualInputFlag, };
+export type VuCardIwRecord = { cardHolderName: HolderName, fullCardNumber: FullCardNumber, cardExpiryDate: TimeReal, cardInsertionTime: TimeReal, vehicleOdometerValueAtInsertion: OdometerShort, cardSlotNumber: CardSlotNumber, cardWithdrawalTime: TimeReal | null, vehicleOdometerValueAtWithdrawal: OdometerShort, previousVehicleInfo: PreviousVehicleInfo | null, manualEntryFlag: ManualInputFlag | null, };

@@ -7,4 +7,4 @@ import type { OdometerShort } from "./OdometerShort";
 import type { PreviousVehicleInfoGen2 } from "./PreviousVehicleInfoGen2";
 import type { TimeReal } from "./TimeReal";
 
-export type VuCardIwRecordGen2 = { cardHolderName: HolderName, fullCardNumberAndGeneration: FullCardNumberAndGenerationGen2, cardExpiryDate: TimeReal, cardInsertionDate: TimeReal, vehicleOdometerValueAtInsertion: OdometerShort, cardSlotNumber: CardSlotNumber, cardWithdrawlTime: TimeReal | null, vehicleOdometerValueAtWithdrawal: OdometerShort, previousVehicleInfo: PreviousVehicleInfoGen2, manualInputFlag: ManualInputFlag, };
+export type VuCardIwRecordGen2 = { cardHolderName: HolderName, fullCardNumberAndGeneration: FullCardNumberAndGenerationGen2, cardExpiryDate: TimeReal, cardInsertionDate: TimeReal, vehicleOdometerValueAtInsertion: OdometerShort, cardSlotNumber: CardSlotNumber, cardWithdrawlTime: TimeReal | null, vehicleOdometerValueAtWithdrawal: OdometerShort, previousVehicleInfo: PreviousVehicleInfoGen2 | null, manualInputFlag: ManualInputFlag | null, };

@@ -109,11 +109,6 @@ impl IA5String {
 
         value = Self::clean_string(value);
 
-        // Error if empty after all processing
-        if value.is_empty() {
-            return Err(anyhow::anyhow!("Empty IA5String"));
-        }
-
         Ok(IA5String(value))
     }
 
@@ -148,11 +143,6 @@ impl IA5String {
         };
 
         value = Self::clean_string(value);
-
-        // Error if empty after all processing
-        if value.is_empty() {
-            return Err(anyhow::anyhow!("Empty IA5String"));
-        }
 
         Ok(IA5String(value))
     }
