@@ -15,7 +15,7 @@ use ts_rs::TS;
 pub struct CardGen1Blocks {
     pub card_icc_identification: gen1::CardIccIdentification,
     pub card_chip_identification: dt::CardChipIdentification,
-    pub application_identification: gen1::DriverCardApplicationIdentification,
+    pub application_identification: gen1::ApplicationIdentification,
     pub application_identification_signature: gen1::Signature,
     pub card_certificate: gen1::Certificate,
     pub member_state_certificate: gen1::Certificate,
@@ -23,6 +23,10 @@ pub struct CardGen1Blocks {
     pub identification_signature: gen1::Signature,
     pub card_download: Option<dt::CardDownload>,
     pub card_download_signature: Option<gen1::Signature>,
+    pub calibration: Option<gen1::WorkshopCardCalibrationData>,
+    pub calibration_signature: Option<gen1::Signature>,
+    pub sensor_installation_data: Option<gen1::SensorInstallation>,
+    pub sensor_installation_data_signature: Option<gen1::Signature>,
     pub driver_licence_info: Option<dt::CardDrivingLicenceInformation>,
     pub driver_licence_info_signature: Option<gen1::Signature>,
     pub events_data: gen1::CardEventData,
@@ -144,15 +148,18 @@ impl CardParser {
         let mut cursor = Cursor::new(&self.input[..]);
         let mut card_icc_identification: Option<gen1::CardIccIdentification> = None;
         let mut card_chip_identification: Option<dt::CardChipIdentification> = None;
-        let mut application_identification: Option<gen1::DriverCardApplicationIdentification> =
-            None;
+        let mut application_identification: Option<gen1::ApplicationIdentification> = None;
         let mut application_identification_signature: Option<gen1::Signature> = None;
         let mut card_certificate: Option<gen1::Certificate> = None;
         let mut member_state_certificate: Option<gen1::Certificate> = None;
         let mut identification: Option<dt::Identification> = None;
         let mut identification_signature: Option<gen1::Signature> = None;
-        let mut last_card_download: Option<dt::CardDownload> = None;
-        let mut last_card_download_signature: Option<gen1::Signature> = None;
+        let mut card_download: Option<dt::CardDownload> = None;
+        let mut card_download_signature: Option<gen1::Signature> = None;
+        let mut calibration: Option<gen1::WorkshopCardCalibrationData> = None;
+        let mut calibration_signature: Option<gen1::Signature> = None;
+        let mut sensor_installation_data: Option<gen1::SensorInstallation> = None;
+        let mut sensor_installation_data_signature: Option<gen1::Signature> = None;
         let mut driver_licence_info: Option<dt::CardDrivingLicenceInformation> = None;
         let mut driver_licence_info_signature: Option<gen1::Signature> = None;
         let mut events_data: Option<gen1::CardEventData> = None;
@@ -269,9 +276,9 @@ impl CardParser {
                         panic_on_duplicate_block_type("application_identification_gen1");
                     }
                     application_identification = Some(
-                        CardBlock::parse(
+                        CardBlock::parse_dyn_size(
                             &mut cursor,
-                            gen1::DriverCardApplicationIdentification::parse,
+                            gen1::ApplicationIdentification::parse_dyn_size,
                         )?
                         .into_inner(),
                     );
@@ -318,13 +325,60 @@ impl CardParser {
                         Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
                 }
                 // CardDownload Gen1
-                (0x050E, 0) => {
-                    last_card_download =
+                // 0x050E is CardDownload for driver card
+                // 0x0509 is CardDownload for workshop card
+                (0x050E, 0) | (0x0509, 0) => {
+                    if card_download.is_some() {
+                        panic_on_duplicate_block_type("card_download_gen1");
+                    }
+                    card_download =
                         Some(CardBlock::parse(&mut cursor, dt::CardDownload::parse)?.into_inner());
                 }
                 // CardDownload Signature Gen1
-                (0x050E, 1) => {
-                    last_card_download_signature =
+                (0x050E, 1) | (0x0509, 1) => {
+                    if card_download_signature.is_some() {
+                        panic_on_duplicate_block_type("card_download_signature_gen1");
+                    }
+                    card_download_signature =
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
+                }
+                // Calibration Gen1
+                (0x050A, 0) => {
+                    if calibration.is_some() {
+                        panic_on_duplicate_block_type("calibration_gen1");
+                    }
+                    calibration = Some(
+                        CardBlock::parse_dyn_size(
+                            &mut cursor,
+                            gen1::WorkshopCardCalibrationData::parse_dyn_size,
+                        )?
+                        .into_inner(),
+                    );
+                }
+                // Calibration Signature Gen1
+                (0x050A, 1) => {
+                    if calibration_signature.is_some() {
+                        panic_on_duplicate_block_type("calibration_signature_gen1");
+                    }
+                    calibration_signature =
+                        Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
+                }
+                // SensorInstallationData Gen1
+                (0x050B, 0) => {
+                    if sensor_installation_data.is_some() {
+                        panic_on_duplicate_block_type("sensor_installation_data_gen1");
+                    }
+                    sensor_installation_data = Some(
+                        CardBlock::parse(&mut cursor, gen1::SensorInstallation::parse)?
+                            .into_inner(),
+                    );
+                }
+                // SensorInstallationData Signature Gen1
+                (0x050B, 1) => {
+                    if sensor_installation_data_signature.is_some() {
+                        panic_on_duplicate_block_type("sensor_installation_data_signature_gen1");
+                    }
+                    sensor_installation_data_signature =
                         Some(CardBlock::parse(&mut cursor, gen1::Signature::parse)?.into_inner());
                 }
                 // DrivingLicenseInfo Gen1
@@ -1102,10 +1156,14 @@ impl CardParser {
                 .context("unable to find identification gen1 after parsing file")?,
             identification_signature: identification_signature
                 .context("unable to find identification_signature gen1 after parsing file")?,
-            card_download: last_card_download,
-            card_download_signature: last_card_download_signature,
+            card_download,
+            card_download_signature,
+            calibration,
+            calibration_signature,
+            sensor_installation_data,
+            sensor_installation_data_signature,
             driver_licence_info,
-            driver_licence_info_signature: driver_licence_info_signature,
+            driver_licence_info_signature,
             events_data: events_data
                 .context("unable to find events_data gen1 after parsing file")?,
             events_data_signature: events_data_signature

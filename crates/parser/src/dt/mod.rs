@@ -358,25 +358,29 @@ pub enum CardStructureVersion {
 }
 impl CardStructureVersion {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let fb = cursor
+        // 'aa'H Index for changes of the structure
+        let structure_version = cursor
             .read_u8()
-            .context("Failed to read first byte of CardStructureVersion")?;
-        let sb = cursor
+            .context("Failed to read structure version byte of CardStructureVersion")?;
+
+        // 'bb'H Index for changes concerning data element usage
+        let data_usage_version = cursor
             .read_u8()
-            .context("Failed to read second byte of CardStructureVersion")?;
+            .context("Failed to read data usage version byte of CardStructureVersion")?;
 
-        let version = match (fb, sb) {
-            (0x00, 0x00) => Self::Gen1,
-            (0x01, 0x00) => Self::Gen2,
-            (0x01, 0x01) => Self::Gen2V2,
-            _ => {
-                return Err(
-                    anyhow::anyhow!("Invalid CardStructureVersion: {:02x} {:02x}", fb, sb).into(),
-                )
-            }
-        };
-
-        Ok(version)
+        match (structure_version, data_usage_version) {
+            // Gen1: '00'H '00'H
+            (0x00, 0x00) => Ok(Self::Gen1),
+            // Gen2v1: '01'H '00'H 
+            (0x01, 0x00) => Ok(Self::Gen2),
+            // Gen2v2: '01'H '01'H
+            (0x01, 0x01) => Ok(Self::Gen2V2),
+            _ => Err(anyhow::anyhow!(
+                "Invalid CardStructureVersion: structure version={:02x}H, data usage version={:02x}H",
+                structure_version,
+                data_usage_version
+            ))
+        }
     }
 }
 #[derive(Debug, Serialize, Deserialize)]

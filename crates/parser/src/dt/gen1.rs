@@ -506,22 +506,23 @@ impl PlaceRecord {
 /// [DriverCardApplicationIdentification: appendix 2.61.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e19751)
 pub struct DriverCardApplicationIdentification {
     pub type_of_tachograph_card_id: EquipmentType,
-    pub card_structure_version: Vec<u8>,
-    pub no_of_events_per_type: u8,
-    pub no_of_faults_per_type: u8,
-    pub activity_structure_length: u16,
-    pub no_of_card_vehicle_records: u16,
-    pub no_of_card_place_records: u8,
+    pub card_structure_version: CardStructureVersion,
+    pub no_of_events_per_type: NoOfEventsPerType,
+    pub no_of_faults_per_type: NoOfFaultsPerType,
+    pub activity_structure_length: CardActivityLengthRange,
+    pub no_of_card_vehicle_records: NoOfCardVehicleRecords,
+    pub no_of_card_place_records: NoOfCardPlaceRecords,
 }
 
 impl DriverCardApplicationIdentification {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let type_of_tachograph_card_id = EquipmentType::parse(cursor)?;
+        let type_of_tachograph_card_id = EquipmentType::parse(cursor).context(
+            "Failed to read type_of_tachograph_card_id in DriverCardApplicationIdentification",
+        )?;
 
-        let mut card_structure_version = [0u8; 2];
-        cursor
-            .read_exact(&mut card_structure_version)
-            .context("Failed to read card_structure_version")?;
+        let card_structure_version = CardStructureVersion::parse(cursor).context(
+            "Failed to read card_structure_version in DriverCardApplicationIdentification",
+        )?;
 
         let no_of_events_per_type = cursor
             .read_u8()
@@ -545,13 +546,181 @@ impl DriverCardApplicationIdentification {
 
         Ok(DriverCardApplicationIdentification {
             type_of_tachograph_card_id,
-            card_structure_version: card_structure_version.to_vec(),
+            card_structure_version,
             no_of_events_per_type,
             no_of_faults_per_type,
             activity_structure_length,
             no_of_card_vehicle_records,
             no_of_card_place_records,
         })
+    }
+}
+
+/// [NoOfEventsPerType: appendix 2.109.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22706)
+type NoOfEventsPerType = u8;
+/// [NoOfFaultsPerType: appendix 2.110.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22729)
+type NoOfFaultsPerType = u8;
+/// [ActivityStructureLength: appendix 2.10.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16777)
+type CardActivityLengthRange = u16;
+/// [NoOfCardVehicleRecords: appendix 2.105.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22612)
+type NoOfCardVehicleRecords = u16;
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct WorkshopCardApplicationIdentification {
+    pub type_of_tachograph_card_id: EquipmentType,
+    pub card_structure_version: CardStructureVersion,
+    pub no_of_events_per_type: NoOfEventsPerType,
+    pub no_of_faults_per_type: NoOfFaultsPerType,
+    pub activity_structure_length: CardActivityLengthRange,
+    pub no_of_card_vehicle_records: NoOfCardVehicleRecords,
+    pub no_of_card_place_records: NoOfCardPlaceRecords,
+    pub no_of_calibration_records: NoOfCalibrationRecords,
+}
+
+impl WorkshopCardApplicationIdentification {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let type_of_tachograph_card_id = EquipmentType::parse(cursor).context(
+            "Failed to read type_of_tachograph_card_id in WorkshopCardApplicationIdentification",
+        )?;
+
+        let card_structure_version = CardStructureVersion::parse(cursor).context(
+            "Failed to read card_structure_version in WorkshopCardApplicationIdentification",
+        )?;
+
+        let no_of_events_per_type = cursor
+            .read_u8()
+            .context("Failed to read no_of_events_per_type")?;
+
+        let no_of_faults_per_type = cursor
+            .read_u8()
+            .context("Failed to read no_of_faults_per_type")?;
+
+        let activity_structure_length = cursor
+            .read_u16::<BigEndian>()
+            .context("Failed to read activity_structure_length")?;
+
+        let no_of_card_vehicle_records = cursor
+            .read_u16::<BigEndian>()
+            .context("Failed to read no_of_card_vehicle_records")?;
+
+        let no_of_card_place_records = cursor
+            .read_u8()
+            .context("Failed to read no_of_card_place_records")?;
+
+        let no_of_calibration_records = cursor
+            .read_u8()
+            .context("Failed to read no_of_calibration_records")?;
+
+        Ok(Self {
+            type_of_tachograph_card_id,
+            card_structure_version,
+            no_of_events_per_type,
+            no_of_faults_per_type,
+            activity_structure_length,
+            no_of_card_vehicle_records,
+            no_of_card_place_records,
+            no_of_calibration_records,
+        })
+    }
+}
+
+/// [NoOfControlActivityRecords: appendix 2.108.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22683)
+type NoOfControlActivityRecords = u16;
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [ControlCardApplicationIdentification: appendix 2.50.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18950)
+pub struct ControlCardApplicationIdentification {
+    pub type_of_tachograph_card_id: EquipmentType,
+    pub card_structure_version: CardStructureVersion,
+    pub no_of_control_activity_records: NoOfControlActivityRecords,
+}
+impl ControlCardApplicationIdentification {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let type_of_tachograph_card_id = EquipmentType::parse(cursor).context(
+            "Failed to read type_of_tachograph_card_id in ControlCardApplicationIdentification",
+        )?;
+        let card_structure_version = CardStructureVersion::parse(cursor).context(
+            "Failed to read card_structure_version in ControlCardApplicationIdentification",
+        )?;
+        let no_of_control_activity_records = cursor
+            .read_u16::<BigEndian>()
+            .context("Failed to read no_of_control_activity_records")?;
+        Ok(Self {
+            type_of_tachograph_card_id,
+            card_structure_version,
+            no_of_control_activity_records,
+        })
+    }
+}
+
+/// [NoOfCompanyActivityRecords: appendix 2.107.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e22660)
+type NoOfCompanyActivityRecords = u16;
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [CompanyCardApplicationIdentification: appendix 2.48.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e18846)
+pub struct CompanyCardApplicationIdentification {
+    pub type_of_tachograph_card_id: EquipmentType,
+    pub card_structure_version: CardStructureVersion,
+    pub no_of_company_records: NoOfCompanyActivityRecords,
+}
+impl CompanyCardApplicationIdentification {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let type_of_tachograph_card_id = EquipmentType::parse(cursor).context(
+            "Failed to read type_of_tachograph_card_id in CompanyCardApplicationIdentification",
+        )?;
+        let card_structure_version = CardStructureVersion::parse(cursor).context(
+            "Failed to read card_structure_version in CompanyCardApplicationIdentification",
+        )?;
+        let no_of_company_records = cursor
+            .read_u16::<BigEndian>()
+            .context("Failed to read no_of_company_records")?;
+        Ok(Self {
+            type_of_tachograph_card_id,
+            card_structure_version,
+            no_of_company_records,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+#[cfg_attr(feature = "ts", derive(TS))]
+pub enum ApplicationIdentification {
+    DriverCard(DriverCardApplicationIdentification),
+    WorkshopCard(WorkshopCardApplicationIdentification),
+    ControlCard(ControlCardApplicationIdentification),
+    CompanyCard(CompanyCardApplicationIdentification),
+}
+impl ApplicationIdentification {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, _size: usize) -> Result<Self> {
+        let type_of_tachograph_card_id = EquipmentType::parse(cursor)
+            .context("Failed to read type_of_tachograph_card_id in ApplicationIdentification")?;
+
+        // return back to the previous position (before parsing the type)
+        // so that we can fully parse the inner struct below
+        cursor.set_position(cursor.position() - 1);
+
+        match type_of_tachograph_card_id {
+            EquipmentType::DriverCard => Ok(ApplicationIdentification::DriverCard(
+                DriverCardApplicationIdentification::parse(cursor)?,
+            )),
+            EquipmentType::WorkshopCard => Ok(ApplicationIdentification::WorkshopCard(
+                WorkshopCardApplicationIdentification::parse(cursor)?,
+            )),
+            EquipmentType::ControlCard => Ok(ApplicationIdentification::ControlCard(
+                ControlCardApplicationIdentification::parse(cursor)?,
+            )),
+            EquipmentType::CompanyCard => Ok(ApplicationIdentification::CompanyCard(
+                CompanyCardApplicationIdentification::parse(cursor)?,
+            )),
+            _ => anyhow::bail!("Invalid ApplicationIdentification type"),
+        }
     }
 }
 
@@ -1763,6 +1932,158 @@ impl VuCompanyLocksBlock {
             sensor_paired,
             vu_calibration_data,
             signature,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+pub struct WorkshopCardCalibrationRecord {
+    pub calibration_purpose: CalibrationPurpose,
+    pub vehicle_identification_number: VehicleIdentificationNumber,
+    pub vehicle_registration: VehicleRegistrationIdentification,
+    pub w_vehicle_characteristic_constant: WVehicleCharacteristicConstant,
+    pub k_constant_of_recording_equipment: KConstantOfRecordingEquipment,
+    pub l_tyre_circumference: LTyreCircumference,
+    pub tyre_size: TyreSize,
+    pub authorised_speed: SpeedAuthorised,
+    pub old_odometer_value: OdometerShort,
+    pub new_odometer_value: OdometerShort,
+    pub old_time_value: TimeReal,
+    pub new_time_value: TimeReal,
+    pub next_calibration_date: TimeReal,
+    pub vu_part_number: VuPartNumber,
+    pub vu_serial_number: VuSerialNumber,
+    pub sensor_serial_number: SensorSerialNumber,
+}
+impl WorkshopCardCalibrationRecord {
+    const SIZE: usize = 105;
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let cursor = &mut cursor.take_exact(Self::SIZE);
+        let calibration_purpose =
+            CalibrationPurpose::parse(cursor).context("Failed to parse calibration_purpose")?;
+        let vehicle_identification_number = VehicleIdentificationNumber::parse(cursor)
+            .context("Failed to parse vehicle_identification_number")?;
+        let vehicle_registration = VehicleRegistrationIdentification::parse(cursor)
+            .context("Failed to parse vehicle_registration")?;
+        let w_vehicle_characteristic_constant = WVehicleCharacteristicConstant::parse(cursor)
+            .context("Failed to parse w_vehicle_characteristic_constant")?;
+        let k_constant_of_recording_equipment = KConstantOfRecordingEquipment::parse(cursor)
+            .context("Failed to parse k_constant_of_recording_equipment")?;
+        let l_tyre_circumference =
+            LTyreCircumference::parse(cursor).context("Failed to parse l_tyre_circumference")?;
+        let tyre_size = TyreSize::parse(cursor).context("Failed to parse tyre_size")?;
+        let authorised_speed =
+            SpeedAuthorised::parse(cursor).context("Failed to parse authorised_speed")?;
+        let old_odometer_value =
+            OdometerShort::parse(cursor).context("Failed to parse old_odometer_value")?;
+        let new_odometer_value =
+            OdometerShort::parse(cursor).context("Failed to parse new_odometer_value")?;
+        let old_time_value = TimeReal::parse(cursor).context("Failed to parse old_time_value")?;
+        let new_time_value = TimeReal::parse(cursor).context("Failed to parse new_time_value")?;
+        let next_calibration_date =
+            TimeReal::parse(cursor).context("Failed to parse next_calibration_date")?;
+        let vu_part_number =
+            VuPartNumber::parse(cursor).context("Failed to parse vu_part_number")?;
+        let vu_serial_number =
+            VuSerialNumber::parse(cursor).context("Failed to parse vu_serial_number")?;
+        let sensor_serial_number =
+            SensorSerialNumber::parse(cursor).context("Failed to parse sensor_serial_number")?;
+
+        Ok(Self {
+            calibration_purpose,
+            vehicle_identification_number,
+            vehicle_registration,
+            w_vehicle_characteristic_constant,
+            k_constant_of_recording_equipment,
+            l_tyre_circumference,
+            tyre_size,
+            authorised_speed,
+            old_odometer_value,
+            new_odometer_value,
+            old_time_value,
+            new_time_value,
+            next_calibration_date,
+            vu_part_number,
+            vu_serial_number,
+            sensor_serial_number,
+        })
+    }
+}
+
+/// [NoOfCalibrationRecords: appendix 2.235.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e29088)
+pub type NoOfCalibrationRecords = u8;
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [WorkshopCardCalibrationData: appendix 2.235.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e29088)
+pub struct WorkshopCardCalibrationData {
+    pub calibration_total_number: u16,
+    pub calibration_pointer_newest_record: NoOfCalibrationRecords,
+    pub calibration_records: Vec<WorkshopCardCalibrationRecord>,
+}
+impl WorkshopCardCalibrationData {
+    pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
+        let calibration_total_number = cursor
+            .read_u16::<BigEndian>()
+            .context("Failed to parse calibration_total_number")?;
+        let calibration_pointer_newest_record = cursor
+            .read_u8()
+            .context("Failed to parse calibration_pointer_newest_record")?;
+
+        let no_of_records = size / WorkshopCardCalibrationRecord::SIZE;
+        let mut calibration_records = Vec::new();
+        for _ in 0..no_of_records {
+            if let Some(record) = WorkshopCardCalibrationRecord::parse(cursor).ok() {
+                calibration_records.push(record);
+            } else {
+                break;
+            }
+        }
+        Ok(Self {
+            calibration_total_number,
+            calibration_pointer_newest_record,
+            calibration_records,
+        })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS))]
+/// [SensorInstallation: appendix 2.141.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e24238)
+pub struct SensorInstallation {
+    pub sensor_pairing_date_first: SensorPairingDate,
+    pub first_vu_approval_number: VuApprovalNumber,
+    pub first_vu_serial_number: VuSerialNumber,
+    pub sensor_pairing_date_current: SensorPairingDate,
+    pub current_vu_approval_number: VuApprovalNumber,
+    pub current_vu_serial_number: VuSerialNumber,
+}
+impl SensorInstallation {
+    pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let sensor_pairing_date_first = SensorPairingDate::parse(cursor)
+            .context("Failed to parse sensor_pairing_date_first")?;
+        let first_vu_approval_number =
+            VuApprovalNumber::parse(cursor).context("Failed to parse first_vu_approval_number")?;
+        let first_vu_serial_number =
+            VuSerialNumber::parse(cursor).context("Failed to parse first_vu_serial_number")?;
+        let sensor_pairing_date_current = SensorPairingDate::parse(cursor)
+            .context("Failed to parse sensor_pairing_date_current")?;
+        let current_vu_approval_number = VuApprovalNumber::parse(cursor)
+            .context("Failed to parse current_vu_approval_number")?;
+        let current_vu_serial_number =
+            VuSerialNumber::parse(cursor).context("Failed to parse current_vu_serial_number")?;
+
+        Ok(Self {
+            sensor_pairing_date_first,
+            first_vu_approval_number,
+            first_vu_serial_number,
+            sensor_pairing_date_current,
+            current_vu_approval_number,
+            current_vu_serial_number,
         })
     }
 }
