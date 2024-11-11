@@ -1,2 +1,4 @@
 /target
 /data
+crates/parser/certs/pks1/*
+crates/parser/certs/pks2/*
