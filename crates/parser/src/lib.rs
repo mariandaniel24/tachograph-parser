@@ -1,7 +1,7 @@
 mod bytes;
 pub mod card_parser;
 pub mod detector;
-mod dt;
+pub mod dt;
 pub mod vu_parser;
 use anyhow::{Context, Result};
 use card_parser::CardParser;
