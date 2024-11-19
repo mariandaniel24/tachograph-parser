@@ -1,4 +1,4 @@
 /target
 /data
-crates/parser/certs/pks1/*
-crates/parser/certs/pks2/*
+crates/parser/certs/pks1/*.bin
+crates/parser/certs/pks2/*.bin

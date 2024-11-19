@@ -8,6 +8,8 @@ use std::io::Read;
 #[cfg(feature = "ts")]
 use ts_rs::TS;
 
+const ROOT_CERT_PK: &[u8] = include_bytes!("../../certs/pks1/root/EC_PK.bin");
+
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ts", derive(TS))]
 /// [EquipmentType: appendix 2.67.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e20100)
@@ -342,6 +344,27 @@ impl Certificate {
         cursor
             .read_exact(&mut value)
             .context("Failed to read certificate")?;
+        let path = format!(
+            "{}/crates/parser/certs/pks1",
+            std::env::current_dir().unwrap().display()
+        );
+        let certs = std::fs::read_dir(path).context("Failed to read certificate directory")?;
+
+        for cert in certs {
+            let cert = cert.context("Failed to read directory entry")?;
+            let path = cert.path();
+            if path.extension().and_then(|ext| ext.to_str()) == Some("bin") {
+                if let Ok(cert_data) = std::fs::read(&path) {
+                    if cert_data == value {
+                        log::info!("Path: {:?}", path);
+                        log::info!("Cert: {:?}\n\n\n", cert);
+                    }
+                }
+            }
+        }
+
+        println!("Cert: {:?}", value);
+
         Ok(Certificate(value))
     }
 }
