@@ -732,14 +732,14 @@ impl ManualInputFlag {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoSlot {
     Driver,
     CoDriver,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoStatus {
     Single,  // When p=0, c=0
