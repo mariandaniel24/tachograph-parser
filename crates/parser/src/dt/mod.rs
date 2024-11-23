@@ -732,14 +732,14 @@ impl ManualInputFlag {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoSlot {
     Driver,
     CoDriver,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoStatus {
     Single,  // When p=0, c=0
@@ -748,14 +748,14 @@ pub enum ActivityChangeInfoStatus {
     Known,   // When p=1, c=1
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoCardStatus {
     Inserted,    // p=0
     NotInserted, // p=1
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[cfg_attr(feature = "ts", derive(TS))]
 pub enum ActivityChangeInfoCardActivity {
     BreakRest,    // aa=00
@@ -764,7 +764,7 @@ pub enum ActivityChangeInfoCardActivity {
     Driving,      // aa=11
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 /// [ActivityChangeInfo: appendix 2.1.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e16027)
 #[cfg_attr(feature = "ts", derive(TS))]
