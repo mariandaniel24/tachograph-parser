@@ -18,19 +18,58 @@ struct NoopStruct {
 
 #[napi(ts_return_type = "VuData")]
 pub fn parse_vu(bytes: Buffer) -> Result<String, napi::Error> {
-    tachograph_parser::parse_vu_from_bytes_to_json(&bytes)
-        .map_err(|e| napi::Error::from_reason(e.to_string()))
+    std::panic::catch_unwind(|| {
+        tachograph_parser::parse_vu_from_bytes_to_json(&bytes)
+            .map_err(|e| napi::Error::from_reason(e.to_string()))
+    })
+    .unwrap_or_else(|panic| {
+        let panic_msg = panic
+            .downcast_ref::<String>()
+            .map(|s| s.as_str())
+            .or_else(|| panic.downcast_ref::<&str>().copied())
+            .unwrap_or("Unknown panic");
+        Err(napi::Error::from_reason(format!(
+            "Parser panicked: {}",
+            panic_msg
+        )))
+    })
 }
 
 #[napi(ts_return_type = "CardData")]
 pub fn parse_card(bytes: Buffer) -> Result<String, napi::Error> {
-    tachograph_parser::parse_card_from_bytes_to_json(&bytes)
-        .map_err(|e| napi::Error::from_reason(e.to_string()))
+    std::panic::catch_unwind(|| {
+        tachograph_parser::parse_card_from_bytes_to_json(&bytes)
+            .map_err(|e| napi::Error::from_reason(e.to_string()))
+    })
+    .unwrap_or_else(|panic| {
+        let panic_msg = panic
+            .downcast_ref::<String>()
+            .map(|s| s.as_str())
+            .or_else(|| panic.downcast_ref::<&str>().copied())
+            .unwrap_or("Unknown panic");
+        Err(napi::Error::from_reason(format!(
+            "Parser panicked: {}",
+            panic_msg
+        )))
+    })
 }
 
 #[napi(ts_return_type = "TachoFileType")]
 pub fn detect_tacho_file_type(bytes: Buffer) -> Result<String, napi::Error> {
-    let value = tachograph_parser::detector::detect_from_bytes(&bytes)
-        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
-    Ok(value.to_string())
+    std::panic::catch_unwind(|| {
+        let value = tachograph_parser::detector::detect_from_bytes(&bytes)
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        Ok(value.to_string())
+    })
+    .unwrap_or_else(|panic| {
+        let panic_msg = panic
+            .downcast_ref::<String>()
+            .map(|s| s.as_str())
+            .or_else(|| panic.downcast_ref::<&str>().copied())
+            .unwrap_or("Unknown panic");
+        Err(napi::Error::from_reason(format!(
+            "Parser panicked: {}",
+            panic_msg
+        )))
+    })
 }
