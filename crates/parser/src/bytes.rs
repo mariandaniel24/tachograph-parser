@@ -53,22 +53,25 @@ pub fn extract_u16_bits_into_tup(
 }
 
 pub trait TakeExact {
-    fn take_exact(&mut self, size: usize) -> Cursor<&[u8]>;
+    fn take_exact(&mut self, size: usize) -> Result<Cursor<&[u8]>, std::io::Error>;
 }
 
 impl TakeExact for Cursor<&[u8]> {
-    fn take_exact(&mut self, size: usize) -> Cursor<&[u8]> {
+    fn take_exact(&mut self, size: usize) -> Result<Cursor<&[u8]>, std::io::Error> {
         let position = self.position() as usize;
         let remaining = self.get_ref().len() - position;
         if size > remaining {
-            panic!(
-                "Attempted to take {} bytes, but only {} bytes remain",
-                size, remaining
-            );
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::UnexpectedEof,
+                format!(
+                    "Attempted to take {} bytes, but only {} bytes remain",
+                    size, remaining
+                ),
+            ));
         }
         let end = position + size;
         let slice = &self.get_ref()[position..end];
         self.set_position(end as u64);
-        Cursor::new(slice)
+        Ok(Cursor::new(slice))
     }
 }

@@ -291,7 +291,11 @@ pub struct SpecificConditionRecord {
 impl SpecificConditionRecord {
     const SIZE: usize = 5;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let entry_time = TimeReal::parse(inner_cursor)?;
         let specific_condition_type = SpecificConditionType::parse(inner_cursor)?;
@@ -480,7 +484,11 @@ pub struct PlaceRecord {
 impl PlaceRecord {
     const SIZE: usize = 10;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let entry_time = TimeReal::parse(inner_cursor)?;
         let entry_type_daily_work_period = EntryTypeDailyWorkPeriod::parse(inner_cursor)?;
@@ -738,7 +746,11 @@ pub struct CardEventRecord {
 impl CardEventRecord {
     const SIZE: usize = 24;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let event_type = EventFaultType::parse(inner_cursor)?;
         let event_begin_time = TimeReal::parse(inner_cursor)?;
@@ -801,7 +813,11 @@ pub struct CardFaultRecord {
 impl CardFaultRecord {
     const SIZE: usize = 24;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let fault_type = EventFaultType::parse(inner_cursor)?;
         let fault_begin_time = TimeReal::parse(inner_cursor)?;
@@ -866,7 +882,11 @@ pub struct CardVehicleRecord {
 impl CardVehicleRecord {
     const SIZE: usize = 31;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         Ok(CardVehicleRecord {
             vehicle_odometer_begin: OdometerShort::parse(inner_cursor)?,
@@ -889,7 +909,12 @@ pub struct CardVehiclesUsed {
 }
 impl CardVehiclesUsed {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
+
         let vehicle_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read vehicle_pointer_newest_record")?;
@@ -924,7 +949,11 @@ pub struct CardPlaceDailyWorkPeriod {
 }
 impl CardPlaceDailyWorkPeriod {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
 
         let place_pointer_newest_record = cursor
             .read_u8()
@@ -965,7 +994,11 @@ pub struct CardControlActivityDataRecord {
 impl CardControlActivityDataRecord {
     const SIZE: usize = 46;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let control_type = ControlType::parse(inner_cursor)?;
         let control_time = TimeReal::parse(inner_cursor).ok();
@@ -1557,7 +1590,11 @@ pub struct VuOverSpeedingControlData {
 impl VuOverSpeedingControlData {
     const SIZE: usize = 9;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         Ok(Self {
             last_overspeed_control_time: TimeReal::parse(inner_cursor).ok(),
@@ -1960,7 +1997,11 @@ pub struct WorkshopCardCalibrationRecord {
 impl WorkshopCardCalibrationRecord {
     const SIZE: usize = 105;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(Self::SIZE);
+        let cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
         let calibration_purpose =
             CalibrationPurpose::parse(cursor).context("Failed to parse calibration_purpose")?;
         let vehicle_identification_number = VehicleIdentificationNumber::parse(cursor)

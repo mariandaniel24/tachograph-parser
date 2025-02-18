@@ -604,7 +604,11 @@ pub struct PlaceRecordGen2 {
 impl PlaceRecordGen2 {
     const SIZE: usize = 21;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let entry_time = TimeReal::parse(inner_cursor)?;
         let entry_type_daily_work_period = EntryTypeDailyWorkPeriodGen2::parse(inner_cursor)?;
@@ -664,7 +668,11 @@ pub struct SpecificConditionRecordGen2 {
 impl SpecificConditionRecordGen2 {
     const SIZE: usize = 5;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let entry_time = TimeReal::parse(inner_cursor)?;
         let specific_condition_type = SpecificConditionTypeGen2::parse(inner_cursor)?;
@@ -1013,7 +1021,13 @@ pub struct SealDataVuGen2 {
 impl SealDataVuGen2 {
     const NO_OF_RECORDS: usize = 5;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::NO_OF_RECORDS * SealRecordGen2::SIZE);
+        let inner_cursor = &mut cursor
+            .take_exact(Self::NO_OF_RECORDS * SealRecordGen2::SIZE)
+            .context(format!(
+                "Failed to take cursor for {}, size: {}",
+                std::any::type_name::<Self>(),
+                Self::NO_OF_RECORDS * SealRecordGen2::SIZE
+            ))?;
 
         let mut seal_records = Vec::with_capacity(Self::NO_OF_RECORDS);
         for _ in 0..Self::NO_OF_RECORDS {
@@ -1189,7 +1203,11 @@ pub struct CardEventRecordGen2 {
 impl CardEventRecordGen2 {
     const SIZE: usize = 24;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let event_type = EventFaultTypeGen2::parse(inner_cursor)?;
         let event_begin_time = TimeReal::parse(inner_cursor)?;
@@ -1252,7 +1270,11 @@ pub struct CardFaultRecordGen2 {
 impl CardFaultRecordGen2 {
     pub const SIZE: usize = 24;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let fault_type = EventFaultTypeGen2::parse(inner_cursor)?;
         let fault_begin_time = TimeReal::parse(inner_cursor)?;
@@ -1329,7 +1351,11 @@ pub struct CardVehicleRecordGen2 {
 impl CardVehicleRecordGen2 {
     const SIZE: usize = 48;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         Ok(CardVehicleRecordGen2 {
             vehicle_odometer_begin: OdometerShort::parse(inner_cursor)?,
@@ -1353,7 +1379,11 @@ pub struct CardVehiclesUsedGen2 {
 }
 impl CardVehiclesUsedGen2 {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
         let vehicle_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read vehicle_pointer_newest_record")?;
@@ -1385,7 +1415,11 @@ pub struct CardPlaceDailyWorkPeriodGen2 {
 }
 impl CardPlaceDailyWorkPeriodGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
         let place_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read place_pointer_newest_record")?;
@@ -1424,7 +1458,11 @@ pub struct CardControlActivityDataRecordGen2 {
 impl CardControlActivityDataRecordGen2 {
     const SIZE: usize = 46;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         Ok(Self {
             control_type: ControlTypeGen2::parse(inner_cursor)?,
@@ -1448,7 +1486,11 @@ pub struct SpecificConditionsGen2 {
 }
 impl SpecificConditionsGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
         let condition_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to read condition_pointer_newest_record")?;
@@ -1485,7 +1527,11 @@ pub struct CardVehicleUnitRecordGen2 {
 impl CardVehicleUnitRecordGen2 {
     const SIZE: usize = 10;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let time_stamp = TimeReal::parse(inner_cursor)?;
         let manufacturer_code = external::ManufacturerCode::parse(inner_cursor)?;
@@ -1577,7 +1623,11 @@ pub struct GnssAccumulatedDrivingGen2 {
 }
 impl GnssAccumulatedDrivingGen2 {
     pub fn parse(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(size);
+        let inner_cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
         let gnss_ad_pointer_newest_record = inner_cursor
             .read_u16::<BigEndian>()
             .context("Failed to read gnss_ad_pointer_newest_record")?;

@@ -194,7 +194,11 @@ pub struct PlaceAuthStatusRecord {
 impl PlaceAuthStatusRecord {
     pub const SIZE: usize = 5;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let entry_time = TimeReal::parse(inner_cursor).context("Failed to parse entry_time")?;
         let authentication_status = PositionAuthenticationStatus::parse(inner_cursor)
@@ -217,7 +221,11 @@ pub struct CardPlacesAuthDailyWorkPeriod {
 
 impl CardPlacesAuthDailyWorkPeriod {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
 
         let place_auth_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
@@ -254,7 +262,11 @@ pub struct GNSSAuthStatusADRecord {
 impl GNSSAuthStatusADRecord {
     pub const SIZE: usize = 5;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let time_stamp = TimeReal::parse(inner_cursor).context("Failed to parse time_stamp")?;
         let authentication_status = PositionAuthenticationStatus::parse(inner_cursor)
@@ -278,7 +290,11 @@ pub struct GNSSAuthAccumulatedDriving {
 
 impl GNSSAuthAccumulatedDriving {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
 
         let gnss_auth_ad_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
@@ -352,7 +368,11 @@ pub struct CardBorderCrossingRecord {
 impl CardBorderCrossingRecord {
     pub const SIZE: usize = 17;
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(Self::SIZE);
+        let cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
 
         let country_left =
             external::NationNumeric::parse(cursor).context("Failed to parse country_left")?;
@@ -382,7 +402,12 @@ pub struct CardBorderCrossings {
 }
 impl CardBorderCrossings {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
+
         let border_crossing_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
             .context("Failed to parse border_crossing_pointer_newest_record")?;
@@ -466,7 +491,11 @@ pub struct CardLoadUnloadOperations {
 }
 impl CardLoadUnloadOperations {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
 
         let load_unload_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
@@ -542,7 +571,11 @@ pub struct CardLoadTypeEntries {
 }
 impl CardLoadTypeEntries {
     pub fn parse_dyn_size(cursor: &mut Cursor<&[u8]>, size: usize) -> Result<Self> {
-        let cursor = &mut cursor.take_exact(size);
+        let cursor = &mut cursor.take_exact(size).context(format!(
+            "Failed to take cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            size
+        ))?;
 
         let load_type_pointer_newest_record = cursor
             .read_u16::<BigEndian>()
