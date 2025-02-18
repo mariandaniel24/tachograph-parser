@@ -780,7 +780,11 @@ impl CardActivityChangeInfo {
     pub const SIZE: usize = 2;
 
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(Self::SIZE);
+        let inner_cursor = &mut cursor.take_exact(Self::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            Self::SIZE
+        ))?;
         let value_buffer = inner_cursor
             .read_u16::<BigEndian>()
             .context("Failed to read activity change info")?;
@@ -1018,8 +1022,11 @@ pub struct CardDownload {
 }
 impl CardDownload {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let inner_cursor = &mut cursor.take_exact(LastCardDownload::SIZE);
-
+        let inner_cursor = &mut cursor.take_exact(LastCardDownload::SIZE).context(format!(
+            "Failed to take inner cursor for {}, size: {}",
+            std::any::type_name::<Self>(),
+            LastCardDownload::SIZE
+        ))?;
         let last_card_download = LastCardDownload::parse(inner_cursor).ok();
         Ok(CardDownload { last_card_download })
     }
