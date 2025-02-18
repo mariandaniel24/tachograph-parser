@@ -217,7 +217,6 @@ impl CardRenewalIndex {
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
 #[serde(rename_all = "camelCase")]
-#[serde(tag = "type")]
 /// [CardNumber: appendix 2.26.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17629)
 pub enum CardNumber {
     #[serde(rename_all = "camelCase")]
@@ -1203,11 +1202,38 @@ impl CardDriverActivity {
         newest_record: usize,
         size: usize,
     ) -> Result<Vec<u8>> {
-        // Get the length of the newest record
+        // Validate input parameters
+        if oldest_record >= size || newest_record >= size {
+            return Err(anyhow::anyhow!(
+                "Record pointers out of bounds: oldest={}, newest={}, size={}",
+                oldest_record,
+                newest_record,
+                size
+            ));
+        }
+
+        // Safely get the length of the newest record
+        if newest_record + 4 > size {
+            return Err(anyhow::anyhow!(
+                "Cannot read newest record length: record start {} exceeds buffer size {}",
+                newest_record,
+                size
+            ));
+        }
+
         let newest_record_length = u16::from_be_bytes([
-            cyclic_data[newest_record as usize + 2],
-            cyclic_data[newest_record as usize + 3],
+            cyclic_data[newest_record + 2],
+            cyclic_data[newest_record + 3],
         ]) as usize;
+
+        // Validate record length
+        if newest_record_length > size {
+            return Err(anyhow::anyhow!(
+                "Invalid record length: {} exceeds buffer size {}",
+                newest_record_length,
+                size
+            ));
+        }
 
         // Calculate the end position of the newest record
         let end_of_newest_record = (newest_record + newest_record_length) % size;
@@ -1216,16 +1242,14 @@ impl CardDriverActivity {
         let is_wrapped = end_of_newest_record < oldest_record;
 
         let uncycled_data = if is_wrapped {
-            // If wrapped, concatenate two slices:
-            // 1. From oldest_record to the end of the buffer
-            // 2. From the start of the buffer to the end of the newest record
+            // If wrapped, concatenate two slices with bounds checking
             let mut data = Vec::new();
-            data.extend_from_slice(&cyclic_data[oldest_record..]);
-            data.extend_from_slice(&cyclic_data[..end_of_newest_record]);
+            data.extend_from_slice(&cyclic_data[oldest_record.min(size)..]);
+            data.extend_from_slice(&cyclic_data[..end_of_newest_record.min(size)]);
             data
         } else {
-            // If not wrapped, simply take the slice from oldest to newest
-            cyclic_data[oldest_record..end_of_newest_record].to_vec()
+            // If not wrapped, take the slice with bounds checking
+            cyclic_data[oldest_record.min(size)..end_of_newest_record.min(size)].to_vec()
         };
 
         Ok(uncycled_data)
@@ -1271,17 +1295,15 @@ impl DriverActivityData {
 pub struct VuDataBlockCounter(pub u16);
 impl VuDataBlockCounter {
     pub fn parse(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let value = BCDString::parse_dyn_size(cursor, 2)?;
-
-        let num_value = value
+        let value = BCDString::parse_dyn_size(cursor, 2)?
             .0
             .parse::<u16>()
             .context("Failed to parse VuDataBlockCounter from BCDString to number")?;
-        if num_value > 9999 {
-            anyhow::bail!("Invalid VuDataBlockCounter value: {}", num_value);
+        if value > 9999 {
+            anyhow::bail!("Invalid VuDataBlockCounter value: {}", value);
         }
 
-        Ok(VuDataBlockCounter(num_value))
+        Ok(VuDataBlockCounter(value))
     }
 }
 
