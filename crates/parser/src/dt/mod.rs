@@ -217,6 +217,7 @@ impl CardRenewalIndex {
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS))]
 #[serde(rename_all = "camelCase")]
+#[serde(tag = "type")]
 /// [CardNumber: appendix 2.26.](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:02016R0799-20230821#cons_toc_d1e17629)
 pub enum CardNumber {
     #[serde(rename_all = "camelCase")]
